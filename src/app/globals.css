@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-mist text-navy antialiased;
+}
+
+.field {
+  @apply w-full rounded-2xl border border-navy/10 bg-mist px-3 py-3 text-sm font-semibold text-navy outline-none transition placeholder:font-medium placeholder:text-navy/35 focus:border-sky focus:bg-white focus:ring-4 focus:ring-sky/20;
+}
+
+:focus-visible {
+  outline: 2px solid #4381C7;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "name": "AIRSTAY",
+  "short_name": "AIRSTAY",
+  "description": "Compare travel out of Canada — flights, stays, cars and packages.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F3F6FB",
+  "theme_color": "#071840",
+  "icons": [
+    { "src": "/favicon.png", "sizes": "64x64", "type": "image/png" },
+    { "src": "/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" }
+  ]
+}

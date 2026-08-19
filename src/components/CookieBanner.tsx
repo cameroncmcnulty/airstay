@@ -1,0 +1,75 @@
+"use client";
+
+import Link from "next/link";
+import { useState } from "react";
+import { useApp } from "@/context/AppContext";
+
+export function CookieBanner() {
+  const { m, consent, setConsent } = useApp();
+  const [analytics, setAnalytics] = useState(false);
+  const [marketing, setMarketing] = useState(false);
+  if (consent) return null;
+
+  return (
+    <div
+      role="dialog"
+      aria-labelledby="cookie-title"
+      className="fixed bottom-4 left-4 right-4 z-50 mx-auto max-w-3xl rounded-3xl border border-navy/10 bg-white p-5 shadow-card"
+    >
+      <h2 id="cookie-title" className="text-lg font-bold text-navy">
+        {m.cookie.title}
+      </h2>
+      <p className="mt-2 text-sm leading-relaxed text-navy/70">{m.cookie.body}</p>
+      <div className="mt-4 flex flex-wrap gap-4 text-sm font-semibold text-navy">
+        <label className="flex items-center gap-2">
+          <input type="checkbox" checked disabled className="accent-navy" />
+          {m.cookie.necessary}
+        </label>
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={analytics}
+            onChange={(e) => setAnalytics(e.target.checked)}
+            className="accent-sky"
+          />
+          {m.cookie.analytics}
+        </label>
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={marketing}
+            onChange={(e) => setMarketing(e.target.checked)}
+            className="accent-sky"
+          />
+          {m.cookie.marketing}
+        </label>
+      </div>
+      <div className="mt-4 flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          className="rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white"
+          onClick={() => setConsent({ analytics: true, marketing: true })}
+        >
+          {m.cookie.acceptAll}
+        </button>
+        <button
+          type="button"
+          className="rounded-full bg-sky px-4 py-2 text-sm font-semibold text-white"
+          onClick={() => setConsent({ analytics, marketing })}
+        >
+          {m.cookie.acceptSel}
+        </button>
+        <button
+          type="button"
+          className="rounded-full border border-navy/15 px-4 py-2 text-sm font-semibold text-navy"
+          onClick={() => setConsent({ analytics: false, marketing: false })}
+        >
+          {m.cookie.reject}
+        </button>
+        <Link href="/cookies" className="ml-auto text-sm font-semibold text-sky-700 underline">
+          {m.cookie.policy}
+        </Link>
+      </div>
+    </div>
+  );
+}
