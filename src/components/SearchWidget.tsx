@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plane, Building2, Car, Sparkles, Search, Minus, Plus } from "lucide-react";
 import { useApp } from "@/context/AppContext";
@@ -43,9 +43,39 @@ export function SearchWidget({ initialKind = "flights" }: { initialKind?: Search
   const [fromOpen, setFromOpen] = useState(false);
   const [toOpen, setToOpen] = useState(false);
   const [error, setError] = useState("");
+  const fromRef = useRef<HTMLLabelElement>(null);
+  const toRef = useRef<HTMLLabelElement>(null);
 
   const fromOpts = useMemo(() => searchCanadianAirports(from), [from]);
   const toOpts = useMemo(() => searchDestinations(to), [to]);
+
+  useEffect(() => {
+    if (!fromOpen && !toOpen) return;
+
+    function onPointerDown(e: PointerEvent) {
+      const target = e.target as Node;
+      if (fromOpen && fromRef.current && !fromRef.current.contains(target)) {
+        setFromOpen(false);
+      }
+      if (toOpen && toRef.current && !toRef.current.contains(target)) {
+        setToOpen(false);
+      }
+    }
+
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setFromOpen(false);
+        setToOpen(false);
+      }
+    }
+
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [fromOpen, toOpen]);
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -85,6 +115,8 @@ export function SearchWidget({ initialKind = "flights" }: { initialKind?: Search
               onClick={() => {
                 setKind(tab.id);
                 setError("");
+                setFromOpen(false);
+                setToOpen(false);
               }}
               className={`inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-bold transition ${
                 active
@@ -121,19 +153,24 @@ export function SearchWidget({ initialKind = "flights" }: { initialKind?: Search
 
         <div className="grid gap-3 md:grid-cols-2">
           {(kind === "flights" || kind === "packages") && (
-            <Field label={m.search.from}>
+            <Field label={m.search.from} fieldRef={fromRef}>
               <input
                 value={from}
                 onChange={(e) => {
                   setFrom(e.target.value);
                   setFromCode("");
                   setFromOpen(true);
+                  setToOpen(false);
                 }}
-                onFocus={() => setFromOpen(true)}
+                onFocus={() => {
+                  setFromOpen(true);
+                  setToOpen(false);
+                }}
                 placeholder={m.search.fromPh}
                 className="field"
                 autoComplete="off"
                 aria-autocomplete="list"
+                aria-expanded={fromOpen}
               />
               {fromOpen && (
                 <Suggest
@@ -149,18 +186,23 @@ export function SearchWidget({ initialKind = "flights" }: { initialKind?: Search
             </Field>
           )}
 
-          <Field label={kind === "cars" ? m.search.pickup : kind === "stays" ? m.search.dest : m.search.to}>
+          <Field label={kind === "cars" ? m.search.pickup : kind === "stays" ? m.search.dest : m.search.to} fieldRef={toRef}>
             <input
               value={to}
               onChange={(e) => {
                 setTo(e.target.value);
                 setToCode("");
                 setToOpen(true);
+                setFromOpen(false);
               }}
-              onFocus={() => setToOpen(true)}
+              onFocus={() => {
+                setToOpen(true);
+                setFromOpen(false);
+              }}
               placeholder={kind === "stays" ? m.search.destPh : m.search.toPh}
               className="field"
               autoComplete="off"
+              aria-expanded={toOpen}
             />
             {toOpen && (
               <Suggest
@@ -234,9 +276,17 @@ export function SearchWidget({ initialKind = "flights" }: { initialKind?: Search
   }
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({
+  label,
+  children,
+  fieldRef,
+}: {
+  label: string;
+  children: React.ReactNode;
+  fieldRef?: React.Ref<HTMLLabelElement>;
+}) {
   return (
-    <label className="relative block text-xs font-bold uppercase tracking-wide text-navy/50">
+    <label ref={fieldRef} className="relative block text-xs font-bold uppercase tracking-wide text-navy/50">
       {label}
       <div className="relative mt-1">{children}</div>
     </label>

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Menu, X, UserRound } from "lucide-react";
 import { Logo } from "./Logo";
 import { useApp } from "@/context/AppContext";
@@ -17,9 +17,31 @@ const LINKS = [
 export function Header() {
   const { m, locale, setLocale, user } = useApp();
   const [open, setOpen] = useState(false);
+  const menuRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+
+    function onPointerDown(e: PointerEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false);
+    }
+
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open]);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-navy/10 bg-white/85 backdrop-blur-xl">
+    <header ref={menuRef} className="sticky top-0 z-40 border-b border-navy/10 bg-white/85 backdrop-blur-xl">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
         <Logo size="sm" />
         <nav className="hidden items-center gap-1 lg:flex" aria-label="Primary">
