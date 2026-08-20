@@ -20,6 +20,23 @@ Legal pages are a compliance-oriented template. Have a Canadian lawyer review th
 
 Next.js 15 · React 19 · Tailwind CSS · TypeScript
 
+## Travel API v1
+
+ReservationHub-style unified API under `/api/v1`:
+
+- `POST /api/v1/search/flights`
+- `POST /api/v1/search/hotels`
+- `POST /api/v1/search/cars`
+- `POST /api/v1/search/packages`
+- `POST /api/v1/bookings`
+- `GET /api/v1/bookings/{id}`
+- `POST /api/v1/bookings/{id}/cancel`
+- `GET /api/v1/health`
+
+Docs: `/developers`
+
+Live flights use Travelpayouts. Hotels use AIRSTAY inventory plus LiteAPI/Amadeus when you add keys.
+
 ## Live fares
 
 AIRSTAY does **not** scrape Kayak, Expedia, or Booking.com. That would break their terms and produce stale prices.

@@ -286,7 +286,7 @@ function ResultsInner() {
                         {m.results.sunwing}
                       </button>
                       {p.flightsUrl && (
-                        <button type="button" className="text-xs font-bold text-sky-800 underline" onClick={() => setLeaving({ ...p, url: p.flightsUrl })}>
+                        <button type="button" className="text-xs font-bold text-sky-800 underline" onClick={() => setLeaving({ ...p, url: p.flightsUrl as string })}>
                           {m.results.liveFlights}
                         </button>
                       )}

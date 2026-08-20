@@ -33,6 +33,7 @@ export function Footer() {
             <li><Link className="hover:text-sky-200" href="/about">{m.nav.about}</Link></li>
             <li><Link className="hover:text-sky-200" href="/contact">{m.footer.contact}</Link></li>
             <li><Link className="hover:text-sky-200" href="/disclosure">{m.footer.disclosure}</Link></li>
+            <li><Link className="hover:text-sky-200" href="/developers">API</Link></li>
           </ul>
         </div>
         <div>
