@@ -14,20 +14,28 @@ export function HeroMedia({ compact = false }: { compact?: boolean }) {
 
   return (
     <div className={`pointer-events-none absolute inset-0 overflow-hidden ${compact ? "" : ""}`} aria-hidden>
+      <img src="/hero.jpg" alt="" className={`absolute inset-0 h-full w-full object-cover ${reduce ? "" : "hero-video"}`} />
       {!reduce && (
         <video
-          className="absolute inset-0 h-full w-full scale-105 object-cover"
+          className="hero-video absolute inset-0 h-full w-full object-cover"
           autoPlay
           muted
           loop
           playsInline
-          preload="metadata"
+          preload="auto"
           poster="/hero.jpg"
+          onLoadedMetadata={(e) => {
+            e.currentTarget.playbackRate = 0.6;
+          }}
+          onEnded={(e) => {
+            const el = e.currentTarget;
+            el.currentTime = 0;
+            void el.play();
+          }}
         >
           <source src="/hero.mp4" type="video/mp4" />
         </video>
       )}
-      {reduce && <img src="/hero.jpg" alt="" className="absolute inset-0 h-full w-full object-cover" />}
       <div className="absolute inset-0 bg-gradient-to-b from-navy/75 via-navy/55 to-mist" />
     </div>
   );

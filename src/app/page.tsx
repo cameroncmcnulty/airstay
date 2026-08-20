@@ -8,7 +8,7 @@ import { CategoryBubbles } from "@/components/CategoryBubbles";
 import { DealGrid } from "@/components/DealCard";
 import { HeroMedia } from "@/components/HeroMedia";
 import { useApp } from "@/context/AppContext";
-import { POPULAR_DESTINATIONS } from "@/lib/airports";
+import { FEATURED_DESTINATIONS, getDestination } from "@/lib/airports";
 import { DEST_PHOTOS } from "@/lib/deals";
 import { defaultDepart, defaultReturn, queryToParams, type SearchKind } from "@/lib/deeplinks";
 
@@ -73,7 +73,9 @@ export default function HomePage() {
           <h2 className="text-2xl font-extrabold text-navy">{m.popular.title}</h2>
           <p className="mt-1 text-sm text-navy/60">{m.popular.subtitle}</p>
           <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-4">
-            {POPULAR_DESTINATIONS.slice(0, 8).map((d) => {
+            {FEATURED_DESTINATIONS.map((code) => {
+              const d = getDestination(code);
+              if (!d) return null;
               const href = `/results?${queryToParams({
                 kind: "flights",
                 from: "YYZ",

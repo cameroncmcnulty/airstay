@@ -88,7 +88,7 @@ export const t = {
       c4t: "Privacy first",
       c4d: "PIPEDA, Quebec Law 25 and CASL built in — consent is never pre-checked.",
     },
-    popular: { title: "Popular from Canada", subtitle: "Jump into a destination Canadians book often." },
+    popular: { title: "Popular from Canada", subtitle: "Mexico, Cuba, the Caribbean and South America — plus the usual long-haul favourites." },
     partners: {
       title: "You book with the brands you already trust",
       note: "AIRSTAY may earn a commission if you book through a partner link. That never changes the price you pay.",
@@ -342,7 +342,7 @@ export const t = {
       c4t: "Vie privée d’abord",
       c4d: "LPRPDE, Loi 25 du Québec et LCAP intégrées — le consentement n’est jamais précoché.",
     },
-    popular: { title: "Populaires au départ du Canada", subtitle: "Des destinations souvent réservées par les Canadiens." },
+    popular: { title: "Populaires au départ du Canada", subtitle: "Mexique, Cuba, Caraïbes et Amérique du Sud — plus les longs courriers habituels." },
     partners: {
       title: "Vous réservez chez des marques que vous connaissez",
       note: "AIRSTAY peut recevoir une commission si vous réservez via un lien partenaire. Cela ne change pas le prix que vous payez.",

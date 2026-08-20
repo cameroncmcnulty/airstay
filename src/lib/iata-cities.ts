@@ -24,6 +24,18 @@ const AIRPORT_TO_CITY: Record<string, string> = {
   GMP: "SEL",
   MEX: "MEX",
   CUN: "CUN",
+  GRU: "SAO",
+  CGH: "SAO",
+  GIG: "RIO",
+  SDU: "RIO",
+  EZE: "BUE",
+  AEP: "BUE",
+  SCL: "SCL",
+  HAV: "HAV",
+  VRA: "VRA",
+  PVR: "PVR",
+  SJD: "SJD",
+  PUJ: "PUJ",
 };
 
 export function cityCode(iata?: string) {

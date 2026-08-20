@@ -15,7 +15,22 @@ body {
   background-color: #f3f6fb;
   background-image: url("/wallpaper.svg");
   background-repeat: repeat;
-  background-size: 420px 420px;
+  background-size: 340px 340px;
+}
+
+@keyframes hero-drift {
+  0%,
+  100% {
+    transform: scale(1.06) translate3d(0, 0, 0);
+  }
+  50% {
+    transform: scale(1.18) translate3d(-1.4%, -1%, 0);
+  }
+}
+
+.hero-video {
+  animation: hero-drift 32s ease-in-out infinite;
+  will-change: transform;
 }
 
 .field {
@@ -30,6 +45,9 @@ body {
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
+  }
+  .hero-video {
+    animation: none !important;
   }
   * {
     animation-duration: 0.01ms !important;

@@ -46,11 +46,40 @@ export type Destination = {
 };
 
 export const POPULAR_DESTINATIONS: Destination[] = [
+  { code: "CUN", city: "Cancún", cityFr: "Cancún", country: "Mexico", countryFr: "Mexique" },
+  { code: "PVR", city: "Puerto Vallarta", cityFr: "Puerto Vallarta", country: "Mexico", countryFr: "Mexique" },
+  { code: "SJD", city: "Los Cabos", cityFr: "Los Cabos", country: "Mexico", countryFr: "Mexique" },
+  { code: "CZM", city: "Cozumel", cityFr: "Cozumel", country: "Mexico", countryFr: "Mexique" },
+  { code: "VRA", city: "Varadero", cityFr: "Varadero", country: "Cuba", countryFr: "Cuba" },
+  { code: "HAV", city: "Havana", cityFr: "La Havane", country: "Cuba", countryFr: "Cuba" },
+  { code: "PUJ", city: "Punta Cana", cityFr: "Punta Cana", country: "Dominican Republic", countryFr: "République dominicaine" },
+  { code: "MBJ", city: "Montego Bay", cityFr: "Montego Bay", country: "Jamaica", countryFr: "Jamaïque" },
+  { code: "HUX", city: "Huatulco", cityFr: "Huatulco", country: "Mexico", countryFr: "Mexique" },
+  { code: "ACA", city: "Acapulco", cityFr: "Acapulco", country: "Mexico", countryFr: "Mexique" },
+  { code: "MEX", city: "Mexico City", cityFr: "Mexico", country: "Mexico", countryFr: "Mexique" },
+  { code: "MID", city: "Mérida", cityFr: "Mérida", country: "Mexico", countryFr: "Mexique" },
+  { code: "ZIH", city: "Ixtapa", cityFr: "Ixtapa", country: "Mexico", countryFr: "Mexique" },
+  { code: "CCC", city: "Cayo Coco", cityFr: "Cayo Coco", country: "Cuba", countryFr: "Cuba" },
+  { code: "HOG", city: "Holguín", cityFr: "Holguín", country: "Cuba", countryFr: "Cuba" },
+  { code: "SNU", city: "Santa Clara", cityFr: "Santa Clara", country: "Cuba", countryFr: "Cuba" },
+  { code: "NAS", city: "Nassau", cityFr: "Nassau", country: "Bahamas", countryFr: "Bahamas" },
+  { code: "AUA", city: "Aruba", cityFr: "Aruba", country: "Aruba", countryFr: "Aruba" },
+  { code: "SJU", city: "San Juan", cityFr: "San Juan", country: "Puerto Rico", countryFr: "Porto Rico" },
+  { code: "POP", city: "Puerto Plata", cityFr: "Puerto Plata", country: "Dominican Republic", countryFr: "République dominicaine" },
+  { code: "LIR", city: "Liberia", cityFr: "Liberia", country: "Costa Rica", countryFr: "Costa Rica" },
+  { code: "SJO", city: "San José", cityFr: "San José", country: "Costa Rica", countryFr: "Costa Rica" },
+  { code: "PTY", city: "Panama City", cityFr: "Panama", country: "Panama", countryFr: "Panama" },
+  { code: "CTG", city: "Cartagena", cityFr: "Carthagène", country: "Colombia", countryFr: "Colombie" },
+  { code: "BOG", city: "Bogotá", cityFr: "Bogotá", country: "Colombia", countryFr: "Colombie" },
+  { code: "LIM", city: "Lima", cityFr: "Lima", country: "Peru", countryFr: "Pérou" },
+  { code: "GIG", city: "Rio de Janeiro", cityFr: "Rio de Janeiro", country: "Brazil", countryFr: "Brésil" },
+  { code: "GRU", city: "São Paulo", cityFr: "São Paulo", country: "Brazil", countryFr: "Brésil" },
+  { code: "EZE", city: "Buenos Aires", cityFr: "Buenos Aires", country: "Argentina", countryFr: "Argentine" },
+  { code: "SCL", city: "Santiago", cityFr: "Santiago", country: "Chile", countryFr: "Chili" },
   { code: "LHR", city: "London", cityFr: "Londres", country: "United Kingdom", countryFr: "Royaume-Uni" },
   { code: "CDG", city: "Paris", cityFr: "Paris", country: "France", countryFr: "France" },
   { code: "NRT", city: "Tokyo", cityFr: "Tokyo", country: "Japan", countryFr: "Japon" },
   { code: "FCO", city: "Rome", cityFr: "Rome", country: "Italy", countryFr: "Italie" },
-  { code: "CUN", city: "Cancún", cityFr: "Cancún", country: "Mexico", countryFr: "Mexique" },
   { code: "JFK", city: "New York", cityFr: "New York", country: "United States", countryFr: "États-Unis" },
   { code: "DUB", city: "Dublin", cityFr: "Dublin", country: "Ireland", countryFr: "Irlande" },
   { code: "BCN", city: "Barcelona", cityFr: "Barcelone", country: "Spain", countryFr: "Espagne" },
@@ -61,7 +90,6 @@ export const POPULAR_DESTINATIONS: Destination[] = [
   { code: "KEF", city: "Reykjavík", cityFr: "Reykjavík", country: "Iceland", countryFr: "Islande" },
   { code: "ICN", city: "Seoul", cityFr: "Séoul", country: "South Korea", countryFr: "Corée du Sud" },
   { code: "HNL", city: "Honolulu", cityFr: "Honolulu", country: "United States", countryFr: "États-Unis" },
-  { code: "MEX", city: "Mexico City", cityFr: "Mexico", country: "Mexico", countryFr: "Mexique" },
   { code: "MAD", city: "Madrid", cityFr: "Madrid", country: "Spain", countryFr: "Espagne" },
   { code: "ATH", city: "Athens", cityFr: "Athènes", country: "Greece", countryFr: "Grèce" },
   { code: "BKK", city: "Bangkok", cityFr: "Bangkok", country: "Thailand", countryFr: "Thaïlande" },
@@ -70,6 +98,25 @@ export const POPULAR_DESTINATIONS: Destination[] = [
   { code: "MIA", city: "Miami", cityFr: "Miami", country: "United States", countryFr: "États-Unis" },
   { code: "SFO", city: "San Francisco", cityFr: "San Francisco", country: "United States", countryFr: "États-Unis" },
   { code: "FRA", city: "Frankfurt", cityFr: "Francfort", country: "Germany", countryFr: "Allemagne" },
+];
+
+export const FEATURED_DESTINATIONS = [
+  "CUN",
+  "PVR",
+  "SJD",
+  "CZM",
+  "VRA",
+  "HAV",
+  "PUJ",
+  "MBJ",
+  "HUX",
+  "GIG",
+  "CTG",
+  "LIM",
+  "EZE",
+  "AUA",
+  "LIR",
+  "MEX",
 ];
 
 export function searchCanadianAirports(q: string): Airport[] {
@@ -87,7 +134,7 @@ export function searchCanadianAirports(q: string): Airport[] {
 
 export function searchDestinations(q: string): Destination[] {
   const s = q.trim().toLowerCase();
-  if (!s) return POPULAR_DESTINATIONS.slice(0, 8);
+  if (!s) return POPULAR_DESTINATIONS.slice(0, 12);
   return POPULAR_DESTINATIONS.filter(
     (d) =>
       d.code.toLowerCase().includes(s) ||
