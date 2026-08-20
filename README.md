@@ -29,11 +29,12 @@ npm run dev
 
 ## Live
 
+- Domain: https://airstay.ca (and https://www.airstay.ca)
 - GitHub: https://github.com/cameroncmcnulty/airstay
-- Vercel (production): https://airstay-tread-bros.vercel.app
-- Vercel alias: https://airstay-eosin.vercel.app
+- Vercel project (TREAD BROS team): https://vercel.com/tread-bros/airstay
+- Vercel production: https://airstay-tread-bros.vercel.app
 
-The Vercel project `tread-bros/airstay` is connected to the GitHub repo, so pushes to `main` redeploy.
+The Vercel project `tread-bros/airstay` is connected to the GitHub repo, so pushes to `main` redeploy. In the Vercel dashboard, switch the team (top left) to **TREAD BROS** — the project is not on the personal Hobby account.
 
 ## Deploy
 

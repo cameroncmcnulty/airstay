@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   },
   description:
     "AIRSTAY is a Canada-outbound travel metasearch for flights, stays, cars and packages. Compare partner prices in CAD and book on Kayak, Expedia, Booking.com and more.",
-  metadataBase: new URL("https://airstay.vercel.app"),
+  metadataBase: new URL("https://airstay.ca"),
   icons: {
     icon: "/favicon.png",
     apple: "/apple-touch-icon.png",
