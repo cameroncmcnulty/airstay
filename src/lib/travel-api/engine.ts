@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto";
 import type { Booking, BookingPassenger, NormalizedOffer, SearchRequest, SearchResponse } from "./types";
-import { getOffer, putBooking, putOffers } from "./store";
+import { getOffer, putBooking, putOffers, logSearch } from "./store";
 import { searchFlights } from "./providers/flights";
 import { searchHotels } from "./providers/hotels";
 import { searchCars } from "./providers/cars";
@@ -30,6 +30,17 @@ export async function runSearch(req: SearchRequest): Promise<SearchResponse> {
   }
 
   putOffers(offers);
+  logSearch({
+    kind: req.type,
+    origin: req.origin,
+    destination: req.destination || req.destinationName,
+    depart: req.departDate,
+    returnDate: req.returnDate,
+    adults: req.adults,
+    results: offers.length,
+    providers: [...providers],
+    source: [...providers].join(","),
+  });
   return {
     success: true,
     data: {

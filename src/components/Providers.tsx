@@ -1,5 +1,6 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { AppProvider } from "@/context/AppContext";
 import { Header } from "./Header";
 import { Footer } from "./Footer";
@@ -8,6 +9,8 @@ import { useApp } from "@/context/AppContext";
 
 function Shell({ children }: { children: React.ReactNode }) {
   const { m } = useApp();
+  const path = usePathname();
+  if (path.startsWith("/admin")) return <>{children}</>;
   return (
     <>
       <a

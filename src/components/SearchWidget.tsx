@@ -29,10 +29,12 @@ export function SearchWidget({
   initialKind = "flights",
   kind: kindProp,
   hideTabs = false,
+  embedded = false,
 }: {
   initialKind?: SearchKind;
   kind?: SearchKind;
   hideTabs?: boolean;
+  embedded?: boolean;
 }) {
   const { m, locale } = useApp();
   const router = useRouter();
@@ -120,7 +122,7 @@ export function SearchWidget({
   }
 
   return (
-    <div className="rounded-[1.8rem] bg-white p-3 shadow-card sm:p-5">
+    <div className={embedded ? "" : "rounded-[1.8rem] bg-white p-3 shadow-card sm:p-5"}>
       {!hideTabs && (
       <div className="flex flex-wrap gap-2" role="tablist" aria-label={m.bubbles.title}>
         {TABS.map((tab) => {

@@ -42,7 +42,7 @@ export function Header() {
 
   return (
     <header ref={menuRef} className="sticky top-0 z-40 border-b border-navy/10 bg-white/85 backdrop-blur-xl">
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-3 py-2 sm:gap-4 sm:px-4 sm:py-3">
         <Logo size="sm" />
         <nav className="hidden items-center gap-1 lg:flex" aria-label="Primary">
           {LINKS.map((l) => (

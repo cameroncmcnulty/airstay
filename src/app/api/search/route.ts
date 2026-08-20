@@ -3,6 +3,7 @@ import { paramsToQuery } from "@/lib/deeplinks";
 import { searchLive } from "@/lib/live-search";
 import { searchPackages } from "@/lib/packages";
 import { duffelConfigured } from "@/lib/duffel";
+import { logSearch } from "@/lib/travel-api/store";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -12,11 +13,23 @@ export async function GET(req: NextRequest) {
   try {
     const live = await searchLive(q);
     const packages = q.kind === "packages" || q.kind === "stays" ? await searchPackages(q, live) : [];
+    const source = duffelConfigured() ? "duffel" : "travelpayouts";
+    logSearch({
+      kind: q.kind,
+      origin: q.from,
+      destination: q.to || q.toCity,
+      depart: q.depart,
+      returnDate: q.returnDate,
+      adults: q.adults,
+      results: (q.kind === "packages" || q.kind === "stays" ? packages.length : live.length),
+      providers: [source, ...(live.some((o) => o.source === "duffel") ? ["duffel-air"] : [])],
+      source,
+    });
     return NextResponse.json({
       ok: true,
       live,
       packages,
-      source: duffelConfigured() ? "duffel" : "travelpayouts",
+      source,
       generatedAt: new Date().toISOString(),
     });
   } catch (err) {

@@ -16,35 +16,47 @@ export function CategoryBubbles({
   selected,
   onSelect,
   light = false,
+  compact = false,
 }: {
   selected?: SearchKind;
   onSelect?: (kind: SearchKind) => void;
   light?: boolean;
+  compact?: boolean;
 }) {
   const { m } = useApp();
   return (
-    <section className="mx-auto max-w-6xl px-4">
-      <h2 className={`text-center text-2xl font-extrabold ${light ? "text-white" : "text-navy"}`}>{m.bubbles.title}</h2>
-      <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-4">
+    <section className={compact ? "" : "mx-auto max-w-6xl px-4"}>
+      {!compact && (
+        <h2 className={`text-center text-2xl font-extrabold ${light ? "text-white" : "text-navy"}`}>{m.bubbles.title}</h2>
+      )}
+      <div className={`grid grid-cols-4 ${compact ? "gap-1 sm:gap-3" : "mt-8 gap-4"}`}>
         {items.map((it) => {
           const Icon = it.icon;
           const active = selected === it.id;
           const inner = (
             <>
               <span
-                className={`grid h-28 w-28 place-items-center rounded-full bg-gradient-to-b ${it.tint} shadow-bubble ring-1 transition group-hover:-translate-y-1 group-hover:shadow-lift md:h-32 md:w-32 ${
-                  active ? "ring-4 ring-sky shadow-lift" : "ring-navy/5"
-                }`}
+                className={`grid place-items-center rounded-full bg-gradient-to-b ${it.tint} shadow-bubble ring-1 transition group-hover:-translate-y-0.5 group-hover:shadow-lift ${
+                  compact ? "h-14 w-14 sm:h-16 sm:w-16 md:h-20 md:w-20" : "h-24 w-24 md:h-32 md:w-32"
+                } ${active ? "ring-4 ring-sky shadow-lift" : "ring-navy/5"}`}
               >
-                <span className={`grid h-16 w-16 place-items-center rounded-full text-white md:h-20 md:w-20 ${active ? "bg-sky" : "bg-navy"}`}>
-                  <Icon className="h-7 w-7 md:h-8 md:w-8" />
+                <span
+                  className={`grid place-items-center rounded-full text-white ${
+                    compact ? "h-9 w-9 sm:h-10 sm:w-10 md:h-12 md:w-12" : "h-14 w-14 md:h-20 md:w-20"
+                  } ${active ? "bg-sky" : "bg-navy"}`}
+                >
+                  <Icon className={compact ? "h-4 w-4 md:h-5 md:w-5" : "h-6 w-6 md:h-8 md:w-8"} />
                 </span>
               </span>
-              <span className={`mt-4 text-lg font-extrabold ${light ? "text-white" : "text-navy"}`}>{m.bubbles[it.key]}</span>
-              <span className={`text-sm ${light ? "text-white/70" : "text-navy/55"}`}>{m.bubbles[it.sub]}</span>
+              <span className={`mt-2 max-w-full truncate font-extrabold ${compact ? "text-[11px] sm:text-sm" : "mt-4 text-lg"} ${light && !compact ? "text-white" : "text-navy"}`}>
+                {m.bubbles[it.key]}
+              </span>
+              {!compact && (
+                <span className={`text-sm ${light ? "text-white/70" : "text-navy/55"}`}>{m.bubbles[it.sub]}</span>
+              )}
             </>
           );
-          const className = "group flex flex-col items-center rounded-[2rem] p-4 text-center";
+          const className = `group flex flex-col items-center text-center ${compact ? "rounded-2xl p-1 sm:p-2" : "rounded-[2rem] p-4"}`;
           if (onSelect) {
             return (
               <button

@@ -149,7 +149,7 @@ function ResultsInner() {
       <section className="relative overflow-hidden bg-navy">
         <img src={destPhoto} alt="" className="absolute inset-0 h-full w-full object-cover opacity-35" />
         <div className="absolute inset-0 bg-gradient-to-r from-navy via-navy/85 to-navy/55" />
-        <div className="relative mx-auto max-w-6xl px-4 py-10 text-white">
+        <div className="relative mx-auto max-w-6xl px-4 py-8 text-white sm:py-10">
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-sky-200">
             {q.kind === "packages" ? m.nav.packages : q.kind === "stays" ? m.nav.stays : q.kind === "cars" ? m.nav.cars : m.nav.flights}
           </p>

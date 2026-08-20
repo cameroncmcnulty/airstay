@@ -37,6 +37,8 @@ Docs: `/developers`
 
 Live stays and bookable flight prices use Duffel. Travelpayouts supplies the Aviasales checkout link so flights keep your AIRSTAY dates.
 
+Staff dashboard: `/admin` (set `ADMIN_PASSWORD`).
+
 ## Live fares
 
 AIRSTAY does **not** scrape Kayak, Expedia, or Booking.com. That would break their terms and produce stale prices.

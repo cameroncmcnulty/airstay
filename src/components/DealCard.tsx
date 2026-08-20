@@ -20,7 +20,7 @@ export function DealCard({ deal }: { deal: Deal }) {
   })}`;
   return (
     <Link href={href} className="group flex flex-col overflow-hidden rounded-card bg-white shadow-card ring-1 ring-navy/5">
-      <div className="relative h-44 overflow-hidden">
+      <div className="relative h-36 overflow-hidden sm:h-44">
         <img
           src={deal.image}
           alt={locale === "fr" ? deal.imageAltFr : deal.imageAlt}
