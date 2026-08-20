@@ -106,12 +106,12 @@ export default function AdminPage() {
   }
 
   if (authed === null) {
-    return <div className="grid min-h-screen place-items-center bg-navy text-white/70">Loading admin…</div>;
+    return <div className="relative z-10 grid min-h-screen place-items-center bg-navy text-white/70">Loading admin…</div>;
   }
 
   if (!authed) {
     return (
-      <div className="grid min-h-screen place-items-center bg-navy px-4">
+      <div className="relative z-10 grid min-h-screen place-items-center bg-navy px-4">
         <form onSubmit={onLogin} className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-card">
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-sky-700">AIRSTAY</p>
           <h1 className="mt-2 text-2xl font-black text-navy">Admin sign in</h1>
@@ -139,7 +139,7 @@ export default function AdminPage() {
   const duffelOn = Boolean(data?.providers.duffel);
 
   return (
-    <div className="min-h-screen bg-[#071428] text-white">
+    <div className="relative z-10 min-h-screen bg-[#071428] text-white">
       <header className="border-b border-white/10 px-4 py-4">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3">
           <div>

@@ -14,24 +14,17 @@ export function HeroMedia({ compact = false }: { compact?: boolean }) {
 
   return (
     <div className={`pointer-events-none absolute inset-0 overflow-hidden ${compact ? "" : ""}`} aria-hidden>
-      <img src="/hero.jpg" alt="" className={`absolute inset-0 h-full w-full object-cover ${reduce ? "" : "hero-video"}`} />
-      {!reduce && (
+      {reduce ? (
+        <img src="/hero.jpg" alt="" className="absolute inset-0 h-full w-full object-cover" />
+      ) : (
         <video
-          className="hero-video absolute inset-0 h-full w-full object-cover"
+          className="absolute inset-0 h-full w-full object-cover"
           autoPlay
           muted
           loop
           playsInline
           preload="auto"
           poster="/hero.jpg"
-          onLoadedMetadata={(e) => {
-            e.currentTarget.playbackRate = 0.6;
-          }}
-          onEnded={(e) => {
-            const el = e.currentTarget;
-            el.currentTime = 0;
-            void el.play();
-          }}
         >
           <source src="/hero.mp4" type="video/mp4" />
         </video>
