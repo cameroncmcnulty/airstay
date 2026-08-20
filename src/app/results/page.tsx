@@ -257,23 +257,39 @@ function ResultsInner() {
                           <p className="text-sm font-bold text-navy">{m.results.seeLive}</p>
                         )}
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex flex-wrap justify-end gap-2">
                         <button
                           type="button"
-                          onClick={() => setLeaving({ ...p, url: p.bookingUrl })}
-                          className="rounded-full border border-navy/15 px-4 py-2.5 text-sm font-bold text-navy"
+                          onClick={() => setLeaving({ ...p, url: p.googleUrl })}
+                          className="inline-flex items-center gap-2 rounded-full bg-sky px-4 py-2.5 text-sm font-bold text-white shadow-lift"
                         >
-                          {m.results.viewResort}
+                          {m.results.liveStay}
+                          <ExternalLink className="h-4 w-4" />
                         </button>
                         <button
                           type="button"
                           onClick={() => setLeaving(p)}
-                          className="inline-flex items-center gap-2 rounded-full bg-sky px-4 py-2.5 text-sm font-bold text-white shadow-lift"
+                          className="rounded-full border border-navy/15 px-4 py-2.5 text-sm font-bold text-navy"
                         >
                           {m.results.viewPackage}
-                          <ExternalLink className="h-4 w-4" />
                         </button>
                       </div>
+                    </div>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <button type="button" className="text-xs font-bold text-sky-800 underline" onClick={() => setLeaving({ ...p, url: p.kayakUrl })}>
+                        {m.results.kayak}
+                      </button>
+                      <button type="button" className="text-xs font-bold text-sky-800 underline" onClick={() => setLeaving({ ...p, url: p.bookingUrl })}>
+                        {m.results.booking}
+                      </button>
+                      <button type="button" className="text-xs font-bold text-sky-800 underline" onClick={() => setLeaving({ ...p, url: p.sunwingUrl })}>
+                        {m.results.sunwing}
+                      </button>
+                      {p.flightsUrl && (
+                        <button type="button" className="text-xs font-bold text-sky-800 underline" onClick={() => setLeaving({ ...p, url: p.flightsUrl })}>
+                          {m.results.liveFlights}
+                        </button>
+                      )}
                     </div>
                   </div>
                 </article>

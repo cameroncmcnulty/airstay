@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plane, Building2, Car, Sparkles, Search, Minus, Plus } from "lucide-react";
+import { Plane, Building2, Car, TreePalm, Search, Minus, Plus } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import {
   searchCanadianAirports,
@@ -22,7 +22,7 @@ const TABS: { id: SearchKind; icon: typeof Plane; labelKey: "flights" | "stays" 
   { id: "flights", icon: Plane, labelKey: "flights" },
   { id: "stays", icon: Building2, labelKey: "stays" },
   { id: "cars", icon: Car, labelKey: "cars" },
-  { id: "packages", icon: Sparkles, labelKey: "packages" },
+  { id: "packages", icon: TreePalm, labelKey: "packages" },
 ];
 
 export function SearchWidget({

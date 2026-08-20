@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Plane, Building2, Car, Sparkles } from "lucide-react";
+import { Plane, Building2, Car, TreePalm } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import type { SearchKind } from "@/lib/deeplinks";
 
@@ -9,7 +9,7 @@ const items = [
   { id: "flights" as const, href: "/flights", icon: Plane, key: "flights" as const, sub: "flightsSub" as const, tint: "from-sky-50 to-white" },
   { id: "stays" as const, href: "/stays", icon: Building2, key: "stays" as const, sub: "staysSub" as const, tint: "from-navy-50 to-white" },
   { id: "cars" as const, href: "/cars", icon: Car, key: "cars" as const, sub: "carsSub" as const, tint: "from-sky-50 to-white" },
-  { id: "packages" as const, href: "/packages", icon: Sparkles, key: "packages" as const, sub: "packagesSub" as const, tint: "from-navy-50 to-white" },
+  { id: "packages" as const, href: "/packages", icon: TreePalm, key: "packages" as const, sub: "packagesSub" as const, tint: "from-navy-50 to-white" },
 ];
 
 export function CategoryBubbles({
