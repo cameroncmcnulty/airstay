@@ -20,7 +20,7 @@ export type PartnerOffer = {
   partner: string;
   tagline: string;
   taglineFr: string;
-  priceCad: number;
+  priceCad?: number;
   url: string;
   sponsored: true;
 };
@@ -65,10 +65,8 @@ export function buildPartnerOffers(q: SearchQuery): PartnerOffer[] {
   const from = (q.from || "YYZ").toUpperCase();
   const to = (q.to || "LHR").toUpperCase();
   const city = encodeURIComponent(q.toCity || to);
-  const seed = hash(`${q.kind}-${from}-${to}-${depart}-${ret}-${adults}`);
 
   if (q.kind === "flights") {
-    const base = 420 + (seed % 380);
     const people = kayakPeople(adults, childAges);
     const kayak =
       q.trip === "oneway"
@@ -87,17 +85,16 @@ export function buildPartnerOffers(q: SearchQuery): PartnerOffer[] {
     const wj = `https://www.westjet.com/en-ca`;
 
     return [
-      offer("kayak", "Kayak", "Compare 100+ sites", "Comparez plus de 100 sites", Math.round(base * 0.97), kayak),
-      offer("skyscanner", "Skyscanner", "Everywhere, every airline", "Partout, toutes compagnies", Math.round(base * 1.02), sky),
-      offer("expedia", "Expedia", "Flights from Canada", "Vols au départ du Canada", Math.round(base * 1.08), expedia),
-      offer("google", "Google Flights", "Calendar view in CAD", "Calendrier en $ CA", Math.round(base * 0.99), google),
-      offer("aircanada", "Air Canada", "Aeroplan eligible", "Admissible Aéroplan", Math.round(base * 1.18), ac),
-      offer("westjet", "WestJet", "WestJet Rewards", "Récompenses WestJet", Math.round(base * 1.15), wj),
+      offer("kayak", "Kayak", "Compare 100+ sites", "Comparez plus de 100 sites", kayak),
+      offer("skyscanner", "Skyscanner", "Everywhere, every airline", "Partout, toutes compagnies", sky),
+      offer("expedia", "Expedia", "Flights from Canada", "Vols au départ du Canada", expedia),
+      offer("google", "Google Flights", "Calendar view in CAD", "Calendrier en $ CA", google),
+      offer("aircanada", "Air Canada", "Aeroplan eligible", "Admissible Aéroplan", ac),
+      offer("westjet", "WestJet", "WestJet Rewards", "Récompenses WestJet", wj),
     ];
   }
 
   if (q.kind === "stays") {
-    const night = 140 + (seed % 220);
     const bookingAges = childAges.map((age) => `&age=${age}`).join("");
     const booking = `https://www.booking.com/searchresults.html?ss=${city}&checkin=${depart}&checkout=${ret}&group_adults=${adults}&group_children=${children}${bookingAges}&no_rooms=${rooms}&selected_currency=CAD`;
     const expedia = `https://www.expedia.ca/Hotel-Search?destination=${city}&startDate=${depart}&endDate=${ret}&rooms=${rooms}&adults=${adults}`;
@@ -105,39 +102,37 @@ export function buildPartnerOffers(q: SearchQuery): PartnerOffer[] {
     const airbnb = `https://www.airbnb.ca/s/${city}/homes?checkin=${depart}&checkout=${ret}&adults=${adults}&children=${children}`;
     const kayak = `https://www.kayak.ca/hotels/${city}/${depart}/${ret}/${adults}adults`;
     return [
-      offer("booking", "Booking.com", "Free cancellation options", "Options d'annulation gratuite", night, booking),
-      offer("expedia", "Expedia", "Member prices in CAD", "Prix membres en $ CA", Math.round(night * 1.04), expedia),
-      offer("hotels", "Hotels.com", "Collect 10-night rewards", "Récompenses 10 nuits", Math.round(night * 1.06), hotels),
-      offer("airbnb", "Airbnb", "Homes & unique stays", "Logements et séjours uniques", Math.round(night * 0.92), airbnb),
-      offer("kayak", "Kayak", "Compare hotel sites", "Comparez les sites d'hôtels", Math.round(night * 0.98), kayak),
+      offer("booking", "Booking.com", "Free cancellation options", "Options d'annulation gratuite", booking),
+      offer("expedia", "Expedia", "Member prices in CAD", "Prix membres en $ CA", expedia),
+      offer("hotels", "Hotels.com", "Collect 10-night rewards", "Récompenses 10 nuits", hotels),
+      offer("airbnb", "Airbnb", "Homes & unique stays", "Logements et séjours uniques", airbnb),
+      offer("kayak", "Kayak", "Compare hotel sites", "Comparez les sites d'hôtels", kayak),
     ];
   }
 
   if (q.kind === "cars") {
-    const day = 36 + (seed % 42);
     const pickup = q.toCity || to;
     const kayak = `https://www.kayak.ca/cars/${to}-${encodeURIComponent(pickup)}/${depart}/${ret}`;
     const rental = `https://www.rentalcars.com/SearchResults#dropLocation=${encodeURIComponent(pickup)}&pickupLocation=${encodeURIComponent(pickup)}&pickupDate=${depart}&dropDate=${ret}`;
     const expedia = `https://www.expedia.ca/carsearch?locn=${encodeURIComponent(pickup)}&date1=${depart}&date2=${ret}`;
     const discover = `https://www.discovercars.com/en-ca/search?pickup=${encodeURIComponent(pickup)}&from=${depart}&to=${ret}`;
     return [
-      offer("kayak", "Kayak", "Compare rental brands", "Comparez les enseignes", day, kayak),
-      offer("rentalcars", "Rentalcars.com", "Pay now or later", "Payez maintenant ou plus tard", Math.round(day * 1.05), rental),
-      offer("expedia", "Expedia", "Add to a trip", "Ajoutez à un voyage", Math.round(day * 1.1), expedia),
-      offer("discover", "Discover Cars", "Full-to-full options", "Plein à plein", Math.round(day * 0.96), discover),
+      offer("kayak", "Kayak", "Compare rental brands", "Comparez les enseignes", kayak),
+      offer("rentalcars", "Rentalcars.com", "Pay now or later", "Payez maintenant ou plus tard", rental),
+      offer("expedia", "Expedia", "Add to a trip", "Ajoutez à un voyage", expedia),
+      offer("discover", "Discover Cars", "Full-to-full options", "Plein à plein", discover),
     ];
   }
 
-  const pack = 1180 + (seed % 620);
-  const expedia = `https://www.expedia.ca/PackageSearch?packageType=fh&origin=${from}&destination=${city}&fromDate=${depart}&toDate=${ret}&adults=${adults}`;
-  const kayak = `https://www.kayak.ca/horizon/sem/flights/packages/${from}-${to}/${depart}/${ret}`;
+  const expediaPkg = `https://www.expedia.ca/PackageSearch?packageType=fh&origin=${from}&destination=${city}&fromDate=${depart}&toDate=${ret}&adults=${adults}`;
+  const kayakPkg = `https://www.kayak.ca/horizon/sem/flights/packages/${from}-${to}/${depart}/${ret}`;
   const sunwing = `https://www.sunwing.ca/en/`;
   const airtransat = `https://www.airtransat.com/en-CA`;
   return [
-    offer("expedia", "Expedia", "Flight + hotel together", "Vol + hôtel ensemble", pack, expedia),
-    offer("kayak", "Kayak", "Package comparison", "Comparaison de forfaits", Math.round(pack * 0.97), kayak),
-    offer("sunwing", "Sunwing", "Canadian vacation packages", "Forfaits vacances canadiens", Math.round(pack * 1.12), sunwing),
-    offer("airtransat", "Air Transat", "Transat packages", "Forfaits Transat", Math.round(pack * 1.08), airtransat),
+    offer("expedia", "Expedia", "Flight + hotel together", "Vol + hôtel ensemble", expediaPkg),
+    offer("kayak", "Kayak", "Package comparison", "Comparaison de forfaits", kayakPkg),
+    offer("sunwing", "Sunwing", "Canadian vacation packages", "Forfaits vacances canadiens", sunwing),
+    offer("airtransat", "Air Transat", "Transat packages", "Forfaits Transat", airtransat),
   ];
 }
 
@@ -146,16 +141,9 @@ function offer(
   partner: string,
   tagline: string,
   taglineFr: string,
-  priceCad: number,
   url: string
 ): PartnerOffer {
-  return { id, partner, tagline, taglineFr, priceCad, url: addParams(url), sponsored: true };
-}
-
-function hash(s: string) {
-  let h = 0;
-  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
-  return h;
+  return { id, partner, tagline, taglineFr, url: addParams(url), sponsored: true };
 }
 
 export function defaultDepart() {

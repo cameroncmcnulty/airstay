@@ -1,12 +1,13 @@
 "use client";
 
-import { Suspense, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { ExternalLink, BookmarkPlus, BookmarkCheck } from "lucide-react";
-import { paramsToQuery, buildPartnerOffers, cad, cadFr } from "@/lib/deeplinks";
+import { paramsToQuery, buildPartnerOffers, cad, cadFr, type PartnerOffer } from "@/lib/deeplinks";
 import { getAirport, getDestination } from "@/lib/airports";
 import { useApp } from "@/context/AppContext";
 import { currentUser, updateUser } from "@/lib/auth";
+import type { LiveOffer } from "@/lib/live-search";
 
 export default function ResultsPage() {
   return (
@@ -19,15 +20,41 @@ export default function ResultsPage() {
 function ResultsInner() {
   const sp = useSearchParams();
   const q = useMemo(() => paramsToQuery(sp), [sp]);
-  const offers = useMemo(() => buildPartnerOffers(q), [q]);
+  const partners = useMemo(() => buildPartnerOffers(q), [q]);
   const { m, locale, refreshUser } = useApp();
-  const [leaving, setLeaving] = useState<(typeof offers)[0] | null>(null);
+  const [leaving, setLeaving] = useState<PartnerOffer | LiveOffer | null>(null);
   const [saved, setSaved] = useState(false);
+  const [live, setLive] = useState<LiveOffer[]>([]);
+  const [loading, setLoading] = useState(q.kind === "flights" || q.kind === "packages");
 
   const origin = q.from ? getAirport(q.from) : undefined;
   const dest = q.to ? getDestination(q.to) : undefined;
   const destName = dest ? (locale === "fr" ? dest.cityFr : dest.city) : q.toCity || q.to || "";
   const originName = origin ? `${locale === "fr" ? origin.cityFr : origin.city} (${origin.code})` : q.from || "";
+
+  useEffect(() => {
+    if (q.kind !== "flights" && q.kind !== "packages") {
+      setLive([]);
+      setLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setLoading(true);
+    fetch(`/api/search?${sp.toString()}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (!cancelled) setLive(Array.isArray(data.live) ? data.live : []);
+      })
+      .catch(() => {
+        if (!cancelled) setLive([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [sp, q.kind]);
 
   function save() {
     const u = currentUser();
@@ -50,16 +77,26 @@ function ResultsInner() {
     refreshUser();
   }
 
-  function go(offer: (typeof offers)[0]) {
+  function go(offer: PartnerOffer | LiveOffer) {
     const u = currentUser();
     if (u) {
       updateUser(u.id, {
-        clicks: [{ partner: offer.partner, url: offer.url, at: new Date().toISOString() }, ...u.clicks].slice(0, 30),
+        clicks: [
+          { partner: "partner" in offer ? offer.partner : offer.title, url: offer.url, at: new Date().toISOString() },
+          ...u.clicks,
+        ].slice(0, 30),
       });
       refreshUser();
     }
     window.open(offer.url, "_blank", "noopener,noreferrer");
     setLeaving(null);
+  }
+
+  function stopsLabel(n?: number) {
+    if (n == null) return "";
+    if (n === 0) return m.results.nonstop;
+    if (n === 1) return m.results.stops.replace("{n}", "1");
+    return m.results.stopsPlural.replace("{n}", String(n));
   }
 
   return (
@@ -96,10 +133,55 @@ function ResultsInner() {
         </button>
       </div>
 
-      <p className="mt-4 rounded-2xl bg-sky-50 px-4 py-3 text-sm text-navy/75">{m.partners.note}</p>
+      {(q.kind === "flights" || q.kind === "packages") && (
+        <section className="mt-8">
+          <h2 className="text-xl font-extrabold text-navy">{m.results.liveTitle}</h2>
+          <p className="mt-1 text-sm text-navy/60">{m.results.liveSub}</p>
+          {loading && <p className="mt-4 text-sm font-semibold text-sky-800">{m.results.loading}</p>}
+          {!loading && live.length === 0 && (
+            <p className="mt-4 rounded-2xl bg-mist px-4 py-3 text-sm text-navy/70">{m.results.liveEmpty}</p>
+          )}
+          <ul className="mt-4 space-y-3">
+            {live.map((o) => (
+              <li key={o.id} className="flex flex-wrap items-center justify-between gap-4 rounded-card bg-white p-5 shadow-card ring-1 ring-navy/5">
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-lg font-black text-navy">{o.airlineName || o.title}</span>
+                    <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-bold uppercase text-sky-800">Live</span>
+                    {o.flightNumber && <span className="text-xs font-semibold text-navy/50">{o.airline}{o.flightNumber}</span>}
+                  </div>
+                  <p className="mt-1 text-sm text-navy/55">
+                    {o.departAt ? new Date(o.departAt).toLocaleString(locale === "fr" ? "fr-CA" : "en-CA") : ""}
+                    {o.returnAt ? ` → ${new Date(o.returnAt).toLocaleString(locale === "fr" ? "fr-CA" : "en-CA")}` : ""}
+                    {o.stops != null ? ` · ${stopsLabel(o.stops)}` : ""}
+                  </p>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="text-right">
+                    <p className="text-xs font-semibold text-navy/45">{m.results.advertised}</p>
+                    <p className="text-2xl font-black text-navy">{locale === "fr" ? cadFr(o.priceCad) : cad(o.priceCad)}</p>
+                    <p className="max-w-[180px] text-[11px] leading-tight text-navy/45">{m.results.cadNote}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setLeaving(o)}
+                    className="inline-flex items-center gap-2 rounded-full bg-sky px-4 py-3 text-sm font-bold text-white shadow-lift"
+                  >
+                    {m.results.bookLive}
+                    <ExternalLink className="h-4 w-4" />
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
-      <ul className="mt-6 space-y-3">
-        {offers.map((o, i) => (
+      <h2 className="mt-10 text-xl font-extrabold text-navy">{m.results.partnersTitle}</h2>
+      <p className="mt-2 rounded-2xl bg-sky-50 px-4 py-3 text-sm text-navy/75">{m.partners.note}</p>
+
+      <ul className="mt-4 space-y-3">
+        {partners.map((o) => (
           <li key={o.id} className="flex flex-wrap items-center justify-between gap-4 rounded-card bg-white p-5 shadow-card ring-1 ring-navy/5">
             <div>
               <div className="flex items-center gap-2">
@@ -107,29 +189,17 @@ function ResultsInner() {
                 <span className="rounded-full bg-sand px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-navy/60">
                   {locale === "fr" ? "Partenaire" : "Partner"}
                 </span>
-                {i === 0 && (
-                  <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-bold uppercase text-sky-800">
-                    {locale === "fr" ? "Prix mis en avant" : "Highlighted"}
-                  </span>
-                )}
               </div>
               <p className="text-sm text-navy/55">{locale === "fr" ? o.taglineFr : o.tagline}</p>
             </div>
-            <div className="flex items-center gap-4">
-              <div className="text-right">
-                <p className="text-xs font-semibold text-navy/45">{m.results.advertised}</p>
-                <p className="text-2xl font-black text-navy">{locale === "fr" ? cadFr(o.priceCad) : cad(o.priceCad)}</p>
-                <p className="max-w-[180px] text-[11px] leading-tight text-navy/45">{m.results.cadNote}</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setLeaving(o)}
-                className="inline-flex items-center gap-2 rounded-full bg-sky px-4 py-3 text-sm font-bold text-white shadow-lift"
-              >
-                {o.partner}
-                <ExternalLink className="h-4 w-4" />
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() => setLeaving(o)}
+              className="inline-flex items-center gap-2 rounded-full bg-navy px-4 py-3 text-sm font-bold text-white"
+            >
+              {m.results.seeLive}
+              <ExternalLink className="h-4 w-4" />
+            </button>
           </li>
         ))}
       </ul>
@@ -145,7 +215,10 @@ function ResultsInner() {
                 className="rounded-full bg-sky px-4 py-2.5 text-sm font-bold text-white"
                 onClick={() => go(leaving)}
               >
-                {m.results.continue.replace("{partner}", leaving.partner)}
+                {m.results.continue.replace(
+                  "{partner}",
+                  "partner" in leaving ? leaving.partner : leaving.airlineName || leaving.title
+                )}
               </button>
               <button
                 type="button"

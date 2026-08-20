@@ -20,6 +20,14 @@ Legal pages are a compliance-oriented template. Have a Canadian lawyer review th
 
 Next.js 15 · React 19 · Tailwind CSS · TypeScript
 
+## Live fares
+
+AIRSTAY does **not** scrape Kayak, Expedia, or Booking.com. That would break their terms and produce stale prices.
+
+Flight results pull official Travelpayouts / Aviasales fare data (CAD) through `/api/search`, then send the traveller to book with your affiliate marker `564250`.
+
+Optional: copy `.env.example` to `.env.local` and set `TRAVELPAYOUTS_TOKEN` from [Travelpayouts → Profile → API token](https://www.travelpayouts.com/programs/100/tools/api).
+
 ## Develop
 
 ```bash
