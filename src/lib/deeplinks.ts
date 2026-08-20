@@ -9,6 +9,7 @@ export type SearchQuery = {
   returnDate?: string;
   adults?: number;
   children?: number;
+  childAges?: number[];
   rooms?: number;
   cabin?: "economy" | "premium" | "business" | "first";
   trip?: "roundtrip" | "oneway";
@@ -40,9 +41,24 @@ function addParams(url: string) {
   return url.includes("?") ? `${url}&${UTM}` : `${url}?${UTM}`;
 }
 
+function kayakPeople(adults: number, ages: number[]) {
+  const adultPart = `${adults}adults`;
+  if (!ages.length) return adultPart;
+  if (ages.length === 1) return `${adultPart}/1child-${ages[0]}`;
+  return `${adultPart}/${ages.length}children-${ages.join("-")}`;
+}
+
+function expediaAges(ages: number[]) {
+  return ages.length ? `,childages:${ages.join(",")}` : "";
+}
+
 export function buildPartnerOffers(q: SearchQuery): PartnerOffer[] {
   const adults = q.adults ?? 1;
   const children = q.children ?? 0;
+  const childAges = (q.childAges && q.childAges.length ? q.childAges : Array.from({ length: children }, () => 8)).slice(
+    0,
+    children
+  );
   const rooms = q.rooms ?? 1;
   const depart = q.depart || defaultDepart();
   const ret = q.returnDate || defaultReturn();
@@ -53,18 +69,19 @@ export function buildPartnerOffers(q: SearchQuery): PartnerOffer[] {
 
   if (q.kind === "flights") {
     const base = 420 + (seed % 380);
+    const people = kayakPeople(adults, childAges);
     const kayak =
       q.trip === "oneway"
-        ? `https://www.kayak.ca/flights/${from}-${to}/${depart}`
-        : `https://www.kayak.ca/flights/${from}-${to}/${depart}/${ret}`;
+        ? `https://www.kayak.ca/flights/${from}-${to}/${depart}/${people}`
+        : `https://www.kayak.ca/flights/${from}-${to}/${depart}/${ret}/${people}`;
     const sky =
       q.trip === "oneway"
         ? `https://www.skyscanner.ca/transport/flights/${from.toLowerCase()}/${to.toLowerCase()}/${yymmdd(depart)}/`
         : `https://www.skyscanner.ca/transport/flights/${from.toLowerCase()}/${to.toLowerCase()}/${yymmdd(depart)}/${yymmdd(ret)}/`;
     const expedia =
       q.trip === "oneway"
-        ? `https://www.expedia.ca/Flights-Search?trip=oneway&leg1=from:${from},to:${to},departure:${mdY(depart)}TANYT&passengers=adults:${adults},children:${children}&mode=search`
-        : `https://www.expedia.ca/Flights-Search?trip=roundtrip&leg1=from:${from},to:${to},departure:${mdY(depart)}TANYT&leg2=from:${to},to:${from},departure:${mdY(ret)}TANYT&passengers=adults:${adults},children:${children}&mode=search`;
+        ? `https://www.expedia.ca/Flights-Search?trip=oneway&leg1=from:${from},to:${to},departure:${mdY(depart)}TANYT&passengers=adults:${adults},children:${children}${expediaAges(childAges)}&mode=search`
+        : `https://www.expedia.ca/Flights-Search?trip=roundtrip&leg1=from:${from},to:${to},departure:${mdY(depart)}TANYT&leg2=from:${to},to:${from},departure:${mdY(ret)}TANYT&passengers=adults:${adults},children:${children}${expediaAges(childAges)}&mode=search`;
     const google = `https://www.google.com/travel/flights?hl=en-CA&curr=CAD&q=Flights%20to%20${to}%20from%20${from}%20on%20${depart}${q.trip === "oneway" ? "" : `%20through%20${ret}`}`;
     const ac = `https://www.aircanada.com/ca/en/aco/home.html#/aco/flights?org0=${from}&dest0=${to}&departureDate0=${depart}${q.trip === "oneway" ? "" : `&org1=${to}&dest1=${from}&departureDate1=${ret}`}&adt=${adults}`;
     const wj = `https://www.westjet.com/en-ca`;
@@ -81,10 +98,11 @@ export function buildPartnerOffers(q: SearchQuery): PartnerOffer[] {
 
   if (q.kind === "stays") {
     const night = 140 + (seed % 220);
-    const booking = `https://www.booking.com/searchresults.html?ss=${city}&checkin=${depart}&checkout=${ret}&group_adults=${adults}&no_rooms=${rooms}&selected_currency=CAD`;
+    const bookingAges = childAges.map((age) => `&age=${age}`).join("");
+    const booking = `https://www.booking.com/searchresults.html?ss=${city}&checkin=${depart}&checkout=${ret}&group_adults=${adults}&group_children=${children}${bookingAges}&no_rooms=${rooms}&selected_currency=CAD`;
     const expedia = `https://www.expedia.ca/Hotel-Search?destination=${city}&startDate=${depart}&endDate=${ret}&rooms=${rooms}&adults=${adults}`;
     const hotels = `https://www.hotels.com/Hotel-Search?destination=${city}&startDate=${depart}&endDate=${ret}&d1=${depart}&d2=${ret}&adults=${adults}`;
-    const airbnb = `https://www.airbnb.ca/s/${city}/homes?checkin=${depart}&checkout=${ret}&adults=${adults}`;
+    const airbnb = `https://www.airbnb.ca/s/${city}/homes?checkin=${depart}&checkout=${ret}&adults=${adults}&children=${children}`;
     const kayak = `https://www.kayak.ca/hotels/${city}/${depart}/${ret}/${adults}adults`;
     return [
       offer("booking", "Booking.com", "Free cancellation options", "Options d'annulation gratuite", night, booking),
@@ -182,6 +200,7 @@ export function queryToParams(q: SearchQuery) {
   if (q.returnDate) p.set("return", q.returnDate);
   if (q.adults) p.set("adults", String(q.adults));
   if (q.children) p.set("children", String(q.children));
+  if (q.childAges?.length) p.set("childAges", q.childAges.join(","));
   if (q.rooms) p.set("rooms", String(q.rooms));
   if (q.cabin) p.set("cabin", q.cabin);
   if (q.trip) p.set("trip", q.trip);
@@ -199,6 +218,10 @@ export function paramsToQuery(sp: URLSearchParams): SearchQuery {
     returnDate: sp.get("return") || defaultReturn(),
     adults: Number(sp.get("adults") || 1),
     children: Number(sp.get("children") || 0),
+    childAges: (sp.get("childAges") || "")
+      .split(",")
+      .map((n) => Number(n))
+      .filter((n) => Number.isFinite(n) && n >= 0 && n <= 17),
     rooms: Number(sp.get("rooms") || 1),
     cabin: (sp.get("cabin") as SearchQuery["cabin"]) || "economy",
     trip: (sp.get("trip") as SearchQuery["trip"]) || "roundtrip",

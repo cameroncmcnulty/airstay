@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { ShieldCheck, MapPin, BadgeDollarSign, Link2 } from "lucide-react";
 import { SearchWidget } from "@/components/SearchWidget";
 import { CategoryBubbles } from "@/components/CategoryBubbles";
@@ -8,12 +9,13 @@ import { DealGrid } from "@/components/DealCard";
 import { useApp } from "@/context/AppContext";
 import { POPULAR_DESTINATIONS } from "@/lib/airports";
 import { DEST_PHOTOS } from "@/lib/deals";
-import { defaultDepart, defaultReturn, queryToParams } from "@/lib/deeplinks";
+import { defaultDepart, defaultReturn, queryToParams, type SearchKind } from "@/lib/deeplinks";
 
 const PARTNERS = ["Kayak", "Expedia", "Booking.com", "Airbnb", "Skyscanner", "Air Canada", "WestJet", "Sunwing"];
 
 export default function HomePage() {
   const { m, locale } = useApp();
+  const [kind, setKind] = useState<SearchKind>("flights");
   const why = [
     { icon: MapPin, t: m.why.c1t, d: m.why.c1d },
     { icon: Link2, t: m.why.c2t, d: m.why.c2d },
@@ -38,14 +40,16 @@ export default function HomePage() {
           </p>
           <h1 className="mt-4 max-w-3xl text-3xl font-black leading-tight text-white md:text-5xl">{m.hero.title}</h1>
           <p className="mt-4 max-w-2xl text-base text-white/80 md:text-lg">{m.hero.subtitle}</p>
+          <div className="mt-10">
+            <CategoryBubbles selected={kind} onSelect={setKind} light />
+          </div>
           <div className="mt-8">
-            <SearchWidget />
+            <SearchWidget kind={kind} hideTabs />
           </div>
         </div>
       </section>
 
       <div className="space-y-20 py-16">
-        <CategoryBubbles />
         <DealGrid limit={4} />
 
         <section className="mx-auto max-w-6xl px-4">

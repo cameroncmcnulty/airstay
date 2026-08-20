@@ -73,7 +73,17 @@ function ResultsInner() {
           <p className="mt-1 text-sm text-navy/60">
             {q.depart}
             {q.returnDate ? ` – ${q.returnDate}` : ""} · {q.adults} {m.search.adults}
-            {q.children ? ` · ${q.children} ${m.search.children}` : ""}
+            {q.children
+              ? ` · ${q.children} ${m.search.children}${
+                  q.childAges?.length
+                    ? ` (${q.childAges
+                        .map((n) =>
+                          n === 0 ? m.search.underOne : n === 1 ? m.search.yearOld : m.search.yearsOld.replace("{n}", String(n))
+                        )
+                        .join(", ")})`
+                    : ""
+                }`
+              : ""}
           </p>
         </div>
         <button

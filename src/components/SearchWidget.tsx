@@ -25,10 +25,22 @@ const TABS: { id: SearchKind; icon: typeof Plane; labelKey: "flights" | "stays" 
   { id: "packages", icon: Sparkles, labelKey: "packages" },
 ];
 
-export function SearchWidget({ initialKind = "flights" }: { initialKind?: SearchKind }) {
+export function SearchWidget({
+  initialKind = "flights",
+  kind: kindProp,
+  hideTabs = false,
+}: {
+  initialKind?: SearchKind;
+  kind?: SearchKind;
+  hideTabs?: boolean;
+}) {
   const { m, locale } = useApp();
   const router = useRouter();
-  const [kind, setKind] = useState<SearchKind>(initialKind);
+  const [kindState, setKindState] = useState<SearchKind>(initialKind);
+  const kind = kindProp ?? kindState;
+  const setKind = (next: SearchKind) => {
+    if (!kindProp) setKindState(next);
+  };
   const [from, setFrom] = useState("");
   const [fromCode, setFromCode] = useState("");
   const [to, setTo] = useState("");
@@ -38,6 +50,7 @@ export function SearchWidget({ initialKind = "flights" }: { initialKind?: Search
   const [trip, setTrip] = useState<"roundtrip" | "oneway">("roundtrip");
   const [adults, setAdults] = useState(1);
   const [children, setChildren] = useState(0);
+  const [childAges, setChildAges] = useState<Array<number | "">>([]);
   const [rooms, setRooms] = useState(1);
   const [cabin, setCabin] = useState<SearchQuery["cabin"]>("economy");
   const [fromOpen, setFromOpen] = useState(false);
@@ -83,6 +96,11 @@ export function SearchWidget({ initialKind = "flights" }: { initialKind?: Search
       setError(m.results.noOrigin);
       return;
     }
+    const ages = childAges.slice(0, children);
+    if (kind !== "cars" && children > 0 && ages.some((age) => age === "")) {
+      setError(m.search.errorChildAges);
+      return;
+    }
     setError("");
     const q: SearchQuery = {
       kind,
@@ -93,6 +111,7 @@ export function SearchWidget({ initialKind = "flights" }: { initialKind?: Search
       returnDate: trip === "oneway" && kind === "flights" ? undefined : ret,
       adults,
       children,
+      childAges: ages.filter((age): age is number => age !== ""),
       rooms,
       cabin,
       trip: kind === "flights" ? trip : "roundtrip",
@@ -102,6 +121,7 @@ export function SearchWidget({ initialKind = "flights" }: { initialKind?: Search
 
   return (
     <div className="rounded-[1.8rem] bg-white p-3 shadow-card sm:p-5">
+      {!hideTabs && (
       <div className="flex flex-wrap gap-2" role="tablist" aria-label={m.bubbles.title}>
         {TABS.map((tab) => {
           const Icon = tab.icon;
@@ -132,8 +152,9 @@ export function SearchWidget({ initialKind = "flights" }: { initialKind?: Search
           );
         })}
       </div>
+      )}
 
-      <form onSubmit={submit} className="mt-5 space-y-4">
+      <form onSubmit={submit} className={`${hideTabs ? "space-y-4" : "mt-5 space-y-4"}`}>
         {kind === "flights" && (
           <div className="flex flex-wrap gap-2">
             {(["roundtrip", "oneway"] as const).map((opt) => (
@@ -230,7 +251,7 @@ export function SearchWidget({ initialKind = "flights" }: { initialKind?: Search
         <div className="flex flex-wrap items-end gap-3">
           <Stepper label={kind === "stays" ? m.search.guests : m.search.adults} value={adults} min={1} onChange={setAdults} />
           {kind !== "cars" && (
-            <Stepper label={m.search.children} value={children} min={0} onChange={setChildren} />
+            <Stepper label={m.search.children} value={children} min={0} onChange={setChildrenCount} />
           )}
           {kind === "stays" && <Stepper label={m.search.rooms} value={rooms} min={1} onChange={setRooms} />}
           {kind === "flights" && (
@@ -256,6 +277,35 @@ export function SearchWidget({ initialKind = "flights" }: { initialKind?: Search
             {m.search.search}
           </button>
         </div>
+        {kind !== "cars" && children > 0 && (
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wide text-navy/50">{m.search.childAgesHint}</p>
+            <div className="mt-2 grid gap-2 sm:grid-cols-2 md:grid-cols-4">
+              {childAges.map((age, i) => (
+                <label key={i} className="text-xs font-bold uppercase tracking-wide text-navy/50">
+                  {m.search.childAge.replace("{n}", String(i + 1))}
+                  <select
+                    className="field mt-1"
+                    value={age}
+                    required
+                    onChange={(e) => {
+                      const next = [...childAges];
+                      next[i] = e.target.value === "" ? "" : Number(e.target.value);
+                      setChildAges(next);
+                    }}
+                  >
+                    <option value="">{m.search.childAgePh}</option>
+                    {Array.from({ length: 18 }, (_, n) => (
+                      <option key={n} value={n}>
+                        {n === 0 ? m.search.underOne : n === 1 ? m.search.yearOld : m.search.yearsOld.replace("{n}", String(n))}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
         {(kind === "flights" || kind === "packages") && (
           <p className="text-xs font-medium text-navy/50">{m.search.canadaOnly}</p>
         )}
@@ -263,6 +313,15 @@ export function SearchWidget({ initialKind = "flights" }: { initialKind?: Search
       </form>
     </div>
   );
+
+  function setChildrenCount(n: number) {
+    setChildren(n);
+    setChildAges((prev) => {
+      const next = prev.slice(0, n);
+      while (next.length < n) next.push("");
+      return next;
+    });
+  }
 
   function pickFrom(a: Airport) {
     setFrom(`${locale === "fr" ? a.cityFr : a.city} (${a.code})`);
