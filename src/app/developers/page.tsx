@@ -4,8 +4,8 @@ import { useApp } from "@/context/AppContext";
 
 const ENDPOINTS = [
   { method: "GET", path: "/api/v1/health", desc: "Provider status and endpoint list" },
-  { method: "POST", path: "/api/v1/search/flights", desc: "Live CAD fares (Travelpayouts)" },
-  { method: "POST", path: "/api/v1/search/hotels", desc: "All-inclusive inventory + LiteAPI if configured" },
+  { method: "POST", path: "/api/v1/search/flights", desc: "Live CAD fares (Duffel, Travelpayouts fallback)" },
+  { method: "POST", path: "/api/v1/search/hotels", desc: "Live stay rates via Duffel Stays" },
   { method: "POST", path: "/api/v1/search/cars", desc: "Normalized car-rental supplier search" },
   { method: "POST", path: "/api/v1/search/packages", desc: "Dynamic flight + resort packages" },
   { method: "POST", path: "/api/v1/bookings", desc: "Create a booking quote from an offer" },
@@ -46,8 +46,9 @@ export default function DevelopersPage() {
         ))}
       </ul>
       <p className="mt-8 text-sm text-navy/60">
-        Optional live hotel rates: set <code>LITEAPI_KEY</code> or Amadeus keys in the Vercel environment. AIRSTAY is a
-        connectivity layer, not a TICO travel agency — bookings complete on the supplier site.
+        Live stays and bookable fares use Duffel. Set <code>DUFFEL_ACCESS_TOKEN</code> (test token from the Duffel
+        dashboard). Flight tickets still complete on the airline/Aviasales checkout with your AIRSTAY dates. AIRSTAY is
+        a connectivity layer, not a TICO travel agency.
       </p>
     </article>
   );

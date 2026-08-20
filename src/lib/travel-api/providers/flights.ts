@@ -18,7 +18,7 @@ export async function searchFlights(req: SearchRequest) {
   const offers: NormalizedOffer[] = live.map((o) => ({
     id: o.id,
     type: "flight",
-    supplier: "travelpayouts",
+    supplier: o.source,
     title: o.airlineName || o.title,
     subtitle: [o.airline && o.flightNumber ? `${o.airline}${o.flightNumber}` : null, o.stops === 0 ? "Non-stop" : o.stops != null ? `${o.stops} stop(s)` : null]
       .filter(Boolean)
@@ -35,5 +35,6 @@ export async function searchFlights(req: SearchRequest) {
       durationMin: o.durationMin,
     },
   }));
-  return { offers, providers: offers.length ? ["travelpayouts"] : [] };
+  const providers = [...new Set(live.map((o) => o.source))];
+  return { offers, providers };
 }

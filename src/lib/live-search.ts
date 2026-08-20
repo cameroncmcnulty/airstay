@@ -1,9 +1,10 @@
 import type { SearchQuery } from "@/lib/deeplinks";
 import { searchCodes } from "@/lib/iata-cities";
+import { duffelConfigured, searchFlights as searchDuffelFlights } from "@/lib/duffel";
 
 export type LiveOffer = {
   id: string;
-  source: "travelpayouts";
+  source: "travelpayouts" | "duffel";
   kind: SearchQuery["kind"];
   title: string;
   airline?: string;
@@ -46,9 +47,17 @@ function aviaStamp(iso?: string) {
   return `${d}${m}`;
 }
 
-function bookingUrl(origin: string, dest: string, depart?: string, ret?: string) {
-  const path = `${origin}${aviaStamp(depart)}${dest}${aviaStamp(ret)}1`;
+function bookingUrl(origin: string, dest: string, depart?: string, ret?: string, adults = 1) {
+  const path = `${origin}${aviaStamp(depart)}${dest}${aviaStamp(ret)}${Math.max(1, adults)}`;
   return `https://www.aviasales.com/search/${path}?marker=${MARKER}&currency=cad&locale=en`;
+}
+
+export function aviasalesUrl(q: Pick<SearchQuery, "from" | "to" | "depart" | "returnDate" | "adults" | "trip">) {
+  if (!q.from || !q.to || !q.depart) return undefined;
+  const origin = searchCodes(q.from)[0];
+  const dest = searchCodes(q.to)[0];
+  const ret = q.trip === "oneway" ? undefined : q.returnDate;
+  return bookingUrl(origin, dest, q.depart, ret, q.adults || 1);
 }
 
 async function tp(path: string) {
@@ -67,19 +76,52 @@ export async function searchLive(q: SearchQuery): Promise<LiveOffer[]> {
   const dests = searchCodes(q.to);
   const names = await airlines();
   const found: LiveOffer[] = [];
+  const book = aviasalesUrl(q) || "";
 
-  for (const origin of origins) {
-    for (const dest of dests) {
-      const batch = await Promise.allSettled([
-        fetchWeek(origin, dest, q, names),
-        fetchCheap(origin, dest, q, names),
-        fetchCalendar(origin, dest, q, names),
-      ]);
-      for (const item of batch) {
-        if (item.status === "fulfilled") found.push(...item.value);
+  const duffelTask = duffelConfigured() && q.from && q.to && q.depart
+    ? searchDuffelFlights(q)
+        .then((rows) =>
+          rows.map(
+            (f): LiveOffer => ({
+              id: f.offerId,
+              source: "duffel",
+              kind: "flights",
+              title: f.airlineName || "Live fare",
+              airline: f.airline,
+              airlineName: f.airlineName,
+              flightNumber: f.flightNumber,
+              priceCad: f.priceCad,
+              stops: f.stops,
+              departAt: f.departAt,
+              returnAt: f.returnAt,
+              durationMin: f.durationMin,
+              url: book,
+              live: true,
+            })
+          )
+        )
+        .catch(() => [] as LiveOffer[])
+    : Promise.resolve([] as LiveOffer[]);
+
+  const tpTask = (async () => {
+    const rows: LiveOffer[] = [];
+    for (const origin of origins) {
+      for (const dest of dests) {
+        const batch = await Promise.allSettled([
+          fetchWeek(origin, dest, q, names),
+          fetchCheap(origin, dest, q, names),
+          fetchCalendar(origin, dest, q, names),
+        ]);
+        for (const item of batch) {
+          if (item.status === "fulfilled") rows.push(...item.value);
+        }
       }
     }
-  }
+    return rows;
+  })();
+
+  const [duffelRows, tpRows] = await Promise.all([duffelTask, tpTask]);
+  found.push(...duffelRows, ...tpRows);
 
   const seen = new Set<string>();
   return found

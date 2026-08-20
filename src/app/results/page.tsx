@@ -115,8 +115,20 @@ function ResultsInner() {
       });
       refreshUser();
     }
+    if (offer.url.startsWith("/")) {
+      window.location.href = offer.url;
+      return;
+    }
     window.open(offer.url, "_blank", "noopener,noreferrer");
     setLeaving(null);
+  }
+
+  function openOffer(offer: Leaving) {
+    if (offer.url.startsWith("/")) {
+      window.location.href = offer.url;
+      return;
+    }
+    setLeaving(offer);
   }
 
   function stopsLabel(n?: number) {
@@ -217,7 +229,7 @@ function ResultsInner() {
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-navy/80 via-navy/20 to-transparent" />
                     <span className="absolute left-3 top-3 rounded-full bg-sky px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-white">
-                      {m.results.allInclusive}
+                      {/all inclusive/i.test(p.board) ? m.results.allInclusive : p.board || m.nav.stays}
                     </span>
                     <div className="absolute bottom-3 left-3 right-3 text-white">
                       <div className="flex items-center gap-1 text-amber-300">
@@ -235,7 +247,9 @@ function ResultsInner() {
                   <div className="p-5">
                     <p className="text-sm leading-relaxed text-navy/70">{locale === "fr" ? p.blurbFr : p.blurb}</p>
                     <div className="mt-3 flex flex-wrap gap-2">
-                      <Amenity icon={UtensilsCrossed} label={m.results.allInclusive} />
+                      {/all inclusive|board|breakfast/i.test(p.board) && (
+                        <Amenity icon={UtensilsCrossed} label={/all inclusive/i.test(p.board) ? m.results.allInclusive : p.board} />
+                      )}
                       {p.amenities.includes("beach") && <Amenity icon={Waves} label={locale === "fr" ? "Plage" : "Beach"} />}
                       {p.amenities.includes("pools") && <Amenity icon={Hotel} label={locale === "fr" ? "Piscines" : "Pools"} />}
                       {p.amenities.includes("spa") && <Amenity icon={Sparkles} label="Spa" />}
@@ -248,13 +262,19 @@ function ResultsInner() {
                         {p.stayCad ? (
                           <>
                             <p className="text-xs font-semibold text-navy/45">
-                              {m.results.nights.replace("{n}", String(p.nights))} · {m.results.allInclusive}
+                              {m.results.nights.replace("{n}", String(p.nights))}
+                              {p.board ? ` · ${p.board}` : ""}
                             </p>
                             <p className="text-2xl font-black text-navy">{locale === "fr" ? cadFr(p.stayCad) : cad(p.stayCad)}</p>
                             {p.flightFromCad ? (
                               <p className="text-xs font-semibold text-navy/50">
                                 {m.results.flightsFrom} {locale === "fr" ? cadFr(p.flightFromCad) : cad(p.flightFromCad)}
                                 {m.results.perPerson}
+                              </p>
+                            ) : null}
+                            {p.packageCad ? (
+                              <p className="text-xs font-bold text-sky-800">
+                                {m.results.packageTotal}: {locale === "fr" ? cadFr(p.packageCad) : cad(p.packageCad)}
                               </p>
                             ) : null}
                           </>
@@ -271,38 +291,26 @@ function ResultsInner() {
                         )}
                       </div>
                       <div className="flex flex-wrap justify-end gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setLeaving({ ...p, url: p.googleUrl })}
-                          className="inline-flex items-center gap-2 rounded-full bg-sky px-4 py-2.5 text-sm font-bold text-white shadow-lift"
-                        >
-                          {m.results.liveStay}
-                          <ExternalLink className="h-4 w-4" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setLeaving(p)}
-                          className="rounded-full border border-navy/15 px-4 py-2.5 text-sm font-bold text-navy"
-                        >
-                          {m.results.viewPackage}
-                        </button>
+                        {p.stayResultId && (
+                          <button
+                            type="button"
+                            onClick={() => openOffer(p)}
+                            className="inline-flex items-center gap-2 rounded-full bg-sky px-4 py-2.5 text-sm font-bold text-white shadow-lift"
+                          >
+                            {m.results.bookStay}
+                          </button>
+                        )}
+                        {p.flightsUrl && (
+                          <button
+                            type="button"
+                            onClick={() => setLeaving({ ...p, url: p.flightsUrl as string })}
+                            className="inline-flex items-center gap-2 rounded-full border border-navy/15 px-4 py-2.5 text-sm font-bold text-navy"
+                          >
+                            {m.results.liveFlights}
+                            <ExternalLink className="h-4 w-4" />
+                          </button>
+                        )}
                       </div>
-                    </div>
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      <button type="button" className="text-xs font-bold text-sky-800 underline" onClick={() => setLeaving({ ...p, url: p.kayakUrl })}>
-                        {m.results.kayak}
-                      </button>
-                      <button type="button" className="text-xs font-bold text-sky-800 underline" onClick={() => setLeaving({ ...p, url: p.bookingUrl })}>
-                        {m.results.booking}
-                      </button>
-                      <button type="button" className="text-xs font-bold text-sky-800 underline" onClick={() => setLeaving({ ...p, url: p.sunwingUrl })}>
-                        {m.results.sunwing}
-                      </button>
-                      {p.flightsUrl && (
-                        <button type="button" className="text-xs font-bold text-sky-800 underline" onClick={() => setLeaving({ ...p, url: p.flightsUrl as string })}>
-                          {m.results.liveFlights}
-                        </button>
-                      )}
                     </div>
                   </div>
                 </article>

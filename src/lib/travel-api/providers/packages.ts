@@ -23,22 +23,26 @@ export async function searchPackages(req: SearchRequest) {
     },
     []
   );
-  if (packages.length) providers.push("airstay-inventory");
+  if (packages.some((p) => p.stayResultId)) providers.push("duffel");
+  else if (packages.length) providers.push("airstay-inventory");
 
   const offers: NormalizedOffer[] = packages.map((p) => ({
     id: `pkg-${p.id}`,
     type: "package",
-    supplier: "airstay-packages",
+    supplier: p.stayResultId ? "duffel" : "airstay-packages",
+    supplierOfferId: p.stayResultId,
     title: p.name,
-    subtitle: `${p.stars}★ · ${p.area} · ${p.nights} nights · all-inclusive`,
+    subtitle: `${p.stars}★ · ${p.area} · ${p.nights} nights · ${p.board}`,
     image: p.image,
     imageAlt: p.imageAlt,
     price:
-      cheapest != null
-        ? { amount: cheapest, currency: "CAD", per: "person" }
-        : undefined,
-    deepLink: p.googleUrl || p.url,
-    bookable: true,
+      p.packageCad != null
+        ? { amount: p.packageCad, currency: "CAD", per: "package" }
+        : cheapest != null
+          ? { amount: cheapest, currency: "CAD", per: "person" }
+          : undefined,
+    deepLink: p.url,
+    bookable: Boolean(p.stayResultId),
     details: {
       nights: p.nights,
       vibe: p.vibe,
@@ -48,11 +52,10 @@ export async function searchPackages(req: SearchRequest) {
       blurb: p.blurb,
       blurbFr: p.blurbFr,
       stars: p.stars,
-      bookingUrl: p.bookingUrl,
-      kayakUrl: p.kayakUrl,
-      sunwingUrl: p.sunwingUrl,
+      stayCad: p.stayCad,
       flightsUrl: p.flightsUrl,
-      flightFromCad: cheapest,
+      flightFromCad: p.flightFromCad ?? cheapest,
+      stayResultId: p.stayResultId,
     },
   }));
 

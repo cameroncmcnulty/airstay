@@ -1,6 +1,6 @@
 # AIRSTAY
 
-Canada-outbound travel metasearch. Compare **Flights**, **Stays**, **Cars** and **Packages** from Canadian airports, then book on partner sites (deeplink / affiliate model).
+Canada-outbound travel metasearch. Compare **Flights**, **Stays**, **Cars** and **Packages** from Canadian airports. Stays book on AIRSTAY through Duffel with your search details; flights complete on the airline/Aviasales checkout.
 
 ## Product
 
@@ -35,15 +35,20 @@ ReservationHub-style unified API under `/api/v1`:
 
 Docs: `/developers`
 
-Live flights use Travelpayouts. Hotels use AIRSTAY inventory plus LiteAPI/Amadeus when you add keys.
+Live stays and bookable flight prices use Duffel. Travelpayouts supplies the Aviasales checkout link so flights keep your AIRSTAY dates.
 
 ## Live fares
 
 AIRSTAY does **not** scrape Kayak, Expedia, or Booking.com. That would break their terms and produce stale prices.
 
-Flight results pull official Travelpayouts / Aviasales fare data (CAD) through `/api/search`, then send the traveller to book with your affiliate marker `564250`.
+Package and stay prices come from Duffel Stays (`POST /stays/search`). Book on `/book` using Duffel quote + booking so the dates, guests and hotel from AIRSTAY are the ones reserved.
 
-Optional: copy `.env.example` to `.env.local` and set `TRAVELPAYOUTS_TOKEN` from [Travelpayouts → Profile → API token](https://www.travelpayouts.com/programs/100/tools/api).
+Flight results use Duffel offer requests when a token is set, with Travelpayouts / Aviasales as the ticket checkout (`marker=564250`).
+
+Copy `.env.example` to `.env.local` and set:
+
+- `DUFFEL_ACCESS_TOKEN` — test token from [Duffel Dashboard → Developers → Access tokens](https://app.duffel.com). Request Duffel Stays access first.
+- `TRAVELPAYOUTS_TOKEN` — optional, from [Travelpayouts → Profile → API token](https://www.travelpayouts.com/programs/100/tools/api).
 
 ## Develop
 

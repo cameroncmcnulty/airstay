@@ -19,9 +19,8 @@ export async function GET() {
         "POST /api/v1/bookings/{id}/cancel",
       ],
       providers: {
+        duffel: Boolean(process.env.DUFFEL_ACCESS_TOKEN),
         travelpayouts: true,
-        liteapi: Boolean(process.env.LITEAPI_KEY),
-        amadeus: Boolean(process.env.AMADEUS_CLIENT_ID && process.env.AMADEUS_CLIENT_SECRET),
         airstayInventory: true,
       },
     },

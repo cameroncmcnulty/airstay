@@ -1,7 +1,7 @@
 import type { NormalizedOffer, SearchRequest } from "../types";
 import { matchResorts, nightsBetween } from "@/data/resorts";
-import { googleHotelsUrl } from "@/lib/packages";
-import { searchLiteRates } from "@/lib/liteapi";
+import { duffelConfigured, searchStays } from "@/lib/duffel";
+import { queryToParams } from "@/lib/deeplinks";
 
 export async function searchHotels(req: SearchRequest) {
   const providers: string[] = [];
@@ -14,41 +14,41 @@ export async function searchHotels(req: SearchRequest) {
     depart: req.departDate,
     returnDate: req.returnDate,
     adults: req.adults,
+    children: req.children,
+    childAges: req.childAges,
     rooms: req.rooms,
   };
 
-  const liteHotels = await searchLiteRates(
-    {
-      kind: "stays",
-      to: req.destination,
-      toCity: req.destinationName,
-      depart: req.departDate,
-      returnDate: req.returnDate,
-      adults: req.adults,
-      childAges: req.childAges,
-    },
-    { allInclusive: true, limit: 24 }
-  ).catch(() => []);
-  if (liteHotels.length) {
-    providers.push("liteapi");
-    for (const h of liteHotels) {
-      offers.push({
-        id: `lite-${h.hotelId}`,
-        type: "hotel",
-        supplier: "liteapi",
-        title: h.name,
-        subtitle: `${h.stars || ""}★ · ${h.city} · ${h.boardName || "All Inclusive"}`,
-        image: h.image,
-        imageAlt: h.name,
-        price: { amount: h.stayCad, currency: "CAD", per: "package" },
-        deepLink: googleHotelsUrl(h.name, q),
-        bookable: true,
-        details: { hotelId: h.hotelId, roomName: h.roomName, rating: h.rating, refundable: h.refundable },
-      });
+  if (duffelConfigured()) {
+    const stays = await searchStays(q).catch(() => []);
+    if (stays.length) {
+      providers.push("duffel");
+      for (const h of stays) {
+        offers.push({
+          id: h.searchResultId,
+          type: "hotel",
+          supplier: "duffel",
+          supplierOfferId: h.searchResultId,
+          title: h.name,
+          subtitle: `${h.stars}★ · ${h.city} · ${h.board || "Stay"}`,
+          image: h.image,
+          imageAlt: h.name,
+          price: { amount: h.stayCad, currency: "CAD", per: "package" },
+          deepLink: `/book?${queryToParams(q)}&stayId=${encodeURIComponent(h.searchResultId)}&accId=${encodeURIComponent(h.accommodationId)}&hotel=${encodeURIComponent(h.name)}`,
+          bookable: true,
+          details: {
+            stayResultId: h.searchResultId,
+            accommodationId: h.accommodationId,
+            board: h.board,
+            reviewScore: h.reviewScore,
+          },
+        });
+      }
+      return { offers, providers };
     }
   }
 
-  const resorts = liteHotels.length ? [] : matchResorts({ to: req.destination, toCity: req.destinationName });
+  const resorts = matchResorts({ to: req.destination, toCity: req.destinationName });
   if (resorts.length) {
     providers.push("airstay-inventory");
     for (const r of resorts) {
@@ -60,8 +60,8 @@ export async function searchHotels(req: SearchRequest) {
         subtitle: `${r.stars}★ · ${r.area} · ${nights} nights · all-inclusive`,
         image: r.image,
         imageAlt: r.imageAlt,
-        deepLink: googleHotelsUrl(r.name, q),
-        bookable: true,
+        deepLink: `/results?${queryToParams(q)}`,
+        bookable: false,
         details: {
           stars: r.stars,
           board: r.board,

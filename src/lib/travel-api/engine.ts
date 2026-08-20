@@ -70,7 +70,9 @@ export function createBooking(input: {
     total: offer.price,
     confirmationUrl: offer.deepLink,
     notes:
-      "AIRSTAY is a comparison and connectivity layer, not a travel agency. This record holds your quote. The supplier completes the reservation on their site.",
+      offer.supplier === "duffel"
+        ? "Complete this stay on /book with the Duffel quote. Flights use the Aviasales checkout with the same AIRSTAY dates."
+        : "AIRSTAY is a comparison and connectivity layer, not a travel agency. This record holds your quote. The supplier completes the reservation on their site.",
   });
   return { success: true as const, data: booking };
 }
