@@ -1,6 +1,7 @@
 import type { SearchQuery } from "@/lib/deeplinks";
 import { matchResorts, nightsBetween, type Resort } from "@/data/resorts";
 import { searchLive, type LiveOffer } from "@/lib/live-search";
+import { searchLiteRates } from "@/lib/liteapi";
 
 export type PackageOffer = {
   id: string;
@@ -19,6 +20,7 @@ export type PackageOffer = {
   blurbFr: string;
   nights: number;
   flightFromCad?: number;
+  stayCad?: number;
   url: string;
   googleUrl: string;
   bookingUrl: string;
@@ -121,11 +123,40 @@ function flightsUrl(q: SearchQuery) {
 }
 
 export async function searchPackages(q: SearchQuery, flights?: LiveOffer[]): Promise<PackageOffer[]> {
-  const resorts = matchResorts(q);
-  if (!resorts.length) return [];
   const nights = nightsBetween(q.depart, q.returnDate);
   const liveFlights = flights ?? (q.from ? await searchLive({ ...q, kind: "flights" }) : []);
   const flightFrom = liveFlights[0]?.priceCad;
+  const liveHotels = await searchLiteRates(q, { allInclusive: true, limit: 24 }).catch(() => []);
+  if (liveHotels.length) {
+    return liveHotels.map((h) => ({
+      id: `lite-${h.hotelId}`,
+      kind: "packages" as const,
+      name: h.name,
+      area: h.address || h.city,
+      areaFr: h.address || h.city,
+      image: h.image || h.thumbnail || "https://images.unsplash.com/photo-1510097467424-192d713fd8b2?auto=format&fit=crop&w=1600&q=80",
+      imageAlt: h.name,
+      imageAltFr: h.name,
+      stars: Math.round(h.stars || 4),
+      vibe: h.adultsOnly ? ("adults" as const) : ("family" as const),
+      board: "all-inclusive" as const,
+      amenities: (h.adultsOnly ? ["meals", "beach", "pools", "adults"] : ["meals", "beach", "pools", "kids"]) as Resort["amenities"],
+      blurb: [h.roomName, h.boardName, h.refundable ? "Refundable" : null].filter(Boolean).join(" · "),
+      blurbFr: [h.roomName, h.boardName].filter(Boolean).join(" · "),
+      nights,
+      flightFromCad: flightFrom,
+      stayCad: h.stayCad,
+      url: googlePackageUrl(h.name, q),
+      googleUrl: googleHotelsUrl(h.name, q),
+      bookingUrl: `https://www.booking.com/searchresults.en-gb.html?ss=${encodeURIComponent(h.name)}&checkin=${q.depart || ""}&checkout=${q.returnDate || ""}&group_adults=${q.adults ?? 2}&selected_currency=CAD`,
+      kayakUrl: `https://www.kayak.com/hotels/${encodeURIComponent(h.city)},Mexico/${q.depart || ""}/${q.returnDate || ""}/${q.adults ?? 2}adults`,
+      sunwingUrl: "https://www.sunwing.ca/en/destinations/mexico/cancun",
+      flightsUrl: q.from && q.to && q.depart ? `https://www.kayak.com/flights/${q.from}-${q.to}/${q.depart}${q.returnDate ? `/${q.returnDate}` : ""}` : undefined,
+      live: true as const,
+    }));
+  }
+  const resorts = matchResorts(q);
+  if (!resorts.length) return [];
   return resorts.map((r) => ({
     id: r.id,
     kind: "packages",

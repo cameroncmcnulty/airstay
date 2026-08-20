@@ -245,7 +245,20 @@ function ResultsInner() {
                     </div>
                     <div className="mt-5 flex flex-wrap items-end justify-between gap-3">
                       <div>
-                        {p.flightFromCad ? (
+                        {p.stayCad ? (
+                          <>
+                            <p className="text-xs font-semibold text-navy/45">
+                              {m.results.nights.replace("{n}", String(p.nights))} · {m.results.allInclusive}
+                            </p>
+                            <p className="text-2xl font-black text-navy">{locale === "fr" ? cadFr(p.stayCad) : cad(p.stayCad)}</p>
+                            {p.flightFromCad ? (
+                              <p className="text-xs font-semibold text-navy/50">
+                                {m.results.flightsFrom} {locale === "fr" ? cadFr(p.flightFromCad) : cad(p.flightFromCad)}
+                                {m.results.perPerson}
+                              </p>
+                            ) : null}
+                          </>
+                        ) : p.flightFromCad ? (
                           <>
                             <p className="text-xs font-semibold text-navy/45">{m.results.flightsFrom}</p>
                             <p className="text-2xl font-black text-navy">
