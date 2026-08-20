@@ -51,11 +51,12 @@ export function DealCard({ deal }: { deal: Deal }) {
   );
 }
 
-export function DealGrid({ limit }: { limit?: number }) {
+export function DealGrid({ limit, heading = true }: { limit?: number; heading?: boolean }) {
   const { m } = useApp();
   const list = limit ? DEALS.slice(0, limit) : DEALS;
   return (
     <section className="mx-auto max-w-6xl px-4">
+      {heading && (
       <div className="flex items-end justify-between gap-4">
         <div>
           <h2 className="text-2xl font-extrabold text-navy md:text-3xl">{m.deals.title}</h2>
@@ -67,6 +68,7 @@ export function DealGrid({ limit }: { limit?: number }) {
           </a>
         )}
       </div>
+      )}
       <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
         {list.map((d) => (
           <DealCard key={d.id} deal={d} />

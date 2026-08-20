@@ -27,6 +27,17 @@ npm install
 npm run dev
 ```
 
+## Live
+
+- GitHub: https://github.com/cameroncmcnulty/airstay
+- Vercel (production): https://airstay-tread-bros.vercel.app
+- Vercel alias: https://airstay-eosin.vercel.app
+
+The Vercel project `tread-bros/airstay` is connected to the GitHub repo, so pushes to `main` redeploy.
+
 ## Deploy
 
-Push to GitHub and import the repo in Vercel (framework: Next.js).
+```bash
+npm run build
+npx vercel --prod --yes
+```

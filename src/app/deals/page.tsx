@@ -12,7 +12,7 @@ export default function DealsPage() {
         <h1 className="mt-2 text-3xl font-black text-navy md:text-4xl">{m.deals.title}</h1>
         <p className="mt-2 max-w-2xl text-navy/65">{m.deals.subtitle}</p>
       </div>
-      <DealGrid />
+      <DealGrid heading={false} />
     </div>
   );
 }
