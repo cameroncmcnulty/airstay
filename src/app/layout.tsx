@@ -48,11 +48,11 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/og.png?v=3",
+        url: "https://airstay.ca/og.jpg?v=4",
         width: 1200,
         height: 630,
         alt: "AIRSTAY — Canada's choice to compare flights, hotels and car rentals",
-        type: "image/png",
+        type: "image/jpeg",
       },
     ],
   },
@@ -60,10 +60,11 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: siteTitle,
     description: "Canada's choice to compare flights, hotels and car rentals. Prices in CAD.",
-    images: ["/og.png?v=3"],
+    images: ["https://airstay.ca/og.jpg?v=4"],
   },
   other: {
     "geo.region": "CA",
+    "og:image:secure_url": "https://airstay.ca/og.jpg?v=4",
   },
 };
 
@@ -71,6 +72,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en-CA">
       <head>
+        <link rel="image_src" href="https://airstay.ca/og.jpg?v=4" />
         <script
           data-cmp-ab="2"
           data-no-defer="1"

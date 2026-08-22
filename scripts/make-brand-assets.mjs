@@ -4,6 +4,8 @@ import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 
 const dir = join(dirname(fileURLToPath(import.meta.url)), "..", "public");
+const NAVY = "#071840";
+const SKY = [125, 186, 232];
 
 const suitcase = `
   <g transform="translate(30.7 8) scale(0.92)">
@@ -22,14 +24,50 @@ function squareIcon(stroke, background, radius = 0) {
   return Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">${bg}${suitcase.replaceAll("STROKE", stroke)}</svg>`);
 }
 
-const tagline = Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="120">
-  <text x="500" y="38" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="28" font-weight="600" fill="#071840">Canada's choice to compare flights, hotels and car rentals</text>
-  <text x="500" y="82" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="20" fill="#4381C7">airstay.ca · Priced in CAD</text>
-</svg>`);
+function dist(r, g, b, r2, g2, b2) {
+  const dr = r - r2;
+  const dg = g - g2;
+  const db = b - b2;
+  return Math.sqrt(dr * dr + dg * dg + db * db);
+}
 
-const card = Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="500">
-  <rect width="1080" height="500" rx="36" fill="#FFFFFF"/>
-</svg>`);
+async function recolorLogoForDark() {
+  const { data, info } = await sharp(join(dir, "logo.png")).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  const out = Buffer.from(data);
+  for (let i = 0; i < out.length; i += 4) {
+    const r = out[i];
+    const g = out[i + 1];
+    const b = out[i + 2];
+    const a = out[i + 3];
+    if (a < 8) {
+      out[i + 3] = 0;
+      continue;
+    }
+    const fromWhite = dist(r, g, b, 255, 255, 255);
+    if (fromWhite < 14) {
+      out[i + 3] = 0;
+      continue;
+    }
+    const brightness = (r + g + b) / 3;
+    const isStayBlue = b > 130 && g > 90 && r < 170 && b > r + 20 && brightness > 85;
+    const alpha = Math.min(a, Math.min(255, Math.round(fromWhite * 1.35)));
+    if (isStayBlue) {
+      out[i] = SKY[0];
+      out[i + 1] = SKY[1];
+      out[i + 2] = SKY[2];
+      out[i + 3] = alpha;
+    } else {
+      out[i] = 255;
+      out[i + 1] = 255;
+      out[i + 2] = 255;
+      out[i + 3] = alpha;
+    }
+  }
+  return sharp(out, { raw: { width: info.width, height: info.height, channels: 4 } })
+    .png()
+    .trim({ threshold: 8 })
+    .toBuffer();
+}
 
 const jobs = [
   { file: "favicon.png", svg: squareIcon("#071840"), size: 64 },
@@ -40,27 +78,49 @@ const jobs = [
 
 for (const job of jobs) {
   let img = sharp(job.svg, { density: 384 });
-  img = Array.isArray(job.size) ? img.resize(job.size[0], job.size[1]) : img.resize(job.size, job.size);
+  img = img.resize(job.size, job.size);
   if (job.flatten) img = img.flatten({ background: job.flatten });
   await img.png({ compressionLevel: 9 }).toFile(join(dir, job.file));
   console.log("wrote", job.file);
 }
 
-const logo = await sharp(join(dir, "logo.png")).resize({ width: 920, withoutEnlargement: true }).png().toBuffer();
-const logoMeta = await sharp(logo).metadata();
-const logoTop = 70 + Math.round((340 - (logoMeta.height || 190)) / 2);
-const logoLeft = Math.round((1200 - (logoMeta.width || 920)) / 2);
+const lightLogo = await recolorLogoForDark();
+await sharp(lightLogo).png({ compressionLevel: 9 }).toFile(join(dir, "logo-light.png"));
+console.log("wrote logo-light.png");
 
-await sharp({
-  create: { width: 1200, height: 630, channels: 3, background: "#071840" },
-})
-  .composite([
-    { input: await sharp(card).png().toBuffer(), top: 65, left: 60 },
-    { input: logo, top: Math.max(100, logoTop), left: logoLeft },
-    { input: await sharp(tagline).png().toBuffer(), top: 455, left: 100 },
-  ])
-  .png({ compressionLevel: 9 })
-  .toFile(join(dir, "og.png"));
+// Messenger square-crops the centre of 1200×630. Keep the lockup inside ~560px.
+const logoFit = await sharp(lightLogo).resize({ width: 540, withoutEnlargement: true }).png().toBuffer();
+const logoMeta = await sharp(logoFit).metadata();
+const logoW = logoMeta.width || 540;
+const logoH = logoMeta.height || 110;
+
+const tagline = Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="560" height="96">
+  <text x="280" y="28" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="22" font-weight="600" fill="#FFFFFF">Canada's choice to compare</text>
+  <text x="280" y="56" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="22" font-weight="600" fill="#FFFFFF">flights, hotels and car rentals</text>
+  <text x="280" y="86" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="18" fill="#7DBAE8">airstay.ca · Priced in CAD</text>
+</svg>`);
+const tagPng = await sharp(tagline).png().toBuffer();
+const tagMeta = await sharp(tagPng).metadata();
+const tagW = tagMeta.width || 560;
+const tagH = tagMeta.height || 96;
+
+const gap = 26;
+const blockH = logoH + gap + tagH;
+const logoTop = Math.max(0, Math.round((630 - blockH) / 2));
+const logoLeft = Math.round((1200 - logoW) / 2);
+const tagTop = logoTop + logoH + gap;
+const tagLeft = Math.round((1200 - tagW) / 2);
+
+const og = sharp({
+  create: { width: 1200, height: 630, channels: 3, background: NAVY },
+}).composite([
+  { input: logoFit, top: logoTop, left: logoLeft },
+  { input: tagPng, top: tagTop, left: tagLeft },
+]);
+
+await og.clone().jpeg({ quality: 92, mozjpeg: true }).toFile(join(dir, "og.jpg"));
+console.log("wrote og.jpg");
+await og.clone().png({ compressionLevel: 9 }).toFile(join(dir, "og.png"));
 console.log("wrote og.png");
 
 writeFileSync(

@@ -224,6 +224,11 @@ export const DEST_PHOTOS: Record<string, string> = {
   SYD: "https://images.unsplash.com/photo-1506973035872-a4ec16b8e8d9?auto=format&fit=crop&w=1400&q=80",
   LAS: "https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?auto=format&fit=crop&w=1400&q=80",
   MIA: "https://images.unsplash.com/photo-1533106497176-45ae19e68ba2?auto=format&fit=crop&w=1400&q=80",
+  FLL: "https://images.unsplash.com/photo-1535498733626-d45b83213e1d?auto=format&fit=crop&w=1400&q=80",
+  MNL: "https://images.unsplash.com/photo-1518509562904-e7ef99cdcc86?auto=format&fit=crop&w=1400&q=80",
+  DEL: "https://images.unsplash.com/photo-1587474260584-136574528ed8?auto=format&fit=crop&w=1400&q=80",
+  PHX: "https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?auto=format&fit=crop&w=1400&q=80",
+  TPA: "https://images.unsplash.com/photo-1569263979104-865d5bbe51ce?auto=format&fit=crop&w=1400&q=80",
   SFO: "https://images.unsplash.com/photo-1501594907352-04cda38ebc29?auto=format&fit=crop&w=1400&q=80",
   FRA: "https://images.unsplash.com/photo-1467269204594-9661b134dd2b?auto=format&fit=crop&w=1400&q=80",
 };
