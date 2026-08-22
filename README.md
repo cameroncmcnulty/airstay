@@ -1,6 +1,6 @@
 # AIRSTAY
 
-Canada-outbound travel metasearch. Compare **Flights**, **Stays** and **Cars** from Canadian airports, then book on Travelpayouts partner sites with your dates already filled. Packages are coming soon.
+Canada's choice to compare **flights**, **hotels** and **car rentals**. Search from Canadian airports, then book on Travelpayouts partner sites with your dates already filled. Packages are coming soon.
 
 ## Product
 

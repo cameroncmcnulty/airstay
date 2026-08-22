@@ -1,7 +1,7 @@
 {
   "name": "AIRSTAY",
   "short_name": "AIRSTAY",
-  "description": "Compare flights, stays and cars leaving Canada. Prices in CAD.",
+  "description": "Canada's choice to compare flights, hotels and car rentals.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#F3F6FB",

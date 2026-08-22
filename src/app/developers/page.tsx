@@ -14,11 +14,11 @@ export default function DevelopersPage() {
   return (
     <article className="mx-auto max-w-3xl px-4 py-12">
       <p className="text-xs font-bold uppercase tracking-[0.2em] text-sky-700">AIRSTAY Travel API v1</p>
-      <h1 className="mt-2 text-3xl font-black text-navy">Travelpayouts search for flights, stays and cars.</h1>
+      <h1 className="mt-2 text-3xl font-black text-navy">Compare flights, hotels and car rentals.</h1>
       <p className="mt-4 text-navy/70">
         {locale === "fr"
-          ? "Prix de vols en $ CA via Travelpayouts. Les séjours et autos ouvrent le site partenaire avec vos dates."
-          : "Live CAD flight prices from Travelpayouts. Stays and cars open the partner site with your AIRSTAY dates already filled."}
+          ? "Prix de vols en $ CA. Les hôtels et locations d'auto ouvrent le site partenaire avec vos dates."
+          : "Live CAD flight prices. Hotels and car rentals open the partner site with your AIRSTAY dates already filled."}
       </p>
       <pre className="mt-6 overflow-auto rounded-2xl bg-navy p-4 text-xs text-sky-100">
         {`POST /api/v1/search/flights

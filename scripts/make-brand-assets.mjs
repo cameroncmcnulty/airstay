@@ -22,30 +22,13 @@ function squareIcon(stroke, background, radius = 0) {
   return Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">${bg}${suitcase.replaceAll("STROKE", stroke)}</svg>`);
 }
 
-const og = Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
-  <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#071840"/>
-      <stop offset="1" stop-color="#0C2A5C"/>
-    </linearGradient>
-  </defs>
-  <rect width="1200" height="630" fill="url(#bg)"/>
-  <circle cx="1080" cy="-40" r="280" fill="#4381C7" opacity="0.18"/>
-  <circle cx="80" cy="680" r="220" fill="#4381C7" opacity="0.10"/>
-  <g transform="translate(88 165) scale(2.35)">
-    <path d="M30 26V16c0-5 4-10 10-10s10 5 10 10v10" stroke="#FFFFFF" stroke-width="6.5" stroke-linecap="round" fill="none"/>
-    <rect x="16" y="26" width="48" height="68" rx="11" stroke="#FFFFFF" stroke-width="6.5" fill="none"/>
-    <path d="M31 40v40M40 40v40M49 40v40" stroke="#FFFFFF" stroke-width="5.2" stroke-linecap="round" fill="none"/>
-    <circle cx="28" cy="102" r="6.2" stroke="#FFFFFF" stroke-width="5.5" fill="none"/>
-    <circle cx="52" cy="102" r="6.2" stroke="#FFFFFF" stroke-width="5.5" fill="none"/>
-  </g>
-  <text x="340" y="292" font-family="Segoe UI, Arial, sans-serif" font-size="92" font-weight="800" letter-spacing="-2">
-    <tspan fill="#FFFFFF">AIR</tspan><tspan fill="#7BB3E1">STAY</tspan>
-  </text>
-  <text x="344" y="352" font-family="Segoe UI, Arial, sans-serif" font-size="28" fill="#D6E7F6">Compare flights, stays and cars from Canada</text>
-  <rect x="344" y="392" width="72" height="6" rx="3" fill="#4381C7"/>
-  <text x="344" y="448" font-family="Segoe UI, Arial, sans-serif" font-size="22" fill="#A9CDEC">Priced in CAD · Book on trusted partner sites</text>
-  <text x="344" y="540" font-family="Segoe UI, Arial, sans-serif" font-size="20" font-weight="700" fill="#FFFFFF">airstay.ca</text>
+const tagline = Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="120">
+  <text x="500" y="38" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="28" font-weight="600" fill="#071840">Canada's choice to compare flights, hotels and car rentals</text>
+  <text x="500" y="82" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="20" fill="#4381C7">airstay.ca · Priced in CAD</text>
+</svg>`);
+
+const card = Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="500">
+  <rect width="1080" height="500" rx="36" fill="#FFFFFF"/>
 </svg>`);
 
 const jobs = [
@@ -53,7 +36,6 @@ const jobs = [
   { file: "favicon-32.png", svg: squareIcon("#071840"), size: 32 },
   { file: "icon-192.png", svg: squareIcon("#071840"), size: 192 },
   { file: "apple-touch-icon.png", svg: squareIcon("#FFFFFF", "#071840", 0), size: 180, flatten: "#071840" },
-  { file: "og.png", svg: og, size: [1200, 630], flatten: "#071840" },
 ];
 
 for (const job of jobs) {
@@ -64,13 +46,30 @@ for (const job of jobs) {
   console.log("wrote", job.file);
 }
 
+const logo = await sharp(join(dir, "logo.png")).resize({ width: 920, withoutEnlargement: true }).png().toBuffer();
+const logoMeta = await sharp(logo).metadata();
+const logoTop = 70 + Math.round((340 - (logoMeta.height || 190)) / 2);
+const logoLeft = Math.round((1200 - (logoMeta.width || 920)) / 2);
+
+await sharp({
+  create: { width: 1200, height: 630, channels: 3, background: "#071840" },
+})
+  .composite([
+    { input: await sharp(card).png().toBuffer(), top: 65, left: 60 },
+    { input: logo, top: Math.max(100, logoTop), left: logoLeft },
+    { input: await sharp(tagline).png().toBuffer(), top: 455, left: 100 },
+  ])
+  .png({ compressionLevel: 9 })
+  .toFile(join(dir, "og.png"));
+console.log("wrote og.png");
+
 writeFileSync(
   join(dir, "site.webmanifest"),
   JSON.stringify(
     {
       name: "AIRSTAY",
       short_name: "AIRSTAY",
-      description: "Compare flights, stays and cars leaving Canada. Prices in CAD.",
+      description: "Canada's choice to compare flights, hotels and car rentals.",
       start_url: "/",
       display: "standalone",
       background_color: "#F3F6FB",

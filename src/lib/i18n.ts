@@ -3,12 +3,12 @@ export type Locale = "en" | "fr";
 export const t = {
   en: {
     brand: "AIRSTAY",
-    tagline: "Travel out of Canada, compared in one place.",
+    tagline: "Canada's choice to compare flights, hotels and car rentals.",
     skip: "Skip to content",
     nav: {
       flights: "Flights",
-      stays: "Stays",
-      cars: "Cars",
+      stays: "Hotels",
+      cars: "Car rentals",
       packages: "Packages",
       deals: "Deals",
       about: "About",
@@ -18,10 +18,10 @@ export const t = {
       signOut: "Sign out",
     },
     hero: {
-      kicker: "Built for Canadians leaving Canada",
-      title: "Compare flights, stays, cars and packages — from Canadian airports only.",
+      kicker: "Canada's choice",
+      title: "Canada's choice to compare flights, hotels and car rentals.",
       subtitle:
-        "AIRSTAY is a metasearch. We send you to trusted partners to book. Prices in Canadian dollars. No booking fees from us.",
+        "Search from Canadian airports, compare in CAD, then book on partner sites. No booking fees from us.",
     },
     search: {
       from: "Leaving from",
@@ -57,32 +57,32 @@ export const t = {
       oneway: "One way",
       search: "Search",
       canadaOnly: "Origins are limited to Canadian airports.",
-      compare: "Compare partner prices",
+      compare: "Compare flights, hotels and car rentals",
     },
     bubbles: {
-      title: "What are you booking?",
+      title: "What would you like to compare?",
       flights: "Flights",
       flightsSub: "Out of Canada",
-      stays: "Stays",
+      stays: "Hotels",
       staysSub: "Hotels & homes",
-      cars: "Cars",
+      cars: "Car rentals",
       carsSub: "Airport & city",
       packages: "Packages",
       packagesSub: "Coming soon",
     },
     deals: {
-      title: "Travel deals from Canada",
+      title: "Deals on flights, hotels and car rentals",
       subtitle: "Highlighted partner prices in CAD. Final price is set on the booking site.",
       viewAll: "See all deals",
       from: "from",
       was: "was",
     },
     why: {
-      title: "Why Canadians use AIRSTAY",
+      title: "Why Canada compares on AIRSTAY",
       c1t: "Canada outbound only",
       c1d: "Every flight search starts at a Canadian airport. No clutter from other countries.",
       c2t: "Compare, then book",
-      c2d: "We send you to Aviasales, Booking.com, Discover Cars and other Travelpayouts partners with your dates already filled. You book with them.",
+      c2d: "We send you to partner sites for flights, hotels and car rentals with your dates already filled. You book with them.",
       c3t: "Priced in CAD",
       c3d: "Estimates are shown in Canadian dollars so you can compare apples to apples.",
       c4t: "Privacy first",
@@ -90,7 +90,7 @@ export const t = {
     },
     popular: { title: "Popular from Canada", subtitle: "Mexico, Cuba, the Caribbean and South America — plus the usual long-haul favourites." },
     partners: {
-      title: "You book with the brands you already trust",
+      title: "Compare, then book with brands you trust",
       note: "AIRSTAY may earn a commission if you book through a partner link. That never changes the price you pay.",
     },
     footer: {
@@ -105,7 +105,7 @@ export const t = {
       disclosure: "Affiliate disclosure",
       rights: "Your privacy rights",
       notAgency:
-        "AIRSTAY is a travel comparison website, not a travel agency. We do not sell tickets, rooms, cars or packages and we do not collect booking payments.",
+        "AIRSTAY is a travel comparison website, not a travel agency. We do not sell flights, hotels, car rentals or packages and we do not collect booking payments.",
       pipeda: "PIPEDA · CASL · Law 25 · CAD",
       copyright: "© {year} AIRSTAY. All rights reserved.",
     },
@@ -159,8 +159,8 @@ export const t = {
     },
     results: {
       title: "Compare partners",
-      liveTitle: "Live fares",
-      liveSub: "Live CAD fares from Travelpayouts. Book on Aviasales with your AIRSTAY dates, passengers and cabin already applied.",
+      liveTitle: "Compare these fares",
+      liveSub: "Live CAD flight prices. Book on the partner site with your AIRSTAY dates, passengers and cabin already applied.",
       liveEmpty: "No cached live fare for those exact dates yet. Use a partner below for a full search.",
       loading: "Scanning live fares…",
       loadingPackages: "Loading all-inclusive resorts…",
@@ -168,7 +168,7 @@ export const t = {
       stopsPlural: "{n} stops",
       nonstop: "Non-stop",
       bookLive: "Book this fare",
-      partnersTitle: "Book this search on the partner site",
+      partnersTitle: "Compare this search on the booking site",
       checkoutHint: "Your dates, destination and travellers from AIRSTAY are already filled in.",
       seeLive: "See live price",
       packagesTitle: "All-inclusive resorts",
@@ -204,7 +204,7 @@ export const t = {
     },
     comingSoon: {
       title: "Coming soon",
-      body: "Vacation packages are next. For now, search flights, stays or cars — each result opens the partner site with your AIRSTAY dates already set.",
+      body: "Vacation packages are next. For now, compare flights, hotels or car rentals — each result opens the partner site with your AIRSTAY dates already set.",
     },
     book: {
       kicker: "AIRSTAY checkout",
@@ -232,8 +232,8 @@ export const t = {
       bookFlights: "Book matching flights",
     },
     about: {
-      title: "AIRSTAY is for people leaving Canada.",
-      body: "We built a calmer Kayak-style comparison site that only searches travel out of Canadian airports. Four bubbles — Flights, Stays, Cars, Packages — and a straight path to the partner who actually books you.",
+      title: "Canada's choice to compare flights, hotels and car rentals.",
+      body: "AIRSTAY is built for travel leaving Canada. Compare flights, hotels and car rentals from Canadian airports, then finish on the partner site with your dates already filled.",
     },
     contact: {
       title: "Contact AIRSTAY",
@@ -262,12 +262,12 @@ export const t = {
   },
   fr: {
     brand: "AIRSTAY",
-    tagline: "Les départs du Canada, comparés au même endroit.",
+    tagline: "Le choix du Canada pour comparer vols, hôtels et locations d'auto.",
     skip: "Aller au contenu",
     nav: {
       flights: "Vols",
-      stays: "Séjours",
-      cars: "Autos",
+      stays: "Hôtels",
+      cars: "Locations d'auto",
       packages: "Forfaits",
       deals: "Aubaines",
       about: "À propos",
@@ -277,10 +277,10 @@ export const t = {
       signOut: "Déconnexion",
     },
     hero: {
-      kicker: "Conçu pour les départs du Canada",
-      title: "Comparez vols, séjours, autos et forfaits — uniquement au départ d’aéroports canadiens.",
+      kicker: "Le choix du Canada",
+      title: "Le choix du Canada pour comparer vols, hôtels et locations d'auto.",
       subtitle:
-        "AIRSTAY est un métamoteur. Vous réservez chez nos partenaires. Prix en dollars canadiens. Aucuns frais de réservation de notre part.",
+        "Recherchez au départ d’aéroports canadiens, comparez en $ CA, puis réservez chez nos partenaires. Aucuns frais de réservation de notre part.",
     },
     search: {
       from: "Départ",
@@ -316,32 +316,32 @@ export const t = {
       oneway: "Aller simple",
       search: "Rechercher",
       canadaOnly: "Les départs sont limités aux aéroports canadiens.",
-      compare: "Comparer les prix des partenaires",
+      compare: "Comparer vols, hôtels et locations d'auto",
     },
     bubbles: {
-      title: "Que réservez-vous ?",
+      title: "Que voulez-vous comparer ?",
       flights: "Vols",
       flightsSub: "Au départ du Canada",
-      stays: "Séjours",
+      stays: "Hôtels",
       staysSub: "Hôtels et logements",
-      cars: "Autos",
+      cars: "Locations d'auto",
       carsSub: "Aéroport et ville",
       packages: "Forfaits",
       packagesSub: "Bientôt",
     },
     deals: {
-      title: "Aubaines au départ du Canada",
+      title: "Aubaines vols, hôtels et locations d'auto",
       subtitle: "Prix partenaires mis en avant en $ CA. Le prix final est fixé sur le site de réservation.",
       viewAll: "Toutes les aubaines",
       from: "à partir de",
       was: "avant",
     },
     why: {
-      title: "Pourquoi les Canadiens utilisent AIRSTAY",
+      title: "Pourquoi le Canada compare sur AIRSTAY",
       c1t: "Départs canadiens seulement",
       c1d: "Chaque recherche de vol commence dans un aéroport canadien. Pas de bruit venu d’ailleurs.",
       c2t: "Comparez, puis réservez",
-      c2d: "Nous vous envoyons vers Aviasales, Booking.com, Discover Cars et d’autres partenaires Travelpayouts, dates déjà remplies. Vous réservez chez eux.",
+      c2d: "Nous vous envoyons vers les sites partenaires pour vols, hôtels et locations d'auto, dates déjà remplies. Vous réservez chez eux.",
       c3t: "Prix en $ CA",
       c3d: "Les estimations sont en dollars canadiens pour comparer plus facilement.",
       c4t: "Vie privée d’abord",
@@ -349,7 +349,7 @@ export const t = {
     },
     popular: { title: "Populaires au départ du Canada", subtitle: "Mexique, Cuba, Caraïbes et Amérique du Sud — plus les longs courriers habituels." },
     partners: {
-      title: "Vous réservez chez des marques que vous connaissez",
+      title: "Comparez, puis réservez chez des marques de confiance",
       note: "AIRSTAY peut recevoir une commission si vous réservez via un lien partenaire. Cela ne change pas le prix que vous payez.",
     },
     footer: {
@@ -364,7 +364,7 @@ export const t = {
       disclosure: "Divulgation d’affiliation",
       rights: "Vos droits à la vie privée",
       notAgency:
-        "AIRSTAY est un site de comparaison, pas une agence de voyages. Nous ne vendons ni billets, ni chambres, ni autos, ni forfaits, et nous n’encaissons aucun paiement de réservation.",
+        "AIRSTAY est un site de comparaison, pas une agence de voyages. Nous ne vendons ni vols, ni hôtels, ni locations d'auto, ni forfaits, et nous n’encaissons aucun paiement de réservation.",
       pipeda: "LPRPDE · LCAP · Loi 25 · $ CA",
       copyright: "© {year} AIRSTAY. Tous droits réservés.",
     },
@@ -418,8 +418,8 @@ export const t = {
     },
     results: {
       title: "Comparer les partenaires",
-      liveTitle: "Tarifs en direct",
-      liveSub: "Tarifs $ CA en direct via Travelpayouts. Réservez sur Aviasales avec vos dates, voyageurs et cabine AIRSTAY.",
+      liveTitle: "Comparez ces tarifs",
+      liveSub: "Prix de vols en $ CA. Réservez chez le partenaire avec vos dates, voyageurs et cabine AIRSTAY.",
       liveEmpty: "Aucun tarif en cache pour ces dates exactes. Lancez une recherche partenaire ci-dessous.",
       loading: "Recherche des tarifs en direct…",
       loadingPackages: "Chargement des complexes tout-inclus…",
@@ -427,7 +427,7 @@ export const t = {
       stopsPlural: "{n} escales",
       nonstop: "Sans escale",
       bookLive: "Réserver ce tarif",
-      partnersTitle: "Réserver cette recherche chez le partenaire",
+      partnersTitle: "Comparer cette recherche sur le site de réservation",
       checkoutHint: "Vos dates, destination et voyageurs AIRSTAY sont déjà remplis.",
       seeLive: "Voir le prix réel",
       packagesTitle: "Complexes tout-inclus",
@@ -463,7 +463,7 @@ export const t = {
     },
     comingSoon: {
       title: "Bientôt",
-      body: "Les forfaits vacances arrivent. En attendant, cherchez vols, séjours ou autos — chaque résultat ouvre le site partenaire avec vos dates AIRSTAY.",
+      body: "Les forfaits vacances arrivent. En attendant, comparez vols, hôtels ou locations d'auto — chaque résultat ouvre le site partenaire avec vos dates AIRSTAY.",
     },
     book: {
       kicker: "Paiement AIRSTAY",
@@ -491,8 +491,8 @@ export const t = {
       bookFlights: "Réserver les vols correspondants",
     },
     about: {
-      title: "AIRSTAY est fait pour quitter le Canada.",
-      body: "Nous avons conçu un comparateur plus calme, façon Kayak, qui ne cherche que les départs d’aéroports canadiens. Quatre bulles — Vols, Séjours, Autos, Forfaits — puis un lien direct vers le partenaire qui réserve vraiment.",
+      title: "Le choix du Canada pour comparer vols, hôtels et locations d'auto.",
+      body: "AIRSTAY est conçu pour les départs du Canada. Comparez vols, hôtels et locations d'auto au départ d’aéroports canadiens, puis terminez sur le site partenaire avec vos dates déjà remplies.",
     },
     contact: {
       title: "Contacter AIRSTAY",

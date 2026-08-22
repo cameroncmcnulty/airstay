@@ -17,9 +17,9 @@ const jakarta = Plus_Jakarta_Sans({
   display: "swap",
 });
 
-const siteTitle = "AIRSTAY — Compare travel out of Canada";
+const siteTitle = "AIRSTAY — Canada's choice to compare flights, hotels and car rentals";
 const siteDescription =
-  "Search flights, stays and cars leaving Canada. Live CAD prices via Travelpayouts. Book on Aviasales, Booking.com, Discover Cars and other partner sites.";
+  "Canada's choice to compare flights, hotels and car rentals. Search from Canadian airports, compare in CAD, then book on trusted partner sites.";
 
 export const metadata: Metadata = {
   title: {
@@ -40,7 +40,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: siteTitle,
-    description: "Flights, stays and cars from Canadian airports. Prices in CAD. Book on trusted partner sites.",
+    description: "Canada's choice to compare flights, hotels and car rentals. Prices in CAD.",
     url: "https://airstay.ca",
     siteName: "AIRSTAY",
     locale: "en_CA",
@@ -48,10 +48,10 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/og.png?v=2",
+        url: "/og.png?v=3",
         width: 1200,
         height: 630,
-        alt: "AIRSTAY — Compare flights, stays and cars from Canada",
+        alt: "AIRSTAY — Canada's choice to compare flights, hotels and car rentals",
         type: "image/png",
       },
     ],
@@ -59,8 +59,8 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: siteTitle,
-    description: "Flights, stays and cars from Canadian airports. Prices in CAD.",
-    images: ["/og.png?v=2"],
+    description: "Canada's choice to compare flights, hotels and car rentals. Prices in CAD.",
+    images: ["/og.png?v=3"],
   },
   other: {
     "geo.region": "CA",
