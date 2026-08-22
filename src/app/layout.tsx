@@ -17,24 +17,50 @@ const jakarta = Plus_Jakarta_Sans({
   display: "swap",
 });
 
+const siteTitle = "AIRSTAY — Compare travel out of Canada";
+const siteDescription =
+  "Search flights, stays and cars leaving Canada. Live CAD prices via Travelpayouts. Book on Aviasales, Booking.com, Discover Cars and other partner sites.";
+
 export const metadata: Metadata = {
   title: {
-    default: "AIRSTAY — Compare travel out of Canada",
+    default: siteTitle,
     template: "%s · AIRSTAY",
   },
-  description:
-    "AIRSTAY is a Canada-outbound travel metasearch for flights, stays, cars and packages. Compare partner prices in CAD and book on Kayak, Expedia, Booking.com and more.",
+  description: siteDescription,
+  applicationName: "AIRSTAY",
   metadataBase: new URL("https://airstay.ca"),
+  manifest: "/site.webmanifest",
   icons: {
-    icon: "/favicon.png",
-    apple: "/apple-touch-icon.png",
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/favicon.png", sizes: "64x64", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
   },
   openGraph: {
-    title: "AIRSTAY — Compare travel out of Canada",
-    description: "Flights, stays, cars and packages from Canadian airports. Prices in CAD.",
+    title: siteTitle,
+    description: "Flights, stays and cars from Canadian airports. Prices in CAD. Book on trusted partner sites.",
+    url: "https://airstay.ca",
+    siteName: "AIRSTAY",
     locale: "en_CA",
     alternateLocale: "fr_CA",
     type: "website",
+    images: [
+      {
+        url: "/og.png?v=2",
+        width: 1200,
+        height: 630,
+        alt: "AIRSTAY — Compare flights, stays and cars from Canada",
+        type: "image/png",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: siteTitle,
+    description: "Flights, stays and cars from Canadian airports. Prices in CAD.",
+    images: ["/og.png?v=2"],
   },
   other: {
     "geo.region": "CA",
