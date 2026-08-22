@@ -56,6 +56,14 @@ footer {
   @apply w-full rounded-2xl border border-navy/10 bg-mist px-3 py-3 text-base font-semibold text-navy outline-none transition placeholder:font-medium placeholder:text-navy/35 focus:border-sky focus:bg-white focus:ring-4 focus:ring-sky/20;
 }
 
+.btn-primary {
+  @apply inline-flex items-center justify-center gap-2 rounded-full bg-sky px-4 py-2.5 text-sm font-bold text-white shadow-lift transition hover:bg-sky-600;
+}
+
+.btn-ghost {
+  @apply inline-flex items-center justify-center gap-2 rounded-full border border-navy/15 px-4 py-2.5 text-sm font-bold text-navy transition hover:bg-mist;
+}
+
 :focus-visible {
   outline: 2px solid #4381C7;
   outline-offset: 2px;

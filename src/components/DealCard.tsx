@@ -10,7 +10,7 @@ export function DealCard({ deal }: { deal: Deal }) {
   const price = locale === "fr" ? cadFr(deal.priceCad) : cad(deal.priceCad);
   const was = deal.wasCad ? (locale === "fr" ? cadFr(deal.wasCad) : cad(deal.wasCad)) : null;
   const href = `/results?${queryToParams({
-    kind: deal.kind === "flight" ? "flights" : deal.kind === "stay" ? "stays" : deal.kind === "car" ? "cars" : "packages",
+    kind: deal.kind === "flight" ? "flights" : deal.kind === "car" ? "cars" : "stays",
     from: deal.from,
     to: deal.to,
     toCity: locale === "fr" ? deal.toCityFr : deal.toCity,
@@ -19,7 +19,7 @@ export function DealCard({ deal }: { deal: Deal }) {
     adults: 1,
   })}`;
   return (
-    <Link href={href} className="group flex flex-col overflow-hidden rounded-card bg-white shadow-card ring-1 ring-navy/5">
+    <Link href={href} className="group flex flex-col overflow-hidden rounded-card bg-white shadow-card ring-1 ring-navy/5 transition hover:-translate-y-1 hover:shadow-lift">
       <div className="relative h-36 overflow-hidden sm:h-44">
         <img
           src={deal.image}

@@ -1,27 +1,60 @@
 import type { SearchQuery } from "@/lib/deeplinks";
 import { searchCodes } from "@/lib/iata-cities";
-import { getDestination } from "@/lib/airports";
+import {
+  PARTNER_META,
+  type PartnerKey,
+  airlineLogo,
+  agodaUrl,
+  aviasalesUrl,
+  bookingHotelsUrl,
+  discoverCarsUrl,
+  expediaCarsUrl,
+  expediaFlightsUrl,
+  expediaHotelsUrl,
+  googleFlightsUrl,
+  hotelsComUrl,
+  kayakCarsUrl,
+  kayakFlightsUrl,
+  kayakHotelsUrl,
+  nightsBetween,
+  rentalcarsUrl,
+  skyscannerCarsUrl,
+  skyscannerFlightsUrl,
+  typicalCarRange,
+  typicalStayRange,
+} from "@/lib/partners";
 
 export type LiveOffer = {
   id: string;
-  source: "travelpayouts";
+  source: "travelpayouts" | "partner";
   kind: SearchQuery["kind"];
   title: string;
   partner?: string;
+  partnerKey?: PartnerKey;
+  domain?: string;
+  color?: string;
+  tagline?: string;
+  taglineFr?: string;
+  highlights?: string[];
+  highlightsFr?: string[];
   airline?: string;
   airlineName?: string;
+  airlineLogo?: string;
   flightNumber?: string;
   priceCad?: number;
+  priceFromCad?: number;
+  priceToCad?: number;
+  priceUnit?: "trip" | "night" | "day" | "person";
   stops?: number;
   departAt?: string;
   returnAt?: string;
   durationMin?: number;
   url: string;
   foundAt?: string;
+  featured?: boolean;
   live: true;
 };
 
-const MARKER = process.env.TRAVELPAYOUTS_MARKER || "564250";
 const TOKEN = process.env.TRAVELPAYOUTS_TOKEN || "321d6a221f8926b5ec41ae89a3b2ae7b";
 
 type Airline = { code: string; name: string };
@@ -42,186 +75,72 @@ async function airlines() {
   return airlineCache;
 }
 
-function aviaStamp(iso?: string) {
-  if (!iso) return "";
-  const [, m, d] = iso.split("-");
-  return `${d}${m}`;
-}
-
-function tripClass(cabin?: SearchQuery["cabin"]) {
-  if (cabin === "business") return "1";
-  if (cabin === "first") return "2";
-  return "0";
-}
-
-export function aviasalesUrl(q: SearchQuery) {
-  if (!q.from || !q.to || !q.depart) return undefined;
-  const origin = searchCodes(q.from)[0];
-  const dest = searchCodes(q.to)[0];
-  const adults = Math.max(1, q.adults || 1);
-  const children = q.children || 0;
-  const path =
-    q.trip === "oneway" || !q.returnDate
-      ? `${origin}${aviaStamp(q.depart)}${dest}${adults}`
-      : `${origin}${aviaStamp(q.depart)}${dest}${aviaStamp(q.returnDate)}${adults}`;
-  const params = new URLSearchParams({
-    marker: MARKER,
-    currency: "cad",
-    locale: "en",
-    adults: String(adults),
-    children: String(children),
-    infants: "0",
-    trip_class: tripClass(q.cabin),
-    utm_source: "airstay",
-  });
-  return `https://www.aviasales.com/search/${path}?${params.toString()}`;
-}
-
-function bookingHotelsUrl(q: SearchQuery) {
-  const dest = getDestination(q.to || "") ;
-  const ss = dest?.city || q.toCity || q.to || "";
-  const adults = String(q.adults || 2);
-  const children = q.children || 0;
-  const rooms = String(q.rooms || 1);
-  const params = new URLSearchParams({
-    ss,
-    checkin: q.depart || "",
-    checkout: q.returnDate || "",
-    group_adults: adults,
-    group_children: String(children),
-    no_rooms: rooms,
-    selected_currency: "CAD",
-    lang: "en-ca",
-  });
-  for (const age of q.childAges || []) params.append("age", String(age));
-  return `https://www.booking.com/searchresults.html?${params.toString()}`;
-}
-
-function hotelsComUrl(q: SearchQuery) {
-  const dest = getDestination(q.to || "");
-  const city = dest?.city || q.toCity || q.to || "";
-  const params = new URLSearchParams({
-    destination: city,
-    startDate: q.depart || "",
-    endDate: q.returnDate || "",
-    d1: q.depart || "",
-    d2: q.returnDate || "",
-    adults: String(q.adults || 2),
-    rooms: String(q.rooms || 1),
-  });
-  return `https://www.hotels.com/Hotel-Search?${params.toString()}`;
-}
-
-function agodaUrl(q: SearchQuery) {
-  const dest = getDestination(q.to || "");
-  const city = dest?.city || q.toCity || q.to || "";
-  const params = new URLSearchParams({
-    text: city,
-    checkIn: q.depart || "",
-    checkOut: q.returnDate || "",
-    rooms: String(q.rooms || 1),
-    adults: String(q.adults || 2),
-    children: String(q.children || 0),
-    currency: "CAD",
-    locale: "en-ca",
-  });
-  return `https://www.agoda.com/search?${params.toString()}`;
-}
-
-function discoverCarsUrl(q: SearchQuery) {
-  const dest = getDestination(q.to || "");
-  const pickup = dest?.city || q.toCity || q.to || "";
-  const params = new URLSearchParams({
-    pickup,
-    dropoff: pickup,
-    from: `${q.depart || ""}T10:00`,
-    to: `${q.returnDate || q.depart || ""}T10:00`,
-  });
-  return `https://www.discovercars.com/en-ca/search?${params.toString()}`;
-}
-
-function rentalcarsUrl(q: SearchQuery) {
-  const dest = getDestination(q.to || "");
-  const pickup = dest?.city || q.toCity || q.to || "";
-  const params = new URLSearchParams({
-    pickupLocationName: pickup,
-    dropLocationName: pickup,
-    pickupDateTime: `${q.depart || ""}T10:00`,
-    dropDateTime: `${q.returnDate || q.depart || ""}T10:00`,
-    driversAge: "30",
-  });
-  return `https://www.rentalcars.com/en-ca/search-results/?${params.toString()}`;
+function offerFromPartner(
+  key: PartnerKey,
+  q: SearchQuery,
+  url: string | undefined,
+  extra: Partial<LiveOffer> = {}
+): LiveOffer | null {
+  if (!url) return null;
+  const meta = PARTNER_META[key];
+  return {
+    id: `tp-${key}`,
+    source: key === "aviasales" ? "travelpayouts" : "partner",
+    kind: q.kind,
+    title: meta.name,
+    partner: meta.name,
+    partnerKey: key,
+    domain: meta.domain,
+    color: meta.color,
+    tagline: meta.tagline,
+    taglineFr: meta.taglineFr,
+    highlights: meta.highlights,
+    highlightsFr: meta.highlightsFr,
+    url,
+    live: true,
+    ...extra,
+  };
 }
 
 export function travelpayoutsCheckouts(q: SearchQuery): LiveOffer[] {
+  const code = (q.to || "").toUpperCase();
+  const nights = nightsBetween(q.depart, q.returnDate);
+  const days = nights;
+
   if (q.kind === "flights") {
-    const url = aviasalesUrl(q);
-    if (!url) return [];
     return [
-      {
-        id: "tp-aviasales",
-        source: "travelpayouts",
-        kind: "flights",
-        title: "Aviasales",
-        partner: "Aviasales",
-        url,
-        live: true,
-      },
-    ];
+      offerFromPartner("aviasales", q, aviasalesUrl(q), { featured: true }),
+      offerFromPartner("kayak", q, kayakFlightsUrl(q)),
+      offerFromPartner("skyscanner", q, skyscannerFlightsUrl(q)),
+      offerFromPartner("google", q, googleFlightsUrl(q)),
+      offerFromPartner("expedia", q, expediaFlightsUrl(q)),
+    ].filter((o): o is LiveOffer => Boolean(o));
   }
+
   if (q.kind === "stays") {
+    const [lo, hi] = typicalStayRange(code);
+    const range = { priceFromCad: lo * nights, priceToCad: hi * nights, priceUnit: "trip" as const };
     return [
-      {
-        id: "tp-booking",
-        source: "travelpayouts",
-        kind: "stays",
-        title: "Booking.com",
-        partner: "Booking.com",
-        url: bookingHotelsUrl(q),
-        live: true,
-      },
-      {
-        id: "tp-hotels",
-        source: "travelpayouts",
-        kind: "stays",
-        title: "Hotels.com",
-        partner: "Hotels.com",
-        url: hotelsComUrl(q),
-        live: true,
-      },
-      {
-        id: "tp-agoda",
-        source: "travelpayouts",
-        kind: "stays",
-        title: "Agoda",
-        partner: "Agoda",
-        url: agodaUrl(q),
-        live: true,
-      },
-    ];
+      offerFromPartner("booking", q, bookingHotelsUrl(q), { ...range, featured: true }),
+      offerFromPartner("kayak", q, kayakHotelsUrl(q), range),
+      offerFromPartner("expedia", q, expediaHotelsUrl(q), range),
+      offerFromPartner("hotels", q, hotelsComUrl(q), range),
+      offerFromPartner("agoda", q, agodaUrl(q), range),
+    ].filter((o): o is LiveOffer => Boolean(o));
   }
+
   if (q.kind === "cars") {
+    const [lo, hi] = typicalCarRange(code);
+    const range = { priceFromCad: lo * days, priceToCad: hi * days, priceUnit: "trip" as const };
     return [
-      {
-        id: "tp-discover",
-        source: "travelpayouts",
-        kind: "cars",
-        title: "Discover Cars",
-        partner: "Discover Cars",
-        url: discoverCarsUrl(q),
-        live: true,
-      },
-      {
-        id: "tp-rentalcars",
-        source: "travelpayouts",
-        kind: "cars",
-        title: "Rentalcars.com",
-        partner: "Rentalcars.com",
-        url: rentalcarsUrl(q),
-        live: true,
-      },
-    ];
+      offerFromPartner("kayak", q, kayakCarsUrl(q), { ...range, featured: true }),
+      offerFromPartner("skyscanner", q, skyscannerCarsUrl(q), range),
+      offerFromPartner("expedia", q, expediaCarsUrl(q), range),
+      offerFromPartner("discover", q, discoverCarsUrl(q), range),
+      offerFromPartner("rentalcars", q, rentalcarsUrl(q), range),
+    ].filter((o): o is LiveOffer => Boolean(o));
   }
+
   return [];
 }
 
@@ -412,36 +331,36 @@ function toOffer(input: {
   q: SearchQuery;
 }): LiveOffer {
   const airline = input.airline || undefined;
-  const depart = input.departAt?.slice(0, 10);
-  const ret = input.returnAt?.slice(0, 10);
-  const path =
-    !ret || input.q.trip === "oneway"
-      ? `${input.origin}${aviaStamp(depart)}${input.dest}${input.adults}`
-      : `${input.origin}${aviaStamp(depart)}${input.dest}${aviaStamp(ret)}${input.adults}`;
-  const params = new URLSearchParams({
-    marker: MARKER,
-    currency: "cad",
-    locale: "en",
-    adults: String(input.adults),
-    children: String(input.q.children || 0),
-    trip_class: tripClass(input.q.cabin),
-    utm_source: "airstay",
-  });
+  const name = airline ? input.names.get(airline) || airline : "Live fare";
+  const url =
+    aviasalesUrl({
+      ...input.q,
+      from: input.origin,
+      to: input.dest,
+      depart: input.departAt?.slice(0, 10) || input.q.depart,
+      returnDate: input.returnAt?.slice(0, 10) || input.q.returnDate,
+      adults: input.adults,
+    }) || "#";
   return {
     id: input.id,
     source: "travelpayouts",
     kind: "flights",
-    title: airline ? `${input.names.get(airline) || airline}` : "Live fare",
+    title: name,
     partner: "Aviasales",
+    partnerKey: "aviasales",
+    domain: "aviasales.com",
+    color: PARTNER_META.aviasales.color,
     airline,
     airlineName: airline ? input.names.get(airline) : undefined,
+    airlineLogo: airlineLogo(airline),
     flightNumber: input.flightNumber || undefined,
     priceCad: Math.round(input.price),
+    priceUnit: "person",
     stops: input.stops,
     departAt: input.departAt,
     returnAt: input.returnAt,
     durationMin: input.durationMin,
-    url: `https://www.aviasales.com/search/${path}?${params.toString()}`,
+    url,
     foundAt: input.foundAt,
     live: true,
   };

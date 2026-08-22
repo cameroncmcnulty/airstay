@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Menu, X, UserRound } from "lucide-react";
 import { Logo } from "./Logo";
@@ -16,6 +17,7 @@ const LINKS = [
 
 export function Header() {
   const { m, locale, setLocale, user } = useApp();
+  const path = usePathname();
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLElement>(null);
 
@@ -45,15 +47,20 @@ export function Header() {
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-3 py-2 sm:gap-4 sm:px-4 sm:py-3">
         <Logo size="sm" />
         <nav className="hidden items-center gap-1 lg:flex" aria-label="Primary">
-          {LINKS.map((l) => (
-            <Link
-              key={l.href}
-              href={l.href}
-              className="rounded-full px-3 py-2 text-sm font-semibold text-navy/80 transition hover:bg-sky-50 hover:text-navy"
-            >
-              {m.nav[l.key]}
-            </Link>
-          ))}
+          {LINKS.map((l) => {
+            const active = path === l.href;
+            return (
+              <Link
+                key={l.href}
+                href={l.href}
+                className={`rounded-full px-3 py-2 text-sm font-semibold transition ${
+                  active ? "bg-navy text-white" : "text-navy/80 hover:bg-sky-50 hover:text-navy"
+                }`}
+              >
+                {m.nav[l.key]}
+              </Link>
+            );
+          })}
         </nav>
         <div className="flex items-center gap-2">
           <div className="flex rounded-full bg-mist p-0.5 text-xs font-bold" role="group" aria-label="Language">

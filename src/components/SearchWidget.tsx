@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { Plane, Building2, Car, TreePalm, Search, Minus, Plus } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import {
+  getAirport,
+  getDestination,
   searchCanadianAirports,
   searchDestinations,
   type Airport,
@@ -30,31 +32,39 @@ export function SearchWidget({
   kind: kindProp,
   hideTabs = false,
   embedded = false,
+  initial,
 }: {
   initialKind?: SearchKind;
   kind?: SearchKind;
   hideTabs?: boolean;
   embedded?: boolean;
+  initial?: SearchQuery;
 }) {
   const { m, locale } = useApp();
   const router = useRouter();
-  const [kindState, setKindState] = useState<SearchKind>(initialKind);
+  const [kindState, setKindState] = useState<SearchKind>(initial?.kind || initialKind);
   const kind = kindProp ?? kindState;
   const setKind = (next: SearchKind) => {
     if (!kindProp) setKindState(next);
   };
-  const [from, setFrom] = useState("");
-  const [fromCode, setFromCode] = useState("");
-  const [to, setTo] = useState("");
-  const [toCode, setToCode] = useState("");
-  const [depart, setDepart] = useState(defaultDepart());
-  const [ret, setRet] = useState(defaultReturn());
-  const [trip, setTrip] = useState<"roundtrip" | "oneway">("roundtrip");
-  const [adults, setAdults] = useState(1);
-  const [children, setChildren] = useState(0);
-  const [childAges, setChildAges] = useState<Array<number | "">>([]);
-  const [rooms, setRooms] = useState(1);
-  const [cabin, setCabin] = useState<SearchQuery["cabin"]>("economy");
+  const seedFrom = initial?.from ? getAirport(initial.from) : undefined;
+  const seedTo = initial?.to ? getDestination(initial.to) : undefined;
+  const [from, setFrom] = useState(
+    seedFrom ? `${locale === "fr" ? seedFrom.cityFr : seedFrom.city} (${seedFrom.code})` : ""
+  );
+  const [fromCode, setFromCode] = useState(initial?.from || "");
+  const [to, setTo] = useState(
+    seedTo ? (locale === "fr" ? seedTo.cityFr : seedTo.city) : initial?.toCity || ""
+  );
+  const [toCode, setToCode] = useState(initial?.to || "");
+  const [depart, setDepart] = useState(initial?.depart || defaultDepart());
+  const [ret, setRet] = useState(initial?.returnDate || defaultReturn());
+  const [trip, setTrip] = useState<"roundtrip" | "oneway">(initial?.trip || "roundtrip");
+  const [adults, setAdults] = useState(initial?.adults || 1);
+  const [children, setChildren] = useState(initial?.children || 0);
+  const [childAges, setChildAges] = useState<Array<number | "">>(initial?.childAges || []);
+  const [rooms, setRooms] = useState(initial?.rooms || 1);
+  const [cabin, setCabin] = useState<SearchQuery["cabin"]>(initial?.cabin || "economy");
   const [fromOpen, setFromOpen] = useState(false);
   const [toOpen, setToOpen] = useState(false);
   const [error, setError] = useState("");
@@ -100,6 +110,10 @@ export function SearchWidget({
     }
     if (kind === "flights" && !fromCode) {
       setError(m.results.noOrigin);
+      return;
+    }
+    if (!toCode && !to) {
+      setError(m.results.noTo);
       return;
     }
     const ages = childAges.slice(0, children);

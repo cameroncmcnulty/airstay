@@ -1,21 +1,30 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 import { ShieldCheck, MapPin, BadgeDollarSign, Link2 } from "lucide-react";
 import { SearchWidget } from "@/components/SearchWidget";
 import { CategoryBubbles } from "@/components/CategoryBubbles";
 import { DealGrid } from "@/components/DealCard";
 import { HeroMedia } from "@/components/HeroMedia";
+import { HowItWorks, TrustStrip } from "@/components/HowItWorks";
+import { PopularDestGrid } from "@/components/PopularDestGrid";
 import { useApp } from "@/context/AppContext";
-import { FEATURED_DESTINATIONS, getDestination } from "@/lib/airports";
-import { DEST_PHOTOS } from "@/lib/deals";
-import { defaultDepart, defaultReturn, queryToParams, type SearchKind } from "@/lib/deeplinks";
+import { type SearchKind } from "@/lib/deeplinks";
 
-const PARTNERS = ["Aviasales", "Booking.com", "Hotels.com", "Agoda", "Discover Cars", "Rentalcars.com"];
+const PARTNERS = [
+  "Aviasales",
+  "Kayak",
+  "Skyscanner",
+  "Expedia",
+  "Booking.com",
+  "Hotels.com",
+  "Agoda",
+  "Discover Cars",
+  "Rentalcars.com",
+];
 
 export default function HomePage() {
-  const { m, locale } = useApp();
+  const { m } = useApp();
   const [kind, setKind] = useState<SearchKind>("flights");
   const why = [
     { icon: MapPin, t: m.why.c1t, d: m.why.c1d },
@@ -50,6 +59,8 @@ export default function HomePage() {
       </section>
 
       <div className="space-y-14 py-12 sm:space-y-20 sm:py-16">
+        <TrustStrip />
+        <HowItWorks />
         <DealGrid limit={4} />
 
         <section className="mx-auto max-w-6xl px-4">
@@ -69,39 +80,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        <section className="mx-auto max-w-6xl px-4">
-          <h2 className="text-2xl font-extrabold text-navy">{m.popular.title}</h2>
-          <p className="mt-1 text-sm text-navy/60">{m.popular.subtitle}</p>
-          <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-4">
-            {FEATURED_DESTINATIONS.map((code) => {
-              const d = getDestination(code);
-              if (!d) return null;
-              const href = `/results?${queryToParams({
-                kind: "flights",
-                from: "YYZ",
-                to: d.code,
-                toCity: locale === "fr" ? d.cityFr : d.city,
-                depart: defaultDepart(),
-                returnDate: defaultReturn(),
-                adults: 1,
-              })}`;
-              return (
-                <Link key={d.code} href={href} className="group relative h-32 overflow-hidden rounded-card sm:h-40">
-                  <img
-                    src={DEST_PHOTOS[d.code] || DEST_PHOTOS.LHR}
-                    alt=""
-                    className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-navy/80 to-navy/10" />
-                  <div className="absolute bottom-3 left-3 text-white">
-                    <p className="font-extrabold">{locale === "fr" ? d.cityFr : d.city}</p>
-                    <p className="text-xs text-white/75">{locale === "fr" ? d.countryFr : d.country}</p>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-        </section>
+        <PopularDestGrid />
 
         <section className="mx-auto max-w-6xl px-4">
           <h2 className="text-center text-2xl font-extrabold text-navy">{m.partners.title}</h2>

@@ -12,6 +12,10 @@ import {
   Plane,
   Moon,
   Clock,
+  ShieldCheck,
+  Sparkles,
+  Car,
+  Building2,
 } from "lucide-react";
 import { paramsToQuery, cad, cadFr } from "@/lib/deeplinks";
 import { getAirport, getDestination } from "@/lib/airports";
@@ -19,7 +23,8 @@ import { DEST_PHOTOS } from "@/lib/deals";
 import { useApp } from "@/context/AppContext";
 import { currentUser, updateUser } from "@/lib/auth";
 import type { LiveOffer } from "@/lib/live-search";
-import { nightsBetween } from "@/data/resorts";
+import { nightsBetween, partnerFavicon } from "@/lib/partners";
+import { SearchWidget } from "@/components/SearchWidget";
 
 type Leaving = LiveOffer;
 
@@ -39,6 +44,7 @@ function ResultsInner() {
   const [saved, setSaved] = useState(false);
   const [live, setLive] = useState<LiveOffer[]>([]);
   const [loading, setLoading] = useState(true);
+  const [sort, setSort] = useState<"price" | "partner">("price");
 
   const origin = q.from ? getAirport(q.from) : undefined;
   const dest = q.to ? getDestination(q.to) : undefined;
@@ -46,9 +52,14 @@ function ResultsInner() {
   const originName = origin ? `${locale === "fr" ? origin.cityFr : origin.city}` : q.from || "";
   const destPhoto = (q.to && DEST_PHOTOS[q.to]) || DEST_PHOTOS.CUN;
   const nights = nightsBetween(q.depart, q.returnDate);
+  const money = (n: number) => (locale === "fr" ? cadFr(n) : cad(n));
 
   const fares = live.filter((o) => o.priceCad && o.priceCad > 0);
   const checkouts = live.filter((o) => !o.priceCad);
+  const sortedCheckouts = [...checkouts].sort((a, b) => {
+    if (sort === "partner") return (a.partner || a.title).localeCompare(b.partner || b.title);
+    return (a.priceFromCad || 0) - (b.priceFromCad || 0);
+  });
 
   useEffect(() => {
     let cancelled = false;
@@ -115,18 +126,25 @@ function ResultsInner() {
     return m.results.stopsPlural.replace("{n}", String(n));
   }
 
+  const kindIcon = q.kind === "cars" ? Car : q.kind === "stays" ? Building2 : Plane;
+  const KindIcon = kindIcon;
+  const headline =
+    q.kind === "stays" || q.kind === "cars" ? destName || m.results.title : `${originName || "—"} → ${destName || "—"}`;
+
   return (
-    <div className="pb-16">
+    <div className="pb-20">
       <section className="relative overflow-hidden bg-navy">
-        <img src={destPhoto} alt="" className="absolute inset-0 h-full w-full object-cover opacity-35" />
-        <div className="absolute inset-0 bg-gradient-to-r from-navy via-navy/85 to-navy/55" />
+        <img src={destPhoto} alt="" className="absolute inset-0 h-full w-full object-cover opacity-40" />
+        <div className="absolute inset-0 bg-gradient-to-r from-navy via-navy/88 to-navy/60" />
         <div className="relative mx-auto max-w-6xl px-4 py-8 text-white sm:py-10">
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-sky-200">
+          <p className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-sky-200">
+            <KindIcon className="h-3.5 w-3.5" />
             {q.kind === "stays" ? m.nav.stays : q.kind === "cars" ? m.nav.cars : m.nav.flights}
           </p>
-          <h1 className="mt-2 text-3xl font-black md:text-4xl">
-            {q.kind === "stays" || q.kind === "cars" ? destName : `${originName} → ${destName}`}
-          </h1>
+          <h1 className="mt-2 text-3xl font-black tracking-tight md:text-5xl">{headline}</h1>
+          {dest && (
+            <p className="mt-1 text-sm text-white/70">{locale === "fr" ? dest.countryFr : dest.country}</p>
+          )}
           <div className="mt-5 flex flex-wrap gap-2">
             {q.depart && (
               <MetaChip icon={CalendarDays}>
@@ -134,7 +152,11 @@ function ResultsInner() {
                 {q.returnDate ? ` – ${q.returnDate}` : ""}
               </MetaChip>
             )}
-            <MetaChip icon={Moon}>{m.results.nights.replace("{n}", String(nights))}</MetaChip>
+            {q.kind === "cars" ? (
+              <MetaChip icon={Car}>{m.results.days.replace("{n}", String(nights))}</MetaChip>
+            ) : (
+              <MetaChip icon={Moon}>{m.results.nights.replace("{n}", String(nights))}</MetaChip>
+            )}
             <MetaChip icon={Users}>
               {q.adults} {m.search.adults}
               {q.children ? ` · ${q.children} ${m.search.children}` : ""}
@@ -142,40 +164,72 @@ function ResultsInner() {
             {q.from && q.kind === "flights" && <MetaChip icon={Plane}>{origin?.code || q.from}</MetaChip>}
             {destName && <MetaChip icon={MapPin}>{destName}</MetaChip>}
           </div>
-          <button
-            type="button"
-            onClick={save}
-            className="mt-5 inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-sm font-bold text-white ring-1 ring-white/20 hover:bg-white/25"
-          >
-            {saved ? <BookmarkCheck className="h-4 w-4" /> : <BookmarkPlus className="h-4 w-4" />}
-            {saved ? m.results.saved : m.results.save}
-          </button>
+          <div className="mt-5 flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={save}
+              className="inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-sm font-bold text-white ring-1 ring-white/20 hover:bg-white/25"
+            >
+              {saved ? <BookmarkCheck className="h-4 w-4" /> : <BookmarkPlus className="h-4 w-4" />}
+              {saved ? m.results.saved : m.results.save}
+            </button>
+            <span className="text-xs font-semibold text-sky-100/90">{m.results.prefilled}</span>
+          </div>
         </div>
       </section>
 
+      <div className="relative z-20 mx-auto -mt-6 max-w-6xl px-3 sm:-mt-8 sm:px-4">
+        <div className="rounded-[1.6rem] bg-white p-3 shadow-card ring-1 ring-navy/5 sm:p-5">
+          <SearchWidget kind={q.kind} hideTabs embedded initial={q} />
+        </div>
+      </div>
+
       <div className="mx-auto max-w-6xl px-4">
+        <div className="mt-8 flex flex-wrap items-center gap-3 rounded-2xl bg-navy px-4 py-3 text-white">
+          <ShieldCheck className="h-5 w-5 text-sky-200" />
+          <p className="text-sm font-semibold">{m.results.trust}</p>
+        </div>
+
         {q.kind === "flights" && (
           <section className="mt-10">
-            <h2 className="text-2xl font-extrabold text-navy">{m.results.liveTitle}</h2>
-            <p className="mt-1 text-sm text-navy/60">{m.results.liveSub}</p>
-            {loading && <p className="mt-4 text-sm font-semibold text-sky-800">{m.results.loading}</p>}
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <h2 className="text-2xl font-extrabold text-navy">{m.results.liveTitle}</h2>
+                <p className="mt-1 text-sm text-navy/60">{m.results.liveSub}</p>
+              </div>
+            </div>
+            {loading && <SkeletonList />}
             {!loading && fares.length === 0 && (
               <p className="mt-4 rounded-2xl bg-mist px-4 py-3 text-sm text-navy/70">{m.results.liveEmpty}</p>
             )}
             <ul className="mt-5 space-y-4">
               {fares.map((o) => (
-                <li key={o.id} className="overflow-hidden rounded-card bg-white shadow-card ring-1 ring-navy/5 md:flex">
-                  <div className="relative h-40 w-full shrink-0 md:h-auto md:w-56">
-                    <img src={destPhoto} alt="" className="h-full w-full object-cover" />
-                    <span className="absolute left-3 top-3 rounded-full bg-sky px-2.5 py-1 text-[10px] font-bold uppercase text-white">
-                      Live
-                    </span>
-                  </div>
-                  <div className="flex flex-1 flex-wrap items-center justify-between gap-4 p-5">
-                    <div>
-                      <h3 className="text-lg font-black text-navy">{o.airlineName || o.title}</h3>
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {o.flightNumber && <Amenity icon={Plane} label={`${o.airline || ""}${o.flightNumber}`} />}
+                <li
+                  key={o.id}
+                  className="group overflow-hidden rounded-card bg-white shadow-card ring-1 ring-navy/5 transition hover:-translate-y-0.5 hover:shadow-lift"
+                >
+                  <div className="flex flex-col md:flex-row">
+                    <div className="flex items-center gap-4 border-b border-navy/5 p-5 md:w-56 md:flex-col md:items-start md:border-b-0 md:border-r md:bg-mist/60">
+                      {o.airlineLogo ? (
+                        <img src={o.airlineLogo} alt="" className="h-12 w-12 rounded-2xl bg-white object-contain ring-1 ring-navy/10" />
+                      ) : (
+                        <span className="grid h-12 w-12 place-items-center rounded-2xl bg-navy text-white">
+                          <Plane className="h-5 w-5" />
+                        </span>
+                      )}
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-sky-700">Live fare</p>
+                        <h3 className="text-lg font-black text-navy">{o.airlineName || o.title}</h3>
+                        {o.airline && (
+                          <p className="text-xs font-semibold text-navy/45">
+                            {o.airline}
+                            {o.flightNumber || ""}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex flex-1 flex-wrap items-center justify-between gap-4 p-5">
+                      <div className="flex flex-wrap gap-2">
                         {o.departAt && (
                           <Amenity
                             icon={CalendarDays}
@@ -189,22 +243,19 @@ function ResultsInner() {
                         {o.durationMin ? (
                           <Amenity icon={Clock} label={m.results.duration.replace("{n}", String(Math.round(o.durationMin / 60)))} />
                         ) : null}
+                        <Amenity icon={Sparkles} label="Aviasales" />
                       </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div className="text-right">
-                        <p className="text-xs font-semibold text-navy/45">{m.results.advertised}</p>
-                        <p className="text-2xl font-black text-navy">{locale === "fr" ? cadFr(o.priceCad || 0) : cad(o.priceCad || 0)}</p>
-                        <p className="text-[11px] text-navy/45">{m.results.cadNote}</p>
+                      <div className="flex items-center gap-4">
+                        <div className="text-right">
+                          <p className="text-xs font-semibold text-navy/45">{m.results.advertised}</p>
+                          <p className="text-3xl font-black tracking-tight text-navy">{money(o.priceCad || 0)}</p>
+                          <p className="text-[11px] text-navy/45">{m.results.cadNote}</p>
+                        </div>
+                        <button type="button" onClick={() => setLeaving(o)} className="btn-primary">
+                          {m.results.bookLive}
+                          <ExternalLink className="h-4 w-4" />
+                        </button>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => setLeaving(o)}
-                        className="inline-flex items-center gap-2 rounded-full bg-sky px-4 py-3 text-sm font-bold text-white shadow-lift"
-                      >
-                        {m.results.bookLive}
-                        <ExternalLink className="h-4 w-4" />
-                      </button>
                     </div>
                   </div>
                 </li>
@@ -213,43 +264,89 @@ function ResultsInner() {
           </section>
         )}
 
-        <h2 className="mt-12 text-2xl font-extrabold text-navy">{m.results.partnersTitle}</h2>
-        <p className="mt-2 rounded-2xl bg-sky-50 px-4 py-3 text-sm text-navy/75">{m.partners.note}</p>
-        {loading && q.kind !== "flights" && <p className="mt-4 text-sm font-semibold text-sky-800">{m.results.loading}</p>}
-        <ul className="mt-4 grid gap-3 md:grid-cols-2">
-          {checkouts.map((o) => (
-            <li key={o.id} className="flex items-center justify-between gap-4 rounded-card bg-white p-5 shadow-card ring-1 ring-navy/5">
-              <div>
-                <p className="text-lg font-black text-navy">{o.partner || o.title}</p>
-                <p className="text-sm text-navy/55">{m.results.checkoutHint}</p>
+        <section className="mt-12">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <h2 className="text-2xl font-extrabold text-navy">{m.results.partnersTitle}</h2>
+              <p className="mt-1 text-sm text-navy/60">
+                {m.results.partnersReady.replace("{n}", String(sortedCheckouts.length || (loading ? "…" : 0)))}
+                {" · "}
+                {m.results.prefilled}
+              </p>
+            </div>
+            {sortedCheckouts.length > 1 && (
+              <div className="flex rounded-full bg-mist p-1 text-xs font-bold">
+                <button
+                  type="button"
+                  className={`rounded-full px-3 py-1.5 ${sort === "price" ? "bg-white text-navy shadow-sm" : "text-navy/55"}`}
+                  onClick={() => setSort("price")}
+                >
+                  {m.results.sortPrice}
+                </button>
+                <button
+                  type="button"
+                  className={`rounded-full px-3 py-1.5 ${sort === "partner" ? "bg-white text-navy shadow-sm" : "text-navy/55"}`}
+                  onClick={() => setSort("partner")}
+                >
+                  {m.results.sortPartner}
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() => setLeaving(o)}
-                className="inline-flex items-center gap-2 rounded-full bg-sky px-4 py-2.5 text-sm font-bold text-white"
-              >
-                {m.results.seeLive}
-                <ExternalLink className="h-4 w-4" />
-              </button>
-            </li>
+            )}
+          </div>
+          <p className="mt-3 rounded-2xl bg-sky-50 px-4 py-3 text-sm text-navy/75">{m.partners.note}</p>
+          {loading && q.kind !== "flights" && <SkeletonList />}
+          {!loading && sortedCheckouts.length === 0 && (
+            <p className="mt-4 rounded-2xl bg-mist px-4 py-3 text-sm text-navy/70">{m.results.emptyHint}</p>
+          )}
+          <ul className="mt-5 grid gap-4 md:grid-cols-2">
+            {sortedCheckouts.map((o) => (
+              <li key={o.id}>
+                <PartnerResultCard
+                  offer={o}
+                  locale={locale}
+                  money={money}
+                  nights={nights}
+                  m={m}
+                  onOpen={() => setLeaving(o)}
+                />
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <section className="mt-14 grid gap-4 md:grid-cols-3">
+          {[
+            { t: m.results.how1t, d: m.results.how1d, n: "01" },
+            { t: m.results.how2t, d: m.results.how2d, n: "02" },
+            { t: m.results.how3t, d: m.results.how3d, n: "03" },
+          ].map((s) => (
+            <div key={s.n} className="rounded-card bg-white p-5 shadow-card ring-1 ring-navy/5">
+              <p className="text-xs font-black tracking-[0.2em] text-sky-700">{s.n}</p>
+              <h3 className="mt-2 font-extrabold text-navy">{s.t}</h3>
+              <p className="mt-1 text-sm leading-relaxed text-navy/60">{s.d}</p>
+            </div>
           ))}
-        </ul>
+        </section>
       </div>
 
       {leaving && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-navy/50 p-4" role="dialog" aria-modal="true">
+        <div className="fixed inset-0 z-50 grid place-items-center bg-navy/55 p-4 backdrop-blur-sm" role="dialog" aria-modal="true">
           <div className="w-full max-w-md rounded-card bg-white p-6 shadow-card">
-            <h2 className="text-xl font-black text-navy">{m.results.leaving}</h2>
-            <p className="mt-2 text-sm leading-relaxed text-navy/70">{m.results.leavingBody}</p>
+            <div className="flex items-center gap-3">
+              {leaving.domain && (
+                <img src={partnerFavicon(leaving.domain)} alt="" className="h-10 w-10 rounded-xl ring-1 ring-navy/10" />
+              )}
+              <div>
+                <h2 className="text-xl font-black text-navy">{m.results.leaving}</h2>
+                <p className="text-sm font-semibold text-navy/50">{leavingName(leaving)}</p>
+              </div>
+            </div>
+            <p className="mt-3 text-sm leading-relaxed text-navy/70">{m.results.leavingBody}</p>
             <div className="mt-6 flex flex-wrap gap-2">
-              <button type="button" className="rounded-full bg-sky px-4 py-2.5 text-sm font-bold text-white" onClick={() => go(leaving)}>
+              <button type="button" className="btn-primary" onClick={() => go(leaving)}>
                 {m.results.continue.replace("{partner}", leavingName(leaving))}
               </button>
-              <button
-                type="button"
-                className="rounded-full border border-navy/15 px-4 py-2.5 text-sm font-bold text-navy"
-                onClick={() => setLeaving(null)}
-              >
+              <button type="button" className="btn-ghost" onClick={() => setLeaving(null)}>
                 {m.results.stay}
               </button>
             </div>
@@ -257,6 +354,101 @@ function ResultsInner() {
         </div>
       )}
     </div>
+  );
+}
+
+function PartnerResultCard({
+  offer,
+  locale,
+  money,
+  nights,
+  m,
+  onOpen,
+}: {
+  offer: LiveOffer;
+  locale: "en" | "fr";
+  money: (n: number) => string;
+  nights: number;
+  m: ReturnType<typeof useApp>["m"];
+  onOpen: () => void;
+}) {
+  const tagline = locale === "fr" ? offer.taglineFr || offer.tagline : offer.tagline;
+  const highlights = locale === "fr" ? offer.highlightsFr || offer.highlights : offer.highlights;
+  const hasRange = Boolean(offer.priceFromCad && offer.priceToCad);
+  return (
+    <article className="flex h-full flex-col overflow-hidden rounded-card bg-white shadow-card ring-1 ring-navy/5 transition hover:-translate-y-0.5 hover:shadow-lift">
+      <div className="flex items-start gap-4 p-5">
+        <span
+          className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl ring-1 ring-black/5"
+          style={{ background: offer.color || "#071840" }}
+        >
+          {offer.domain ? (
+            <img src={partnerFavicon(offer.domain)} alt="" className="h-8 w-8 rounded-md bg-white p-0.5" />
+          ) : (
+            <Sparkles className="h-6 w-6 text-white" />
+          )}
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <h3 className="truncate text-lg font-black text-navy">{offer.partner || offer.title}</h3>
+            {offer.featured && (
+              <span className="rounded-full bg-sky-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-sky-800">
+                {locale === "fr" ? "Suggéré" : "Featured"}
+              </span>
+            )}
+          </div>
+          <p className="mt-0.5 text-sm text-navy/55">{tagline || m.results.checkoutHint}</p>
+          {highlights && highlights.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {highlights.map((h) => (
+                <span key={h} className="rounded-full bg-mist px-2.5 py-1 text-[11px] font-bold text-navy/70">
+                  {h}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+      <div className="mt-auto flex items-end justify-between gap-3 border-t border-navy/5 px-5 py-4">
+        <div>
+          {hasRange ? (
+            <>
+              <p className="text-[11px] font-bold uppercase tracking-wide text-navy/40">{m.results.typicalRange}</p>
+              <p className="text-xl font-black text-navy">
+                {money(offer.priceFromCad || 0)}
+                <span className="text-navy/35"> – </span>
+                {money(offer.priceToCad || 0)}
+              </p>
+              <p className="text-[11px] text-navy/45">
+                {nights} {qKindUnit(offer, m)} · {m.results.rangeNote}
+              </p>
+            </>
+          ) : (
+            <p className="text-sm font-semibold text-navy/55">{m.results.checkoutHint}</p>
+          )}
+        </div>
+        <button type="button" onClick={onOpen} className="btn-primary shrink-0">
+          {m.results.viewOn.replace("{partner}", (offer.partner || offer.title).split(" ")[0])}
+          <ExternalLink className="h-4 w-4" />
+        </button>
+      </div>
+    </article>
+  );
+}
+
+function qKindUnit(offer: LiveOffer, m: ReturnType<typeof useApp>["m"]) {
+  if (offer.kind === "cars") return m.nav.cars.toLowerCase();
+  if (offer.kind === "stays") return m.nav.stays.toLowerCase();
+  return m.nav.flights.toLowerCase();
+}
+
+function SkeletonList() {
+  return (
+    <ul className="mt-5 space-y-3">
+      {[0, 1, 2].map((i) => (
+        <li key={i} className="h-28 animate-pulse rounded-card bg-white/80 ring-1 ring-navy/5" />
+      ))}
+    </ul>
   );
 }
 
