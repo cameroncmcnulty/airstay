@@ -11,25 +11,17 @@ import {
   MapPin,
   Plane,
   Moon,
-  Star,
-  UtensilsCrossed,
-  Waves,
-  Sparkles,
-  Baby,
-  Wine,
   Clock,
-  Hotel,
 } from "lucide-react";
-import { paramsToQuery, buildPartnerOffers, cad, cadFr, type PartnerOffer } from "@/lib/deeplinks";
+import { paramsToQuery, cad, cadFr } from "@/lib/deeplinks";
 import { getAirport, getDestination } from "@/lib/airports";
 import { DEST_PHOTOS } from "@/lib/deals";
 import { useApp } from "@/context/AppContext";
 import { currentUser, updateUser } from "@/lib/auth";
 import type { LiveOffer } from "@/lib/live-search";
-import type { PackageOffer } from "@/lib/packages";
 import { nightsBetween } from "@/data/resorts";
 
-type Leaving = PartnerOffer | LiveOffer | PackageOffer;
+type Leaving = LiveOffer;
 
 export default function ResultsPage() {
   return (
@@ -42,14 +34,11 @@ export default function ResultsPage() {
 function ResultsInner() {
   const sp = useSearchParams();
   const q = useMemo(() => paramsToQuery(sp), [sp]);
-  const partners = useMemo(() => buildPartnerOffers(q), [q]);
   const { m, locale, refreshUser } = useApp();
   const [leaving, setLeaving] = useState<Leaving | null>(null);
   const [saved, setSaved] = useState(false);
   const [live, setLive] = useState<LiveOffer[]>([]);
-  const [packages, setPackages] = useState<PackageOffer[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<"all" | "family" | "adults" | "luxury">("all");
 
   const origin = q.from ? getAirport(q.from) : undefined;
   const dest = q.to ? getDestination(q.to) : undefined;
@@ -57,8 +46,9 @@ function ResultsInner() {
   const originName = origin ? `${locale === "fr" ? origin.cityFr : origin.city}` : q.from || "";
   const destPhoto = (q.to && DEST_PHOTOS[q.to]) || DEST_PHOTOS.CUN;
   const nights = nightsBetween(q.depart, q.returnDate);
-  const showPackages = q.kind === "packages" || q.kind === "stays";
-  const showFlights = q.kind === "flights" || q.kind === "packages";
+
+  const fares = live.filter((o) => o.priceCad && o.priceCad > 0);
+  const checkouts = live.filter((o) => !o.priceCad);
 
   useEffect(() => {
     let cancelled = false;
@@ -68,12 +58,9 @@ function ResultsInner() {
       .then((data) => {
         if (cancelled) return;
         setLive(Array.isArray(data.live) ? data.live : []);
-        setPackages(Array.isArray(data.packages) ? data.packages : []);
       })
       .catch(() => {
-        if (cancelled) return;
-        setLive([]);
-        setPackages([]);
+        if (!cancelled) setLive([]);
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -82,8 +69,6 @@ function ResultsInner() {
       cancelled = true;
     };
   }, [sp]);
-
-  const visiblePackages = packages.filter((p) => filter === "all" || p.vibe === filter);
 
   function save() {
     const u = currentUser();
@@ -108,27 +93,19 @@ function ResultsInner() {
 
   function go(offer: Leaving) {
     const u = currentUser();
-    const name = "partner" in offer ? offer.partner : "name" in offer ? offer.name : offer.title;
+    const name = offer.partner || offer.airlineName || offer.title;
     if (u) {
       updateUser(u.id, {
         clicks: [{ partner: name, url: offer.url, at: new Date().toISOString() }, ...u.clicks].slice(0, 30),
       });
       refreshUser();
     }
-    if (offer.url.startsWith("/")) {
-      window.location.href = offer.url;
-      return;
-    }
     window.open(offer.url, "_blank", "noopener,noreferrer");
     setLeaving(null);
   }
 
-  function openOffer(offer: Leaving) {
-    if (offer.url.startsWith("/")) {
-      window.location.href = offer.url;
-      return;
-    }
-    setLeaving(offer);
+  function leavingName(offer: Leaving) {
+    return offer.partner || offer.airlineName || offer.title;
   }
 
   function stopsLabel(n?: number) {
@@ -138,12 +115,6 @@ function ResultsInner() {
     return m.results.stopsPlural.replace("{n}", String(n));
   }
 
-  function leavingName(offer: Leaving) {
-    if ("partner" in offer) return offer.partner;
-    if ("name" in offer) return offer.name;
-    return offer.airlineName || offer.title;
-  }
-
   return (
     <div className="pb-16">
       <section className="relative overflow-hidden bg-navy">
@@ -151,7 +122,7 @@ function ResultsInner() {
         <div className="absolute inset-0 bg-gradient-to-r from-navy via-navy/85 to-navy/55" />
         <div className="relative mx-auto max-w-6xl px-4 py-8 text-white sm:py-10">
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-sky-200">
-            {q.kind === "packages" ? m.nav.packages : q.kind === "stays" ? m.nav.stays : q.kind === "cars" ? m.nav.cars : m.nav.flights}
+            {q.kind === "stays" ? m.nav.stays : q.kind === "cars" ? m.nav.cars : m.nav.flights}
           </p>
           <h1 className="mt-2 text-3xl font-black md:text-4xl">
             {q.kind === "stays" || q.kind === "cars" ? destName : `${originName} → ${destName}`}
@@ -168,7 +139,7 @@ function ResultsInner() {
               {q.adults} {m.search.adults}
               {q.children ? ` · ${q.children} ${m.search.children}` : ""}
             </MetaChip>
-            {q.from && q.kind !== "stays" && q.kind !== "cars" && <MetaChip icon={Plane}>{origin?.code || q.from}</MetaChip>}
+            {q.from && q.kind === "flights" && <MetaChip icon={Plane}>{origin?.code || q.from}</MetaChip>}
             {destName && <MetaChip icon={MapPin}>{destName}</MetaChip>}
           </div>
           <button
@@ -183,152 +154,16 @@ function ResultsInner() {
       </section>
 
       <div className="mx-auto max-w-6xl px-4">
-        {showPackages && (
+        {q.kind === "flights" && (
           <section className="mt-10">
-            <div className="flex flex-wrap items-end justify-between gap-3">
-              <div>
-                <h2 className="text-2xl font-extrabold text-navy">{m.results.packagesTitle}</h2>
-                <p className="mt-1 max-w-2xl text-sm text-navy/60">{m.results.packagesSub}</p>
-              </div>
-              {packages.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {(
-                    [
-                      ["all", m.results.allInclusive],
-                      ["family", m.results.family],
-                      ["adults", m.results.adultsOnly],
-                      ["luxury", m.results.luxury],
-                    ] as const
-                  ).map(([id, label]) => (
-                    <button
-                      key={id}
-                      type="button"
-                      onClick={() => setFilter(id)}
-                      className={`rounded-full px-3 py-1.5 text-xs font-bold ${
-                        filter === id ? "bg-navy text-white" : "bg-white text-navy ring-1 ring-navy/10"
-                      }`}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-            {loading && <p className="mt-6 text-sm font-semibold text-sky-800">{m.results.loadingPackages}</p>}
-            {!loading && packages.length === 0 && (
-              <p className="mt-6 rounded-2xl bg-mist px-4 py-3 text-sm text-navy/70">{m.results.noPackages}</p>
-            )}
-            <div className="mt-6 grid gap-6 md:grid-cols-2">
-              {visiblePackages.map((p) => (
-                <article key={p.id} className="overflow-hidden rounded-card bg-white shadow-card ring-1 ring-navy/5">
-                  <div className="relative h-56">
-                    <img
-                      src={p.image}
-                      alt={locale === "fr" ? p.imageAltFr : p.imageAlt}
-                      className="h-full w-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-navy/80 via-navy/20 to-transparent" />
-                    <span className="absolute left-3 top-3 rounded-full bg-sky px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-white">
-                      {/all inclusive/i.test(p.board) ? m.results.allInclusive : p.board || m.nav.stays}
-                    </span>
-                    <div className="absolute bottom-3 left-3 right-3 text-white">
-                      <div className="flex items-center gap-1 text-amber-300">
-                        {Array.from({ length: p.stars }).map((_, i) => (
-                          <Star key={i} className="h-3.5 w-3.5 fill-current" />
-                        ))}
-                      </div>
-                      <h3 className="mt-1 text-xl font-black">{p.name}</h3>
-                      <p className="flex items-center gap-1 text-sm text-white/80">
-                        <MapPin className="h-3.5 w-3.5" />
-                        {locale === "fr" ? p.areaFr : p.area}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="p-5">
-                    <p className="text-sm leading-relaxed text-navy/70">{locale === "fr" ? p.blurbFr : p.blurb}</p>
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {/all inclusive|board|breakfast/i.test(p.board) && (
-                        <Amenity icon={UtensilsCrossed} label={/all inclusive/i.test(p.board) ? m.results.allInclusive : p.board} />
-                      )}
-                      {p.amenities.includes("beach") && <Amenity icon={Waves} label={locale === "fr" ? "Plage" : "Beach"} />}
-                      {p.amenities.includes("pools") && <Amenity icon={Hotel} label={locale === "fr" ? "Piscines" : "Pools"} />}
-                      {p.amenities.includes("spa") && <Amenity icon={Sparkles} label="Spa" />}
-                      {p.amenities.includes("kids") && <Amenity icon={Baby} label={m.results.family} />}
-                      {p.amenities.includes("adults") && <Amenity icon={Wine} label={m.results.adultsOnly} />}
-                      <Amenity icon={Moon} label={m.results.nights.replace("{n}", String(p.nights))} />
-                    </div>
-                    <div className="mt-5 flex flex-wrap items-end justify-between gap-3">
-                      <div>
-                        {p.stayCad ? (
-                          <>
-                            <p className="text-xs font-semibold text-navy/45">
-                              {m.results.nights.replace("{n}", String(p.nights))}
-                              {p.board ? ` · ${p.board}` : ""}
-                            </p>
-                            <p className="text-2xl font-black text-navy">{locale === "fr" ? cadFr(p.stayCad) : cad(p.stayCad)}</p>
-                            {p.flightFromCad ? (
-                              <p className="text-xs font-semibold text-navy/50">
-                                {m.results.flightsFrom} {locale === "fr" ? cadFr(p.flightFromCad) : cad(p.flightFromCad)}
-                                {m.results.perPerson}
-                              </p>
-                            ) : null}
-                            {p.packageCad ? (
-                              <p className="text-xs font-bold text-sky-800">
-                                {m.results.packageTotal}: {locale === "fr" ? cadFr(p.packageCad) : cad(p.packageCad)}
-                              </p>
-                            ) : null}
-                          </>
-                        ) : p.flightFromCad ? (
-                          <>
-                            <p className="text-xs font-semibold text-navy/45">{m.results.flightsFrom}</p>
-                            <p className="text-2xl font-black text-navy">
-                              {locale === "fr" ? cadFr(p.flightFromCad) : cad(p.flightFromCad)}
-                              <span className="ml-1 text-sm font-semibold text-navy/50">{m.results.perPerson}</span>
-                            </p>
-                          </>
-                        ) : (
-                          <p className="text-sm font-bold text-navy">{m.results.seeLive}</p>
-                        )}
-                      </div>
-                      <div className="flex flex-wrap justify-end gap-2">
-                        {p.stayResultId && (
-                          <button
-                            type="button"
-                            onClick={() => openOffer(p)}
-                            className="inline-flex items-center gap-2 rounded-full bg-sky px-4 py-2.5 text-sm font-bold text-white shadow-lift"
-                          >
-                            {m.results.bookStay}
-                          </button>
-                        )}
-                        {p.flightsUrl && (
-                          <button
-                            type="button"
-                            onClick={() => setLeaving({ ...p, url: p.flightsUrl as string })}
-                            className="inline-flex items-center gap-2 rounded-full border border-navy/15 px-4 py-2.5 text-sm font-bold text-navy"
-                          >
-                            {m.results.liveFlights}
-                            <ExternalLink className="h-4 w-4" />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </article>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {showFlights && (
-          <section className="mt-12">
             <h2 className="text-2xl font-extrabold text-navy">{m.results.liveTitle}</h2>
             <p className="mt-1 text-sm text-navy/60">{m.results.liveSub}</p>
             {loading && <p className="mt-4 text-sm font-semibold text-sky-800">{m.results.loading}</p>}
-            {!loading && live.length === 0 && (
+            {!loading && fares.length === 0 && (
               <p className="mt-4 rounded-2xl bg-mist px-4 py-3 text-sm text-navy/70">{m.results.liveEmpty}</p>
             )}
             <ul className="mt-5 space-y-4">
-              {live.map((o) => (
+              {fares.map((o) => (
                 <li key={o.id} className="overflow-hidden rounded-card bg-white shadow-card ring-1 ring-navy/5 md:flex">
                   <div className="relative h-40 w-full shrink-0 md:h-auto md:w-56">
                     <img src={destPhoto} alt="" className="h-full w-full object-cover" />
@@ -340,9 +175,7 @@ function ResultsInner() {
                     <div>
                       <h3 className="text-lg font-black text-navy">{o.airlineName || o.title}</h3>
                       <div className="mt-2 flex flex-wrap gap-2">
-                        {o.flightNumber && (
-                          <Amenity icon={Plane} label={`${o.airline || ""}${o.flightNumber}`} />
-                        )}
+                        {o.flightNumber && <Amenity icon={Plane} label={`${o.airline || ""}${o.flightNumber}`} />}
                         {o.departAt && (
                           <Amenity
                             icon={CalendarDays}
@@ -361,7 +194,7 @@ function ResultsInner() {
                     <div className="flex items-center gap-4">
                       <div className="text-right">
                         <p className="text-xs font-semibold text-navy/45">{m.results.advertised}</p>
-                        <p className="text-2xl font-black text-navy">{locale === "fr" ? cadFr(o.priceCad) : cad(o.priceCad)}</p>
+                        <p className="text-2xl font-black text-navy">{locale === "fr" ? cadFr(o.priceCad || 0) : cad(o.priceCad || 0)}</p>
                         <p className="text-[11px] text-navy/45">{m.results.cadNote}</p>
                       </div>
                       <button
@@ -382,17 +215,18 @@ function ResultsInner() {
 
         <h2 className="mt-12 text-2xl font-extrabold text-navy">{m.results.partnersTitle}</h2>
         <p className="mt-2 rounded-2xl bg-sky-50 px-4 py-3 text-sm text-navy/75">{m.partners.note}</p>
+        {loading && q.kind !== "flights" && <p className="mt-4 text-sm font-semibold text-sky-800">{m.results.loading}</p>}
         <ul className="mt-4 grid gap-3 md:grid-cols-2">
-          {partners.map((o) => (
+          {checkouts.map((o) => (
             <li key={o.id} className="flex items-center justify-between gap-4 rounded-card bg-white p-5 shadow-card ring-1 ring-navy/5">
               <div>
-                <p className="text-lg font-black text-navy">{o.partner}</p>
-                <p className="text-sm text-navy/55">{locale === "fr" ? o.taglineFr : o.tagline}</p>
+                <p className="text-lg font-black text-navy">{o.partner || o.title}</p>
+                <p className="text-sm text-navy/55">{m.results.checkoutHint}</p>
               </div>
               <button
                 type="button"
                 onClick={() => setLeaving(o)}
-                className="inline-flex items-center gap-2 rounded-full bg-navy px-4 py-2.5 text-sm font-bold text-white"
+                className="inline-flex items-center gap-2 rounded-full bg-sky px-4 py-2.5 text-sm font-bold text-white"
               >
                 {m.results.seeLive}
                 <ExternalLink className="h-4 w-4" />
@@ -435,7 +269,7 @@ function MetaChip({ icon: Icon, children }: { icon: typeof CalendarDays; childre
   );
 }
 
-function Amenity({ icon: Icon, label }: { icon: typeof Star; label: string }) {
+function Amenity({ icon: Icon, label }: { icon: typeof Plane; label: string }) {
   return (
     <span className="inline-flex items-center gap-1 rounded-full bg-mist px-2.5 py-1 text-[11px] font-bold text-navy/80">
       <Icon className="h-3.5 w-3.5 text-sky" />

@@ -12,7 +12,7 @@ import { FEATURED_DESTINATIONS, getDestination } from "@/lib/airports";
 import { DEST_PHOTOS } from "@/lib/deals";
 import { defaultDepart, defaultReturn, queryToParams, type SearchKind } from "@/lib/deeplinks";
 
-const PARTNERS = ["Kayak", "Expedia", "Booking.com", "Airbnb", "Skyscanner", "Air Canada", "WestJet", "Sunwing"];
+const PARTNERS = ["Aviasales", "Booking.com", "Hotels.com", "Agoda", "Discover Cars", "Rentalcars.com"];
 
 export default function HomePage() {
   const { m, locale } = useApp();

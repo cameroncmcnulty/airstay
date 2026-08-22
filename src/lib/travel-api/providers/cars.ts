@@ -1,8 +1,8 @@
 import type { NormalizedOffer, SearchRequest } from "../types";
-import { buildPartnerOffers } from "@/lib/deeplinks";
+import { searchLive } from "@/lib/live-search";
 
 export async function searchCars(req: SearchRequest) {
-  const partners = buildPartnerOffers({
+  const live = await searchLive({
     kind: "cars",
     to: req.destination,
     toCity: req.destinationName,
@@ -10,15 +10,15 @@ export async function searchCars(req: SearchRequest) {
     returnDate: req.returnDate,
     adults: req.adults,
   });
-  const offers: NormalizedOffer[] = partners.map((p) => ({
-    id: `car-${p.id}`,
+  const offers: NormalizedOffer[] = live.map((o) => ({
+    id: o.id,
     type: "car",
-    supplier: p.partner.toLowerCase().replace(/\s+/g, "-"),
-    title: p.partner,
-    subtitle: p.tagline,
-    deepLink: p.url,
+    supplier: "travelpayouts",
+    title: o.partner || o.title,
+    subtitle: "Pickup dates from AIRSTAY",
+    deepLink: o.url,
     bookable: true,
-    details: { fulfillment: "supplier" },
+    details: { partner: o.partner },
   }));
-  return { offers, providers: ["deeplink"] };
+  return { offers, providers: offers.length ? ["travelpayouts"] : [] };
 }

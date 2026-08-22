@@ -94,7 +94,11 @@ export function SearchWidget({
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
-    if ((kind === "flights" || kind === "packages") && !fromCode) {
+    if (kind === "packages") {
+      router.push("/packages");
+      return;
+    }
+    if (kind === "flights" && !fromCode) {
       setError(m.results.noOrigin);
       return;
     }
@@ -156,6 +160,12 @@ export function SearchWidget({
       </div>
       )}
 
+      {kind === "packages" ? (
+        <div className={`${hideTabs ? "" : "mt-5"} rounded-2xl bg-mist px-4 py-5 text-center`}>
+          <p className="text-lg font-black text-navy">{m.comingSoon.title}</p>
+          <p className="mt-2 text-sm text-navy/65">{m.comingSoon.body}</p>
+        </div>
+      ) : (
       <form onSubmit={submit} className={`${hideTabs ? "space-y-4" : "mt-5 space-y-4"}`}>
         {kind === "flights" && (
           <div className="flex flex-wrap gap-2">
@@ -175,7 +185,7 @@ export function SearchWidget({
         )}
 
         <div className="grid gap-3 md:grid-cols-2">
-          {(kind === "flights" || kind === "packages") && (
+          {kind === "flights" && (
             <Field label={m.search.from} fieldRef={fromRef}>
               <input
                 value={from}
@@ -308,11 +318,12 @@ export function SearchWidget({
             </div>
           </div>
         )}
-        {(kind === "flights" || kind === "packages") && (
+        {kind === "flights" && (
           <p className="text-xs font-medium text-navy/50">{m.search.canadaOnly}</p>
         )}
         {error && <p className="text-sm font-semibold text-red-600">{error}</p>}
       </form>
+      )}
     </div>
   );
 

@@ -3,7 +3,7 @@ import { createHmac, timingSafeEqual } from "crypto";
 const COOKIE = "airstay_admin";
 
 function secret() {
-  return process.env.ADMIN_PASSWORD || process.env.DUFFEL_ACCESS_TOKEN || "airstay-admin-dev";
+  return process.env.ADMIN_PASSWORD || "airstay-admin-dev";
 }
 
 export function adminConfigured() {

@@ -3,14 +3,10 @@
 import { useApp } from "@/context/AppContext";
 
 const ENDPOINTS = [
-  { method: "GET", path: "/api/v1/health", desc: "Provider status and endpoint list" },
-  { method: "POST", path: "/api/v1/search/flights", desc: "Live CAD fares (Duffel, Travelpayouts fallback)" },
-  { method: "POST", path: "/api/v1/search/hotels", desc: "Live stay rates via Duffel Stays" },
-  { method: "POST", path: "/api/v1/search/cars", desc: "Normalized car-rental supplier search" },
-  { method: "POST", path: "/api/v1/search/packages", desc: "Dynamic flight + resort packages" },
-  { method: "POST", path: "/api/v1/bookings", desc: "Create a booking quote from an offer" },
-  { method: "GET", path: "/api/v1/bookings/{id}", desc: "Retrieve a booking" },
-  { method: "POST", path: "/api/v1/bookings/{id}/cancel", desc: "Cancel a booking quote" },
+  { method: "GET", path: "/api/v1/health", desc: "Provider status" },
+  { method: "POST", path: "/api/v1/search/flights", desc: "Live CAD fares via Travelpayouts, checkout on Aviasales" },
+  { method: "POST", path: "/api/v1/search/hotels", desc: "Stay search with dates on Booking.com, Hotels.com, Agoda" },
+  { method: "POST", path: "/api/v1/search/cars", desc: "Car search with dates on Discover Cars and Rentalcars.com" },
 ];
 
 export default function DevelopersPage() {
@@ -18,18 +14,17 @@ export default function DevelopersPage() {
   return (
     <article className="mx-auto max-w-3xl px-4 py-12">
       <p className="text-xs font-bold uppercase tracking-[0.2em] text-sky-700">AIRSTAY Travel API v1</p>
-      <h1 className="mt-2 text-3xl font-black text-navy">One API for flights, stays, cars and packages.</h1>
+      <h1 className="mt-2 text-3xl font-black text-navy">Travelpayouts search for flights, stays and cars.</h1>
       <p className="mt-4 text-navy/70">
         {locale === "fr"
-          ? "Même idée qu’un agrégateur type ReservationHub / TripGic : un JSON normalisé, des fournisseurs branchés derrière."
-          : "Same idea as ReservationHub / TripGic: one normalized JSON surface, suppliers behind it."}
+          ? "Prix de vols en $ CA via Travelpayouts. Les séjours et autos ouvrent le site partenaire avec vos dates."
+          : "Live CAD flight prices from Travelpayouts. Stays and cars open the partner site with your AIRSTAY dates already filled."}
       </p>
       <pre className="mt-6 overflow-auto rounded-2xl bg-navy p-4 text-xs text-sky-100">
-        {`POST /api/v1/search/packages
+        {`POST /api/v1/search/flights
 {
   "origin": "YYZ",
   "destination": "CUN",
-  "destinationName": "Cancun",
   "departDate": "2026-09-16",
   "returnDate": "2026-09-23",
   "adults": 2
@@ -46,9 +41,8 @@ export default function DevelopersPage() {
         ))}
       </ul>
       <p className="mt-8 text-sm text-navy/60">
-        Live stays and bookable fares use Duffel. Set <code>DUFFEL_ACCESS_TOKEN</code> (test token from the Duffel
-        dashboard). Flight tickets still complete on the airline/Aviasales checkout with your AIRSTAY dates. AIRSTAY is
-        a connectivity layer, not a TICO travel agency.
+        Bookings complete on the Travelpayouts partner site (Aviasales, Booking.com, Discover Cars, and similar). AIRSTAY
+        is a connectivity layer, not a TICO travel agency. Vacation packages are coming soon.
       </p>
     </article>
   );

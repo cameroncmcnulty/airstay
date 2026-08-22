@@ -4,7 +4,6 @@ import { getOffer, putBooking, putOffers, logSearch } from "./store";
 import { searchFlights } from "./providers/flights";
 import { searchHotels } from "./providers/hotels";
 import { searchCars } from "./providers/cars";
-import { searchPackages } from "./providers/packages";
 
 export async function runSearch(req: SearchRequest): Promise<SearchResponse> {
   const started = Date.now();
@@ -24,9 +23,7 @@ export async function runSearch(req: SearchRequest): Promise<SearchResponse> {
     offers = r.offers;
     r.providers.forEach((p) => providers.add(p));
   } else {
-    const r = await searchPackages(req);
-    offers = r.offers;
-    r.providers.forEach((p) => providers.add(p));
+    offers = [];
   }
 
   putOffers(offers);
@@ -81,9 +78,7 @@ export function createBooking(input: {
     total: offer.price,
     confirmationUrl: offer.deepLink,
     notes:
-      offer.supplier === "duffel"
-        ? "Complete this stay on /book with the Duffel quote. Flights use the Aviasales checkout with the same AIRSTAY dates."
-        : "AIRSTAY is a comparison and connectivity layer, not a travel agency. This record holds your quote. The supplier completes the reservation on their site.",
+      "AIRSTAY is a comparison layer. Complete the booking on the Travelpayouts partner site with the same dates from this search.",
   });
   return { success: true as const, data: booking };
 }

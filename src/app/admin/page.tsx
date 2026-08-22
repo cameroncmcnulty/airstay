@@ -15,8 +15,8 @@ import {
 
 type Overview = {
   generatedAt: string;
-  providers: { duffel: boolean; travelpayouts: boolean };
-  env: { duffel: boolean; travelpayoutsToken: boolean; travelpayoutsMarker: string; adminPassword: boolean };
+  providers: { travelpayouts: boolean };
+  env: { travelpayoutsToken: boolean; travelpayoutsMarker: string; adminPassword: boolean };
   stats: { searches: number; bookings: number; offers: number };
   searches: Array<{
     id: string;
@@ -41,8 +41,7 @@ type Ping = {
   ok: boolean;
   elapsedMs?: number;
   error?: string;
-  stays?: { count: number; sample: Array<{ name: string; stayCad: number }>; error: string | null };
-  flights?: { count: number; sample: Array<{ name?: string; priceCad: number }>; error: string | null };
+  flights?: { count: number; sample: Array<{ name?: string; priceCad?: number }>; error: string | null };
 };
 
 export default function AdminPage() {
@@ -136,7 +135,7 @@ export default function AdminPage() {
     );
   }
 
-  const duffelOn = Boolean(data?.providers.duffel);
+  const tpOn = Boolean(data?.providers.travelpayouts);
 
   return (
     <div className="relative z-10 min-h-screen bg-[#071428] text-white">
@@ -165,27 +164,17 @@ export default function AdminPage() {
 
       <div className="mx-auto max-w-6xl space-y-6 px-4 py-8">
         <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <Stat icon={Shield} label="Duffel" value={duffelOn ? "Live" : "Token missing"} ok={duffelOn} />
-          <Stat icon={Plane} label="Travelpayouts" value="Live" ok />
+          <Stat icon={Shield} label="Travelpayouts" value={tpOn ? "Live" : "Off"} ok={tpOn} />
+          <Stat icon={Plane} label="Marker" value={data?.env.travelpayoutsMarker || "564250"} ok />
           <Stat icon={Activity} label="Searches (this instance)" value={String(data?.stats.searches ?? 0)} />
           <Stat icon={Hotel} label="Bookings (this instance)" value={String(data?.stats.bookings ?? 0)} />
         </section>
-
-        {!duffelOn && (
-          <div className="flex gap-3 rounded-2xl bg-amber-400/15 px-4 py-3 text-sm text-amber-100 ring-1 ring-amber-300/30">
-            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-            <p>
-              Duffel is enabled in their dashboard, but <code className="font-mono">DUFFEL_ACCESS_TOKEN</code> is not on
-              Vercel yet. Add the test token there (Production + Preview), then ping below.
-            </p>
-          </div>
-        )}
 
         <section className="rounded-3xl bg-white/5 p-5 ring-1 ring-white/10">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 className="text-lg font-black">Provider ping</h2>
-              <p className="text-sm text-white/60">Runs YYZ → CUN stays + flights through Duffel with the live token.</p>
+              <p className="text-sm text-white/60">Runs YYZ → CUN through Travelpayouts cheap/week/calendar fares.</p>
             </div>
             <button
               type="button"
@@ -193,12 +182,11 @@ export default function AdminPage() {
               disabled={busy}
               className="rounded-full bg-sky px-4 py-2 text-sm font-bold disabled:opacity-60"
             >
-              {busy ? "Pinging…" : "Ping Duffel"}
+              {busy ? "Pinging…" : "Ping Travelpayouts"}
             </button>
           </div>
           {ping && (
             <div className="mt-4 grid gap-3 md:grid-cols-2">
-              <PingCard title="Stays" count={ping.stays?.count} error={ping.stays?.error || ping.error} sample={ping.stays?.sample?.map((s) => `${s.name} · $${s.stayCad}`)} />
               <PingCard title="Flights" count={ping.flights?.count} error={ping.flights?.error || ping.error} sample={ping.flights?.sample?.map((s) => `${s.name || "Fare"} · $${s.priceCad}`)} />
             </div>
           )}

@@ -1,6 +1,6 @@
 # AIRSTAY
 
-Canada-outbound travel metasearch. Compare **Flights**, **Stays**, **Cars** and **Packages** from Canadian airports. Stays book on AIRSTAY through Duffel with your search details; flights complete on the airline/Aviasales checkout.
+Canada-outbound travel metasearch. Compare **Flights**, **Stays** and **Cars** from Canadian airports, then book on Travelpayouts partner sites with your dates already filled. Packages are coming soon.
 
 ## Product
 
@@ -27,30 +27,19 @@ ReservationHub-style unified API under `/api/v1`:
 - `POST /api/v1/search/flights`
 - `POST /api/v1/search/hotels`
 - `POST /api/v1/search/cars`
-- `POST /api/v1/search/packages`
-- `POST /api/v1/bookings`
-- `GET /api/v1/bookings/{id}`
-- `POST /api/v1/bookings/{id}/cancel`
 - `GET /api/v1/health`
 
 Docs: `/developers`
 
-Live stays and bookable flight prices use Duffel. Travelpayouts supplies the Aviasales checkout link so flights keep your AIRSTAY dates.
+Live CAD flight fares come from the Travelpayouts Data API. Book on Aviasales (`marker=564250`) with the same origin, dates, cabin and passenger count. Stays open Booking.com / Hotels.com / Agoda. Cars open Discover Cars / Rentalcars.com. Vacation packages are coming soon.
 
 Staff dashboard: `/admin` (set `ADMIN_PASSWORD`).
 
 ## Live fares
 
-AIRSTAY does **not** scrape Kayak, Expedia, or Booking.com. That would break their terms and produce stale prices.
+AIRSTAY does **not** scrape Kayak, Expedia, or Booking.com.
 
-Package and stay prices come from Duffel Stays (`POST /stays/search`). Book on `/book` using Duffel quote + booking so the dates, guests and hotel from AIRSTAY are the ones reserved.
-
-Flight results use Duffel offer requests when a token is set, with Travelpayouts / Aviasales as the ticket checkout (`marker=564250`).
-
-Copy `.env.example` to `.env.local` and set:
-
-- `DUFFEL_ACCESS_TOKEN` — test token from [Duffel Dashboard → Developers → Access tokens](https://app.duffel.com). Request Duffel Stays access first.
-- `TRAVELPAYOUTS_TOKEN` — optional, from [Travelpayouts → Profile → API token](https://www.travelpayouts.com/programs/100/tools/api).
+Copy `.env.example` to `.env.local` and set `TRAVELPAYOUTS_TOKEN` from [Travelpayouts → Profile → API token](https://www.travelpayouts.com/programs/100/tools/api). Marker `564250` is already set.
 
 ## Develop
 

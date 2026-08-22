@@ -1,16 +1,17 @@
 import type { SearchQuery } from "@/lib/deeplinks";
 import { searchCodes } from "@/lib/iata-cities";
-import { duffelConfigured, searchFlights as searchDuffelFlights } from "@/lib/duffel";
+import { getDestination } from "@/lib/airports";
 
 export type LiveOffer = {
   id: string;
-  source: "travelpayouts" | "duffel";
+  source: "travelpayouts";
   kind: SearchQuery["kind"];
   title: string;
+  partner?: string;
   airline?: string;
   airlineName?: string;
   flightNumber?: string;
-  priceCad: number;
+  priceCad?: number;
   stops?: number;
   departAt?: string;
   returnAt?: string;
@@ -47,17 +48,181 @@ function aviaStamp(iso?: string) {
   return `${d}${m}`;
 }
 
-function bookingUrl(origin: string, dest: string, depart?: string, ret?: string, adults = 1) {
-  const path = `${origin}${aviaStamp(depart)}${dest}${aviaStamp(ret)}${Math.max(1, adults)}`;
-  return `https://www.aviasales.com/search/${path}?marker=${MARKER}&currency=cad&locale=en`;
+function tripClass(cabin?: SearchQuery["cabin"]) {
+  if (cabin === "business") return "1";
+  if (cabin === "first") return "2";
+  return "0";
 }
 
-export function aviasalesUrl(q: Pick<SearchQuery, "from" | "to" | "depart" | "returnDate" | "adults" | "trip">) {
+export function aviasalesUrl(q: SearchQuery) {
   if (!q.from || !q.to || !q.depart) return undefined;
   const origin = searchCodes(q.from)[0];
   const dest = searchCodes(q.to)[0];
-  const ret = q.trip === "oneway" ? undefined : q.returnDate;
-  return bookingUrl(origin, dest, q.depart, ret, q.adults || 1);
+  const adults = Math.max(1, q.adults || 1);
+  const children = q.children || 0;
+  const path =
+    q.trip === "oneway" || !q.returnDate
+      ? `${origin}${aviaStamp(q.depart)}${dest}${adults}`
+      : `${origin}${aviaStamp(q.depart)}${dest}${aviaStamp(q.returnDate)}${adults}`;
+  const params = new URLSearchParams({
+    marker: MARKER,
+    currency: "cad",
+    locale: "en",
+    adults: String(adults),
+    children: String(children),
+    infants: "0",
+    trip_class: tripClass(q.cabin),
+    utm_source: "airstay",
+  });
+  return `https://www.aviasales.com/search/${path}?${params.toString()}`;
+}
+
+function bookingHotelsUrl(q: SearchQuery) {
+  const dest = getDestination(q.to || "") ;
+  const ss = dest?.city || q.toCity || q.to || "";
+  const adults = String(q.adults || 2);
+  const children = q.children || 0;
+  const rooms = String(q.rooms || 1);
+  const params = new URLSearchParams({
+    ss,
+    checkin: q.depart || "",
+    checkout: q.returnDate || "",
+    group_adults: adults,
+    group_children: String(children),
+    no_rooms: rooms,
+    selected_currency: "CAD",
+    lang: "en-ca",
+  });
+  for (const age of q.childAges || []) params.append("age", String(age));
+  return `https://www.booking.com/searchresults.html?${params.toString()}`;
+}
+
+function hotelsComUrl(q: SearchQuery) {
+  const dest = getDestination(q.to || "");
+  const city = dest?.city || q.toCity || q.to || "";
+  const params = new URLSearchParams({
+    destination: city,
+    startDate: q.depart || "",
+    endDate: q.returnDate || "",
+    d1: q.depart || "",
+    d2: q.returnDate || "",
+    adults: String(q.adults || 2),
+    rooms: String(q.rooms || 1),
+  });
+  return `https://www.hotels.com/Hotel-Search?${params.toString()}`;
+}
+
+function agodaUrl(q: SearchQuery) {
+  const dest = getDestination(q.to || "");
+  const city = dest?.city || q.toCity || q.to || "";
+  const params = new URLSearchParams({
+    text: city,
+    checkIn: q.depart || "",
+    checkOut: q.returnDate || "",
+    rooms: String(q.rooms || 1),
+    adults: String(q.adults || 2),
+    children: String(q.children || 0),
+    currency: "CAD",
+    locale: "en-ca",
+  });
+  return `https://www.agoda.com/search?${params.toString()}`;
+}
+
+function discoverCarsUrl(q: SearchQuery) {
+  const dest = getDestination(q.to || "");
+  const pickup = dest?.city || q.toCity || q.to || "";
+  const params = new URLSearchParams({
+    pickup,
+    dropoff: pickup,
+    from: `${q.depart || ""}T10:00`,
+    to: `${q.returnDate || q.depart || ""}T10:00`,
+  });
+  return `https://www.discovercars.com/en-ca/search?${params.toString()}`;
+}
+
+function rentalcarsUrl(q: SearchQuery) {
+  const dest = getDestination(q.to || "");
+  const pickup = dest?.city || q.toCity || q.to || "";
+  const params = new URLSearchParams({
+    pickupLocationName: pickup,
+    dropLocationName: pickup,
+    pickupDateTime: `${q.depart || ""}T10:00`,
+    dropDateTime: `${q.returnDate || q.depart || ""}T10:00`,
+    driversAge: "30",
+  });
+  return `https://www.rentalcars.com/en-ca/search-results/?${params.toString()}`;
+}
+
+export function travelpayoutsCheckouts(q: SearchQuery): LiveOffer[] {
+  if (q.kind === "flights") {
+    const url = aviasalesUrl(q);
+    if (!url) return [];
+    return [
+      {
+        id: "tp-aviasales",
+        source: "travelpayouts",
+        kind: "flights",
+        title: "Aviasales",
+        partner: "Aviasales",
+        url,
+        live: true,
+      },
+    ];
+  }
+  if (q.kind === "stays") {
+    return [
+      {
+        id: "tp-booking",
+        source: "travelpayouts",
+        kind: "stays",
+        title: "Booking.com",
+        partner: "Booking.com",
+        url: bookingHotelsUrl(q),
+        live: true,
+      },
+      {
+        id: "tp-hotels",
+        source: "travelpayouts",
+        kind: "stays",
+        title: "Hotels.com",
+        partner: "Hotels.com",
+        url: hotelsComUrl(q),
+        live: true,
+      },
+      {
+        id: "tp-agoda",
+        source: "travelpayouts",
+        kind: "stays",
+        title: "Agoda",
+        partner: "Agoda",
+        url: agodaUrl(q),
+        live: true,
+      },
+    ];
+  }
+  if (q.kind === "cars") {
+    return [
+      {
+        id: "tp-discover",
+        source: "travelpayouts",
+        kind: "cars",
+        title: "Discover Cars",
+        partner: "Discover Cars",
+        url: discoverCarsUrl(q),
+        live: true,
+      },
+      {
+        id: "tp-rentalcars",
+        source: "travelpayouts",
+        kind: "cars",
+        title: "Rentalcars.com",
+        partner: "Rentalcars.com",
+        url: rentalcarsUrl(q),
+        live: true,
+      },
+    ];
+  }
+  return [];
 }
 
 async function tp(path: string) {
@@ -71,62 +236,31 @@ async function tp(path: string) {
 }
 
 export async function searchLive(q: SearchQuery): Promise<LiveOffer[]> {
-  if (q.kind !== "flights" && q.kind !== "packages") return [];
+  if (q.kind === "stays" || q.kind === "cars") return travelpayoutsCheckouts(q);
+  if (q.kind !== "flights") return [];
   const origins = searchCodes(q.from);
   const dests = searchCodes(q.to);
   const names = await airlines();
   const found: LiveOffer[] = [];
-  const book = aviasalesUrl(q) || "";
+  const adults = q.adults || 1;
 
-  const duffelTask = duffelConfigured() && q.from && q.to && q.depart
-    ? searchDuffelFlights(q)
-        .then((rows) =>
-          rows.map(
-            (f): LiveOffer => ({
-              id: f.offerId,
-              source: "duffel",
-              kind: "flights",
-              title: f.airlineName || "Live fare",
-              airline: f.airline,
-              airlineName: f.airlineName,
-              flightNumber: f.flightNumber,
-              priceCad: f.priceCad,
-              stops: f.stops,
-              departAt: f.departAt,
-              returnAt: f.returnAt,
-              durationMin: f.durationMin,
-              url: book,
-              live: true,
-            })
-          )
-        )
-        .catch(() => [] as LiveOffer[])
-    : Promise.resolve([] as LiveOffer[]);
-
-  const tpTask = (async () => {
-    const rows: LiveOffer[] = [];
-    for (const origin of origins) {
-      for (const dest of dests) {
-        const batch = await Promise.allSettled([
-          fetchWeek(origin, dest, q, names),
-          fetchCheap(origin, dest, q, names),
-          fetchCalendar(origin, dest, q, names),
-        ]);
-        for (const item of batch) {
-          if (item.status === "fulfilled") rows.push(...item.value);
-        }
+  for (const origin of origins) {
+    for (const dest of dests) {
+      const batch = await Promise.allSettled([
+        fetchWeek(origin, dest, q, names, adults),
+        fetchCheap(origin, dest, q, names, adults),
+        fetchCalendar(origin, dest, q, names, adults),
+      ]);
+      for (const item of batch) {
+        if (item.status === "fulfilled") found.push(...item.value);
       }
     }
-    return rows;
-  })();
-
-  const [duffelRows, tpRows] = await Promise.all([duffelTask, tpTask]);
-  found.push(...duffelRows, ...tpRows);
+  }
 
   const seen = new Set<string>();
-  return found
-    .filter((o) => o.priceCad > 0)
-    .sort((a, b) => a.priceCad - b.priceCad)
+  const fares = found
+    .filter((o) => (o.priceCad || 0) > 0)
+    .sort((a, b) => (a.priceCad || 0) - (b.priceCad || 0))
     .filter((o) => {
       const key = `${o.airline}-${o.priceCad}-${o.departAt?.slice(0, 10)}-${o.stops}`;
       if (seen.has(key)) return false;
@@ -134,9 +268,18 @@ export async function searchLive(q: SearchQuery): Promise<LiveOffer[]> {
       return true;
     })
     .slice(0, 12);
+
+  const checkout = travelpayoutsCheckouts(q);
+  return [...fares, ...checkout.filter((c) => !fares.some((f) => f.url === c.url))];
 }
 
-async function fetchWeek(origin: string, dest: string, q: SearchQuery, names: Map<string, string>) {
+async function fetchWeek(
+  origin: string,
+  dest: string,
+  q: SearchQuery,
+  names: Map<string, string>,
+  adults: number
+) {
   const params = new URLSearchParams({
     currency: "cad",
     origin,
@@ -159,11 +302,19 @@ async function fetchWeek(origin: string, dest: string, q: SearchQuery, names: Ma
       durationMin: row.duration != null ? Number(row.duration) : undefined,
       foundAt: String(row.found_at || ""),
       names,
+      adults,
+      q,
     })
   );
 }
 
-async function fetchCheap(origin: string, dest: string, q: SearchQuery, names: Map<string, string>) {
+async function fetchCheap(
+  origin: string,
+  dest: string,
+  q: SearchQuery,
+  names: Map<string, string>,
+  adults: number
+) {
   const month = (q.depart || "").slice(0, 7);
   const params = new URLSearchParams({
     origin,
@@ -194,6 +345,8 @@ async function fetchCheap(origin: string, dest: string, q: SearchQuery, names: M
           durationMin: row.duration != null ? Number(row.duration) : undefined,
           foundAt: String(row.expires_at || ""),
           names,
+          adults,
+          q,
         })
       );
     }
@@ -201,7 +354,13 @@ async function fetchCheap(origin: string, dest: string, q: SearchQuery, names: M
   return out;
 }
 
-async function fetchCalendar(origin: string, dest: string, q: SearchQuery, names: Map<string, string>) {
+async function fetchCalendar(
+  origin: string,
+  dest: string,
+  q: SearchQuery,
+  names: Map<string, string>,
+  adults: number
+) {
   const month = (q.depart || "").slice(0, 7);
   if (!month) return [];
   const params = new URLSearchParams({
@@ -230,6 +389,8 @@ async function fetchCalendar(origin: string, dest: string, q: SearchQuery, names
         departAt: String(r.departure_at || day),
         returnAt: String(r.return_at || q.returnDate || ""),
         names,
+        adults,
+        q,
       });
     });
 }
@@ -241,22 +402,37 @@ function toOffer(input: {
   price: number;
   stops?: number;
   airline?: string;
-  airlineName?: string;
   flightNumber?: string;
   departAt?: string;
   returnAt?: string;
   durationMin?: number;
   foundAt?: string;
   names: Map<string, string>;
+  adults: number;
+  q: SearchQuery;
 }): LiveOffer {
   const airline = input.airline || undefined;
   const depart = input.departAt?.slice(0, 10);
   const ret = input.returnAt?.slice(0, 10);
+  const path =
+    !ret || input.q.trip === "oneway"
+      ? `${input.origin}${aviaStamp(depart)}${input.dest}${input.adults}`
+      : `${input.origin}${aviaStamp(depart)}${input.dest}${aviaStamp(ret)}${input.adults}`;
+  const params = new URLSearchParams({
+    marker: MARKER,
+    currency: "cad",
+    locale: "en",
+    adults: String(input.adults),
+    children: String(input.q.children || 0),
+    trip_class: tripClass(input.q.cabin),
+    utm_source: "airstay",
+  });
   return {
     id: input.id,
     source: "travelpayouts",
     kind: "flights",
     title: airline ? `${input.names.get(airline) || airline}` : "Live fare",
+    partner: "Aviasales",
     airline,
     airlineName: airline ? input.names.get(airline) : undefined,
     flightNumber: input.flightNumber || undefined,
@@ -265,7 +441,7 @@ function toOffer(input: {
     departAt: input.departAt,
     returnAt: input.returnAt,
     durationMin: input.durationMin,
-    url: bookingUrl(input.origin, input.dest, depart, ret),
+    url: `https://www.aviasales.com/search/${path}?${params.toString()}`,
     foundAt: input.foundAt,
     live: true,
   };

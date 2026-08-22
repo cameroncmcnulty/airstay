@@ -15,26 +15,28 @@ export async function searchFlights(req: SearchRequest) {
     cabin: req.cabin,
     trip: req.trip,
   });
-  const offers: NormalizedOffer[] = live.map((o) => ({
-    id: o.id,
-    type: "flight",
-    supplier: o.source,
-    title: o.airlineName || o.title,
-    subtitle: [o.airline && o.flightNumber ? `${o.airline}${o.flightNumber}` : null, o.stops === 0 ? "Non-stop" : o.stops != null ? `${o.stops} stop(s)` : null]
-      .filter(Boolean)
-      .join(" · "),
-    price: { amount: o.priceCad, currency: "CAD", per: "person" },
-    deepLink: o.url,
-    bookable: true,
-    details: {
-      airline: o.airline,
-      flightNumber: o.flightNumber,
-      stops: o.stops,
-      departAt: o.departAt,
-      returnAt: o.returnAt,
-      durationMin: o.durationMin,
-    },
-  }));
-  const providers = [...new Set(live.map((o) => o.source))];
-  return { offers, providers };
+  const offers: NormalizedOffer[] = live
+    .filter((o) => o.priceCad)
+    .map((o) => ({
+      id: o.id,
+      type: "flight",
+      supplier: "travelpayouts",
+      title: o.airlineName || o.title,
+      subtitle: [o.airline && o.flightNumber ? `${o.airline}${o.flightNumber}` : null, o.stops === 0 ? "Non-stop" : o.stops != null ? `${o.stops} stop(s)` : null]
+        .filter(Boolean)
+        .join(" · "),
+      price: { amount: o.priceCad || 0, currency: "CAD", per: "person" },
+      deepLink: o.url,
+      bookable: true,
+      details: {
+        airline: o.airline,
+        flightNumber: o.flightNumber,
+        stops: o.stops,
+        departAt: o.departAt,
+        returnAt: o.returnAt,
+        durationMin: o.durationMin,
+        partner: o.partner,
+      },
+    }));
+  return { offers, providers: offers.length ? ["travelpayouts"] : [] };
 }
