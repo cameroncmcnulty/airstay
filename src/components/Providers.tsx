@@ -5,6 +5,7 @@ import { AppProvider } from "@/context/AppContext";
 import { Header } from "./Header";
 import { Footer } from "./Footer";
 import { CookieBanner } from "./CookieBanner";
+import { AriaChat } from "./AriaChat";
 import { useApp } from "@/context/AppContext";
 
 function Shell({ children }: { children: React.ReactNode }) {
@@ -19,11 +20,28 @@ function Shell({ children }: { children: React.ReactNode }) {
       >
         {m.skip}
       </a>
+      <SiteBanner />
       <Header />
       <main id="main">{children}</main>
       <Footer />
       <CookieBanner />
+      <AriaChat />
     </>
+  );
+}
+
+function SiteBanner() {
+  const { locale, settings } = useApp();
+  if (!settings) return null;
+  const copy =
+    locale === "fr" && settings.announceFr
+      ? settings.announceFr
+      : settings.banner;
+  if (!copy && !settings.maintenance) return null;
+  return (
+    <div className="relative z-30 bg-navy px-4 py-2 text-center text-sm font-semibold text-sky-100">
+      {settings.maintenance ? (locale === "fr" ? "On polit quelques détails — la recherche marche encore." : "We’re polishing a few things — search still works.") : copy}
+    </div>
   );
 }
 

@@ -4,19 +4,30 @@ import { useState } from "react";
 import { useApp } from "@/context/AppContext";
 
 export default function ContactPage() {
-  const { m } = useApp();
+  const { m, settings } = useApp();
   const [sent, setSent] = useState(false);
+  const inbox = settings?.contactEmail || "hello@airstay.ca";
 
   return (
     <div className="mx-auto max-w-lg px-4 py-12">
       <h1 className="text-3xl font-black text-navy">{m.contact.title}</h1>
       <p className="mt-2 text-sm text-navy/65">{m.contact.sub}</p>
       <p className="mt-3 text-sm font-semibold text-navy">
+        <a className="text-sky-700 underline" href={`mailto:${inbox}`}>
+          {inbox}
+        </a>
+      </p>
+      <p className="mt-1 text-sm font-semibold text-navy">
         {m.contact.privacyOfficer}:{" "}
         <a className="text-sky-700 underline" href="mailto:privacy@airstay.ca">
           privacy@airstay.ca
         </a>
       </p>
+      {settings?.supportHours && (
+        <p className="mt-1 text-sm text-navy/60">
+          {m.contact.hours}: {settings.supportHours}
+        </p>
+      )}
       {sent ? (
         <p className="mt-8 rounded-2xl bg-sky-50 p-4 text-sm text-navy/80">{m.contact.sent}</p>
       ) : (

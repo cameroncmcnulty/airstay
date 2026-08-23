@@ -14,6 +14,8 @@ import {
   Car,
   MousePointerClick,
   MapPin,
+  Users,
+  Settings,
 } from "lucide-react";
 
 type Mix = { flights: number; stays: number; cars: number };
@@ -53,6 +55,7 @@ type Overview = {
     adminUsername?: boolean;
     adminEmail?: string;
     mail?: boolean;
+    aria?: boolean;
   };
   stats: { searches: number; bookings: number; offers: number };
   analytics?: Analytics;
@@ -91,6 +94,31 @@ export default function AdminPage() {
   const [ping, setPing] = useState<Ping | null>(null);
   const [busy, setBusy] = useState(false);
   const [month, setMonth] = useState<string>("");
+  const [tab, setTab] = useState<"overview" | "users" | "settings">("overview");
+  const [users, setUsers] = useState<
+    Array<{
+      id: string;
+      name: string;
+      email: string;
+      province: string;
+      marketingConsent: boolean;
+      createdAt: string;
+      lastSeen: string;
+      disabled: boolean;
+      notes: string;
+    }>
+  >([]);
+  const [userQuery, setUserQuery] = useState("");
+  const [settings, setSettings] = useState({
+    chatEnabled: true,
+    maintenance: false,
+    banner: "",
+    contactEmail: "hello@airstay.ca",
+    supportHours: "Daily 8am–10pm ET",
+    defaultFrom: "YYZ",
+    announceFr: "",
+  });
+  const [savedMsg, setSavedMsg] = useState("");
 
   async function load(nextMonth?: string) {
     const q = nextMonth || month;
@@ -156,6 +184,68 @@ export default function AdminPage() {
     await fetch("/api/admin/logout", { method: "POST" });
     setAuthed(false);
     setData(null);
+  }
+
+  async function loadUsers() {
+    const res = await fetch("/api/admin/users", { cache: "no-store" });
+    const json = await res.json();
+    if (json.ok) setUsers(json.users || []);
+  }
+
+  async function loadSettings() {
+    const res = await fetch("/api/admin/settings", { cache: "no-store" });
+    const json = await res.json();
+    if (json.ok && json.settings) setSettings((s) => ({ ...s, ...json.settings }));
+  }
+
+  async function saveSettings() {
+    setBusy(true);
+    const res = await fetch("/api/admin/settings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(settings),
+    });
+    setBusy(false);
+    if (res.ok) setSavedMsg("Settings saved.");
+  }
+
+  async function patchUser(id: string, patch: Record<string, unknown>) {
+    await fetch("/api/admin/users", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, ...patch }),
+    });
+    await loadUsers();
+  }
+
+  async function deleteUser(id: string) {
+    if (!window.confirm("Delete this member from the admin list? They can still have a local browser account.")) return;
+    await fetch(`/api/admin/users?id=${encodeURIComponent(id)}`, { method: "DELETE" });
+    await loadUsers();
+  }
+
+  function exportUsers() {
+    const rows = [
+      ["name", "email", "province", "joined", "lastSeen", "status", "marketing", "notes"],
+      ...users.map((u) => [
+        u.name,
+        u.email,
+        u.province,
+        u.createdAt,
+        u.lastSeen,
+        u.disabled ? "disabled" : "active",
+        u.marketingConsent ? "yes" : "no",
+        u.notes.replace(/\n/g, " "),
+      ]),
+    ];
+    const csv = rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "airstay-members.csv";
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   async function runPing() {
@@ -291,6 +381,209 @@ export default function AdminPage() {
       </header>
 
       <div className="mx-auto max-w-6xl space-y-6 px-4 py-8">
+        <nav className="flex flex-wrap gap-2">
+          {(
+            [
+              { id: "overview" as const, label: "Overview", icon: Activity },
+              { id: "users" as const, label: "Members", icon: Users },
+              { id: "settings" as const, label: "Settings", icon: Settings },
+            ] as const
+          ).map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => {
+                setTab(item.id);
+                if (item.id === "users") loadUsers();
+                if (item.id === "settings") loadSettings();
+              }}
+              className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold ${
+                tab === item.id ? "bg-white text-navy" : "bg-white/10 text-white/80 hover:bg-white/15"
+              }`}
+            >
+              <item.icon className="h-4 w-4" />
+              {item.label}
+            </button>
+          ))}
+        </nav>
+
+        {tab === "users" && (
+          <section className="overflow-hidden rounded-3xl bg-white/5 ring-1 ring-white/10">
+            <div className="flex flex-wrap items-end justify-between gap-3 border-b border-white/10 px-5 py-4">
+              <div>
+                <h2 className="font-black">Member accounts</h2>
+                <p className="text-sm text-white/50">
+                  {users.length} {users.length === 1 ? "member" : "members"}. Disable blocks sign-in. Notes stay on this server.
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <input
+                  className="field w-56 bg-white text-navy"
+                  placeholder="Search name or email"
+                  value={userQuery}
+                  onChange={(e) => setUserQuery(e.target.value)}
+                />
+                <button type="button" onClick={exportUsers} className="rounded-full bg-white/10 px-3 py-2 text-xs font-bold">
+                  Export CSV
+                </button>
+              </div>
+            </div>
+            {users.length === 0 ? (
+              <p className="px-5 py-8 text-sm text-white/45">No members yet. New sign-ups appear here.</p>
+            ) : (
+              <div className="max-h-[640px] overflow-auto">
+                <table className="w-full text-left text-sm">
+                  <thead className="text-[11px] uppercase tracking-wide text-white/45">
+                    <tr>
+                      <th className="px-5 py-2">Member</th>
+                      <th className="px-2 py-2">Province</th>
+                      <th className="px-2 py-2">Joined</th>
+                      <th className="px-2 py-2">Last seen</th>
+                      <th className="px-2 py-2">Deals</th>
+                      <th className="px-2 py-2">Status</th>
+                      <th className="px-5 py-2"> </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {users
+                      .filter((u) => {
+                        const q = userQuery.trim().toLowerCase();
+                        if (!q) return true;
+                        return `${u.name} ${u.email} ${u.province}`.toLowerCase().includes(q);
+                      })
+                      .map((u) => (
+                      <tr key={u.id} className="border-t border-white/5 align-top">
+                        <td className="px-5 py-3">
+                          <p className="font-bold">{u.name}</p>
+                          <p className="text-white/50">{u.email}</p>
+                          <textarea
+                            className="mt-2 w-full rounded-xl bg-black/30 px-2 py-1.5 text-xs text-white/80 outline-none ring-1 ring-white/10"
+                            rows={2}
+                            defaultValue={u.notes}
+                            placeholder="Staff notes"
+                            onBlur={(e) => {
+                              if (e.target.value !== u.notes) patchUser(u.id, { notes: e.target.value });
+                            }}
+                          />
+                        </td>
+                        <td className="px-2 py-3">{u.province || "—"}</td>
+                        <td className="px-2 py-3 text-white/70">{new Date(u.createdAt).toLocaleDateString("en-CA")}</td>
+                        <td className="px-2 py-3 text-white/70">{new Date(u.lastSeen).toLocaleDateString("en-CA")}</td>
+                        <td className="px-2 py-3">{u.marketingConsent ? "On" : "Off"}</td>
+                        <td className="px-2 py-3">{u.disabled ? "Disabled" : "Active"}</td>
+                        <td className="px-5 py-3 text-right">
+                          <div className="flex flex-col items-end gap-1">
+                            <button
+                              type="button"
+                              className="rounded-full bg-white/10 px-3 py-1 text-xs font-bold"
+                              onClick={() => patchUser(u.id, { disabled: !u.disabled })}
+                            >
+                              {u.disabled ? "Enable" : "Disable"}
+                            </button>
+                            <button
+                              type="button"
+                              className="rounded-full px-3 py-1 text-xs font-bold text-rose-200 hover:bg-rose-500/20"
+                              onClick={() => deleteUser(u.id)}
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
+        )}
+
+        {tab === "settings" && (
+          <section className="rounded-3xl bg-white/5 p-5 ring-1 ring-white/10">
+            <h2 className="font-black">Website settings</h2>
+            <p className="text-sm text-white/50">Toggles and public copy that shape the live site.</p>
+            <div className="mt-6 grid gap-4 md:grid-cols-2">
+              <label className="flex items-center justify-between rounded-2xl bg-black/20 px-4 py-3 text-sm font-semibold">
+                Aria chat
+                <input
+                  type="checkbox"
+                  className="accent-sky h-4 w-4"
+                  checked={settings.chatEnabled}
+                  onChange={(e) => setSettings({ ...settings, chatEnabled: e.target.checked })}
+                />
+              </label>
+              <label className="flex items-center justify-between rounded-2xl bg-black/20 px-4 py-3 text-sm font-semibold">
+                Maintenance banner
+                <input
+                  type="checkbox"
+                  className="accent-sky h-4 w-4"
+                  checked={settings.maintenance}
+                  onChange={(e) => setSettings({ ...settings, maintenance: e.target.checked })}
+                />
+              </label>
+              <label className="block text-xs font-bold uppercase tracking-wide text-white/45 md:col-span-2">
+                Site banner (English)
+                <input
+                  className="field mt-1 bg-white text-navy"
+                  value={settings.banner}
+                  onChange={(e) => setSettings({ ...settings, banner: e.target.value })}
+                  placeholder="Optional note at the top of the site"
+                />
+              </label>
+              <label className="block text-xs font-bold uppercase tracking-wide text-white/45 md:col-span-2">
+                Site banner (French)
+                <input
+                  className="field mt-1 bg-white text-navy"
+                  value={settings.announceFr}
+                  onChange={(e) => setSettings({ ...settings, announceFr: e.target.value })}
+                  placeholder="Note facultative en haut du site"
+                />
+              </label>
+              <label className="block text-xs font-bold uppercase tracking-wide text-white/45">
+                Contact email
+                <input
+                  className="field mt-1 bg-white text-navy"
+                  value={settings.contactEmail}
+                  onChange={(e) => setSettings({ ...settings, contactEmail: e.target.value })}
+                />
+              </label>
+              <label className="block text-xs font-bold uppercase tracking-wide text-white/45">
+                Default from airport
+                <input
+                  className="field mt-1 bg-white text-navy"
+                  value={settings.defaultFrom}
+                  maxLength={3}
+                  onChange={(e) => setSettings({ ...settings, defaultFrom: e.target.value.toUpperCase() })}
+                />
+              </label>
+              <label className="block text-xs font-bold uppercase tracking-wide text-white/45 md:col-span-2">
+                Support hours
+                <input
+                  className="field mt-1 bg-white text-navy"
+                  value={settings.supportHours}
+                  onChange={(e) => setSettings({ ...settings, supportHours: e.target.value })}
+                />
+              </label>
+            </div>
+            <div className="mt-6 rounded-2xl bg-black/20 p-4 text-sm text-white/70">
+              <p className="font-bold text-white">Aria</p>
+              <p className="mt-1">
+                {data?.env.aria
+                  ? "Live AI is on (XAI_API_KEY). Aria streams answers with travel knowledge and web search."
+                  : "Fallback mode: add XAI_API_KEY on Vercel so Aria uses Grok. Until then she still answers from AIRSTAY’s travel notes."}
+              </p>
+            </div>
+            <div className="mt-5 flex items-center gap-3">
+              <button type="button" onClick={saveSettings} disabled={busy} className="rounded-full bg-sky px-5 py-2 text-sm font-bold disabled:opacity-60">
+                Save settings
+              </button>
+              {savedMsg && <p className="text-sm text-emerald-300">{savedMsg}</p>}
+            </div>
+          </section>
+        )}
+
+        {tab === "overview" && (
+          <>
         <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <Stat icon={Activity} label="Searches" value={String(a?.totals.searches ?? 0)} />
           <Stat icon={MousePointerClick} label="Partner click-throughs" value={String(a?.totals.outbounds ?? 0)} />
@@ -423,9 +716,10 @@ export default function AdminPage() {
 
         <p className="text-xs text-white/40">
           Last refresh {data?.generatedAt ? new Date(data.generatedAt).toLocaleString("en-CA") : "—"}. Charts count searches
-          and partner click-throughs (AIRSTAY does not complete the booking). Counts persist on this server when the
-          filesystem is writable; Vercel instances reset unless you add a database later.
+          and click-throughs. Counts persist when the filesystem is writable.
         </p>
+          </>
+        )}
       </div>
     </div>
   );

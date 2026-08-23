@@ -23,6 +23,7 @@ export async function GET(req: NextRequest) {
       adminUsername: Boolean(process.env.ADMIN_USERNAME),
       adminEmail: process.env.ADMIN_EMAIL || "airstaytravel@gmail.com",
       mail: Boolean(process.env.AGENTMAIL_API_KEY || process.env.RESEND_API_KEY),
+      aria: Boolean(process.env.XAI_API_KEY),
     },
     stats: stats(),
     analytics: analyticsSummary(month),

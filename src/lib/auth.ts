@@ -88,6 +88,17 @@ export async function createUser(input: {
   users.push(user);
   writeUsers(users);
   localStorage.setItem(SESSION_KEY, id);
+  fetch("/api/account/register", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      id,
+      name: user.name,
+      email: user.email,
+      province: user.province,
+      marketingConsent: user.marketingConsent,
+    }),
+  }).catch(() => undefined);
   return { ok: true, user: toPublic(user) };
 }
 
@@ -97,7 +108,25 @@ export async function signIn(email: string, password: string): Promise<PublicUse
   if (!user) return null;
   const hash = await hashPassword(password, user.id);
   if (hash !== user.passwordHash) return null;
+  try {
+    const status = await fetch(`/api/account/status?email=${encodeURIComponent(user.email)}`);
+    const json = await status.json();
+    if (json?.disabled) return null;
+  } catch {
+    /* offline */
+  }
   localStorage.setItem(SESSION_KEY, user.id);
+  fetch("/api/account/register", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      province: user.province,
+      marketingConsent: user.marketingConsent,
+    }),
+  }).catch(() => undefined);
   return toPublic(user);
 }
 

@@ -10,7 +10,7 @@ export default function StaysPage() {
   const { m } = useApp();
   return (
     <div className="pb-16">
-      <CategoryHero kicker={m.nav.stays} title={m.bubbles.stays} subtitle={m.bubbles.staysSub}>
+      <CategoryHero kicker={m.nav.stays} title={m.pages.staysTitle} subtitle={m.pages.staysSub}>
         <SearchWidget initialKind="stays" />
       </CategoryHero>
       <div className="mt-12 space-y-14 sm:mt-16 sm:space-y-20">

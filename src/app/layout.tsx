@@ -17,9 +17,9 @@ const jakarta = Plus_Jakarta_Sans({
   display: "swap",
 });
 
-const siteTitle = "AIRSTAY — Canada's choice to compare flights, hotels and car rentals";
+const siteTitle = "AIRSTAY — Canadian travel. No booking fees.";
 const siteDescription =
-  "Canada's choice to compare flights, hotels and car rentals. Search from Canadian airports, compare in CAD, then book on trusted partner sites.";
+  "Flights, hotels and cars from Canada — in CAD, with zero AIRSTAY booking fees. Made by Canadians, for Canadians.";
 
 export const metadata: Metadata = {
   title: {
@@ -40,7 +40,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: siteTitle,
-    description: "Canada's choice to compare flights, hotels and car rentals. Prices in CAD.",
+    description: "Canadian travel in CAD. No booking fees from AIRSTAY.",
     url: "https://airstay.ca",
     siteName: "AIRSTAY",
     locale: "en_CA",
@@ -59,7 +59,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: siteTitle,
-    description: "Canada's choice to compare flights, hotels and car rentals. Prices in CAD.",
+    description: "Canadian travel in CAD. No booking fees from AIRSTAY.",
     images: ["https://airstay.ca/og.jpg?v=4"],
   },
   other: {

@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { t, type Locale, type Messages } from "@/lib/i18n";
 import { currentUser, signOut as authSignOut, type PublicUser } from "@/lib/auth";
 import { readConsent, writeConsent, type ConsentState } from "@/lib/consent";
+import type { PublicSettings } from "@/lib/site-public";
 
 type AppContextValue = {
   locale: Locale;
@@ -15,6 +16,7 @@ type AppContextValue = {
   signOut: () => void;
   consent: ConsentState | null;
   setConsent: (c: { analytics: boolean; marketing: boolean }) => void;
+  settings: PublicSettings | null;
 };
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -24,6 +26,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<PublicUser | null>(null);
   const [ready, setReady] = useState(false);
   const [consent, setConsentState] = useState<ConsentState | null>(null);
+  const [settings, setSettings] = useState<PublicSettings | null>(null);
 
   useEffect(() => {
     const stored = localStorage.getItem("airstay.locale") as Locale | null;
@@ -31,6 +34,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setUser(currentUser());
     setConsentState(readConsent());
     setReady(true);
+    fetch("/api/settings")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d?.settings) setSettings(d.settings as PublicSettings);
+      })
+      .catch(() => undefined);
   }, []);
 
   const setLocale = (l: Locale) => {
@@ -49,8 +58,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   const value = useMemo(
-    () => ({ locale, setLocale, m: t[locale] as Messages, user, ready, refreshUser, signOut, consent, setConsent }),
-    [locale, user, ready, consent]
+    () => ({ locale, setLocale, m: t[locale] as Messages, user, ready, refreshUser, signOut, consent, setConsent, settings }),
+    [locale, user, ready, consent, settings]
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

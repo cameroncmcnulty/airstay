@@ -356,7 +356,9 @@ function ResultsInner() {
                 <p className="text-sm font-semibold text-navy/50">{leavingName(leaving)}</p>
               </div>
             </div>
-            <p className="mt-3 text-sm leading-relaxed text-navy/70">{m.results.leavingBody}</p>
+            <p className="mt-3 text-sm leading-relaxed text-navy/70">
+              {m.results.leavingBody.replace("{partner}", leavingName(leaving))}
+            </p>
             <div className="mt-6 flex flex-wrap gap-2">
               <button type="button" className="btn-primary" onClick={() => go(leaving)}>
                 {m.results.continue.replace("{partner}", leavingName(leaving))}

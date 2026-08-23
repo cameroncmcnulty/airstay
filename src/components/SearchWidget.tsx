@@ -41,7 +41,7 @@ export function SearchWidget({
   embedded?: boolean;
   initial?: SearchQuery;
 }) {
-  const { m, locale } = useApp();
+  const { m, locale, settings } = useApp();
   const router = useRouter();
   const [kindState, setKindState] = useState<SearchKind>(initial?.kind || initialKind);
   const kind = kindProp ?? kindState;
@@ -74,6 +74,18 @@ export function SearchWidget({
   const fromRef = useRef<HTMLLabelElement>(null);
   const toRef = useRef<HTMLLabelElement>(null);
   const calRef = useRef<HTMLDivElement>(null);
+  const seededFrom = useRef(Boolean(initial?.from));
+
+  useEffect(() => {
+    if (seededFrom.current || initial?.from) return;
+    const code = settings?.defaultFrom;
+    if (!code) return;
+    const ap = getAirport(code);
+    if (!ap) return;
+    seededFrom.current = true;
+    setFrom(`${locale === "fr" ? ap.cityFr : ap.city} (${ap.code})`);
+    setFromCode(ap.code);
+  }, [settings?.defaultFrom, initial?.from, locale]);
 
   const fromOpts = useMemo(() => searchCanadianAirports(from), [from]);
   const toOpts = useMemo(() => searchDestinations(to), [to]);
