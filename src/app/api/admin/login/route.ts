@@ -10,7 +10,7 @@ import {
   signOtpChallenge,
   usernameMatches,
 } from "@/lib/admin";
-import { sendAdminOtp } from "@/lib/mail";
+import { mailConfigured, sendAdminOtp } from "@/lib/mail";
 
 export const runtime = "nodejs";
 
@@ -27,25 +27,25 @@ export async function POST(req: NextRequest) {
   }
 
   const code = generateOtp();
-  try {
-    await sendAdminOtp(code);
-  } catch (err) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error:
-          err instanceof Error
-            ? `Could not send the login code: ${err.message}`
-            : "Could not send the login code email.",
-      },
-      { status: 502 }
-    );
+  let emailSent = false;
+  let mailError = "";
+  if (mailConfigured()) {
+    try {
+      await sendAdminOtp(code);
+      emailSent = true;
+    } catch (err) {
+      mailError = err instanceof Error ? err.message : "Could not send the login code email.";
+    }
+  } else {
+    mailError = "Email sending is not set up yet. Use your backup code to finish sign-in.";
   }
 
   const res = NextResponse.json({
     ok: true,
     needOtp: true,
+    emailSent,
     emailHint: maskEmail(adminEmail()),
+    mailError: emailSent ? undefined : mailError,
   });
   res.cookies.set(otpCookieName(), signOtpChallenge(code), otpCookieOpts);
   res.cookies.set(otpTriesCookieName(), "0", otpCookieOpts);

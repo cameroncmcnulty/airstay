@@ -13,6 +13,8 @@ export async function sendAdminOtp(code: string) {
     </div>
   `;
 
+  const errors: string[] = [];
+
   const resendKey = process.env.RESEND_API_KEY;
   if (resendKey) {
     const from = process.env.RESEND_FROM || "AIRSTAY Admin <onboarding@resend.dev>";
@@ -21,49 +23,38 @@ export async function sendAdminOtp(code: string) {
       headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({ from, to: [to], subject, html, text }),
     });
-    if (!res.ok) {
-      const body = await res.text();
-      throw new Error(`Resend failed: ${body.slice(0, 200)}`);
-    }
-    return { ok: true as const, via: "resend" };
+    if (res.ok) return { ok: true as const, via: "resend" };
+    errors.push(`Resend ${res.status}: ${(await res.text()).slice(0, 160)}`);
   }
 
   const smtpUser = process.env.SMTP_USER;
-  const smtpPass = process.env.SMTP_PASS;
+  const smtpPass = (process.env.SMTP_PASS || "").replace(/\s+/g, "");
   if (smtpUser && smtpPass) {
-    const nodemailer = await import("nodemailer");
-    const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || "smtp.gmail.com",
-      port: Number(process.env.SMTP_PORT || 587),
-      secure: false,
-      auth: { user: smtpUser, pass: smtpPass },
-    });
-    await transporter.sendMail({
-      from: `AIRSTAY Admin <${smtpUser}>`,
-      to,
-      subject,
-      text,
-      html,
-    });
-    return { ok: true as const, via: "smtp" };
+    try {
+      const nodemailer = await import("nodemailer");
+      const transporter = nodemailer.createTransport({
+        host: process.env.SMTP_HOST || "smtp.gmail.com",
+        port: Number(process.env.SMTP_PORT || 587),
+        secure: false,
+        auth: { user: smtpUser, pass: smtpPass },
+      });
+      await transporter.sendMail({
+        from: `AIRSTAY Admin <${smtpUser}>`,
+        to,
+        subject,
+        text,
+        html,
+      });
+      return { ok: true as const, via: "smtp" };
+    } catch (err) {
+      errors.push(err instanceof Error ? err.message : "SMTP failed");
+    }
   }
 
-  const res = await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(to)}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
-    body: JSON.stringify({
-      _subject: subject,
-      _template: "box",
-      _captcha: "false",
-      message: text,
-      login_code: code,
-    }),
-  });
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`Email send failed: ${body.slice(0, 200)}`);
-  }
-  return { ok: true as const, via: "formsubmit" };
+  throw new Error(
+    errors[0] ||
+      "Email is not configured. Add a Gmail App Password as SMTP_PASS, or a Resend API key as RESEND_API_KEY."
+  );
 }
 
 export function mailConfigured() {

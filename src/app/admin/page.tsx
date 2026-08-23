@@ -85,6 +85,7 @@ export default function AdminPage() {
   const [otp, setOtp] = useState("");
   const [needOtp, setNeedOtp] = useState(false);
   const [emailHint, setEmailHint] = useState("");
+  const [emailSent, setEmailSent] = useState(true);
   const [error, setError] = useState("");
   const [data, setData] = useState<Overview | null>(null);
   const [ping, setPing] = useState<Ping | null>(null);
@@ -146,7 +147,9 @@ export default function AdminPage() {
     }
     setPassword("");
     setNeedOtp(true);
+    setEmailSent(Boolean(json.emailSent));
     setEmailHint(json.emailHint || "airstaytravel@gmail.com");
+    if (!json.emailSent && json.mailError) setError(json.mailError);
   }
 
   async function logout() {
@@ -176,7 +179,9 @@ export default function AdminPage() {
           <h1 className="mt-2 text-2xl font-black text-navy">Admin sign in</h1>
           <p className="mt-1 text-sm text-navy/60">
             {needOtp
-              ? `We sent a 6-digit code to ${emailHint}.`
+              ? emailSent
+                ? `We sent a 6-digit code to ${emailHint}.`
+                : "Email is not sending yet. Enter your backup code to get in."
               : "Staff only. Username, password, then an email code."}
           </p>
           {!needOtp && (
@@ -206,14 +211,13 @@ export default function AdminPage() {
           )}
           {needOtp && (
             <label className="mt-5 block text-xs font-bold uppercase tracking-wide text-navy/50">
-              Email code
+              {emailSent ? "Email code or backup code" : "Backup code"}
               <input
-                className="field mt-1 tracking-[0.4em]"
-                inputMode="numeric"
+                className="field mt-1 tracking-wide"
                 autoComplete="one-time-code"
-                maxLength={6}
+                maxLength={24}
                 value={otp}
-                onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                onChange={(e) => setOtp(e.target.value.toUpperCase())}
                 required
               />
             </label>

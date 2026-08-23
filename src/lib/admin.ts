@@ -52,6 +52,19 @@ export function passwordMatches(input: string) {
   return safeEqual(input, expected);
 }
 
+function normalizeBackup(value: string) {
+  return value.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+}
+
+export function backupCodeMatches(input: string) {
+  const expected = process.env.ADMIN_BACKUP_CODE || "";
+  if (!expected) return false;
+  const a = normalizeBackup(input);
+  const b = normalizeBackup(expected);
+  if (!a || !b) return false;
+  return safeEqual(a, b);
+}
+
 export function signAdminToken() {
   const exp = Date.now() + 7 * 24 * 60 * 60 * 1000;
   const payload = `ok.${exp}`;
