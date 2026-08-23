@@ -13,7 +13,22 @@ export async function sendAdminOtp(code: string) {
     </div>
   `;
 
-  const errors: string[] = [];
+  const agentKey = process.env.AGENTMAIL_API_KEY;
+  const inbox = process.env.AGENTMAIL_INBOX || "airstay-admin@agentmail.to";
+  if (agentKey) {
+    const res = await fetch(`https://api.agentmail.to/v0/inboxes/${encodeURIComponent(inbox)}/messages/send`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${agentKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ to: [to], subject, text, html }),
+    });
+    if (!res.ok) {
+      throw new Error(`AgentMail ${res.status}: ${(await res.text()).slice(0, 200)}`);
+    }
+    return { ok: true as const, via: "agentmail" };
+  }
 
   const resendKey = process.env.RESEND_API_KEY;
   if (resendKey) {
@@ -23,40 +38,13 @@ export async function sendAdminOtp(code: string) {
       headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({ from, to: [to], subject, html, text }),
     });
-    if (res.ok) return { ok: true as const, via: "resend" };
-    errors.push(`Resend ${res.status}: ${(await res.text()).slice(0, 160)}`);
+    if (!res.ok) throw new Error(`Resend ${res.status}: ${(await res.text()).slice(0, 160)}`);
+    return { ok: true as const, via: "resend" };
   }
 
-  const smtpUser = process.env.SMTP_USER;
-  const smtpPass = (process.env.SMTP_PASS || "").replace(/\s+/g, "");
-  if (smtpUser && smtpPass) {
-    try {
-      const nodemailer = await import("nodemailer");
-      const transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST || "smtp.gmail.com",
-        port: Number(process.env.SMTP_PORT || 587),
-        secure: false,
-        auth: { user: smtpUser, pass: smtpPass },
-      });
-      await transporter.sendMail({
-        from: `AIRSTAY Admin <${smtpUser}>`,
-        to,
-        subject,
-        text,
-        html,
-      });
-      return { ok: true as const, via: "smtp" };
-    } catch (err) {
-      errors.push(err instanceof Error ? err.message : "SMTP failed");
-    }
-  }
-
-  throw new Error(
-    errors[0] ||
-      "Email is not configured. Add a Gmail App Password as SMTP_PASS, or a Resend API key as RESEND_API_KEY."
-  );
+  throw new Error("No outbound mail provider is configured.");
 }
 
 export function mailConfigured() {
-  return Boolean(process.env.RESEND_API_KEY || (process.env.SMTP_USER && process.env.SMTP_PASS));
+  return Boolean(process.env.AGENTMAIL_API_KEY || process.env.RESEND_API_KEY);
 }

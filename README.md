@@ -33,7 +33,7 @@ Docs: `/developers`
 
 Live CAD flight fares come from the Travelpayouts Data API. Book on Aviasales (`marker=564250`) with the same origin, dates, cabin and passenger count. Stays open Booking.com / Hotels.com / Agoda. Cars open Discover Cars / Rentalcars.com. Vacation packages are coming soon.
 
-Staff dashboard: `https://admin.airstay.ca` (username + password + email OTP). Set `ADMIN_USERNAME`, `ADMIN_PASSWORD`, `ADMIN_EMAIL`, and either `RESEND_API_KEY` or Gmail `SMTP_USER`/`SMTP_PASS`.
+Staff dashboard: `https://admin.airstay.ca` (username + password + email OTP to `ADMIN_EMAIL`). OTP is sent from a free AgentMail inbox (`AGENTMAIL_API_KEY` / `AGENTMAIL_INBOX`).
 
 ## Live fares
 
