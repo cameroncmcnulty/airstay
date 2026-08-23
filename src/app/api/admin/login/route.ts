@@ -1,23 +1,60 @@
 import { NextRequest, NextResponse } from "next/server";
-import { adminConfigured, cookieName, passwordMatches, signAdminToken } from "@/lib/admin";
+import {
+  adminConfigured,
+  adminEmail,
+  generateOtp,
+  otpCookieName,
+  otpCookieOpts,
+  otpTriesCookieName,
+  passwordMatches,
+  signOtpChallenge,
+  usernameMatches,
+} from "@/lib/admin";
+import { sendAdminOtp } from "@/lib/mail";
 
 export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
   if (!adminConfigured()) {
-    return NextResponse.json({ ok: false, error: "Set ADMIN_PASSWORD in the environment first." }, { status: 400 });
+    return NextResponse.json(
+      { ok: false, error: "Admin username and password are not set in the environment." },
+      { status: 400 }
+    );
   }
-  const body = (await req.json().catch(() => ({}))) as { password?: string };
-  if (!passwordMatches(body.password || "")) {
-    return NextResponse.json({ ok: false, error: "Wrong password." }, { status: 401 });
+  const body = (await req.json().catch(() => ({}))) as { username?: string; password?: string };
+  if (!usernameMatches(body.username || "") || !passwordMatches(body.password || "")) {
+    return NextResponse.json({ ok: false, error: "Wrong username or password." }, { status: 401 });
   }
-  const res = NextResponse.json({ ok: true });
-  res.cookies.set(cookieName(), signAdminToken(), {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    maxAge: 60 * 60 * 24 * 7,
+
+  const code = generateOtp();
+  try {
+    await sendAdminOtp(code);
+  } catch (err) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error:
+          err instanceof Error
+            ? `Could not send the login code: ${err.message}`
+            : "Could not send the login code email.",
+      },
+      { status: 502 }
+    );
+  }
+
+  const res = NextResponse.json({
+    ok: true,
+    needOtp: true,
+    emailHint: maskEmail(adminEmail()),
   });
+  res.cookies.set(otpCookieName(), signOtpChallenge(code), otpCookieOpts);
+  res.cookies.set(otpTriesCookieName(), "0", otpCookieOpts);
   return res;
+}
+
+function maskEmail(email: string) {
+  const [user, domain] = email.split("@");
+  if (!user || !domain) return email;
+  const shown = user.slice(0, 2);
+  return `${shown}${"•".repeat(Math.max(1, user.length - 2))}@${domain}`;
 }

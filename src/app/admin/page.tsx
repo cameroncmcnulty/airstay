@@ -46,7 +46,14 @@ type Analytics = {
 type Overview = {
   generatedAt: string;
   providers: { travelpayouts: boolean };
-  env: { travelpayoutsToken: boolean; travelpayoutsMarker: string; adminPassword: boolean };
+  env: {
+    travelpayoutsToken: boolean;
+    travelpayoutsMarker: string;
+    adminPassword: boolean;
+    adminUsername?: boolean;
+    adminEmail?: string;
+    mail?: boolean;
+  };
   stats: { searches: number; bookings: number; offers: number };
   analytics?: Analytics;
   searches: Array<{
@@ -73,7 +80,11 @@ const KIND_LABEL = { flights: "Flights", stays: "Hotels", cars: "Cars" };
 
 export default function AdminPage() {
   const [authed, setAuthed] = useState<boolean | null>(null);
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [otp, setOtp] = useState("");
+  const [needOtp, setNeedOtp] = useState(false);
+  const [emailHint, setEmailHint] = useState("");
   const [error, setError] = useState("");
   const [data, setData] = useState<Overview | null>(null);
   const [ping, setPing] = useState<Ping | null>(null);
@@ -105,10 +116,27 @@ export default function AdminPage() {
     e.preventDefault();
     setBusy(true);
     setError("");
+    if (needOtp) {
+      const res = await fetch("/api/admin/verify-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: otp }),
+      });
+      const json = await res.json();
+      setBusy(false);
+      if (!json.ok) {
+        setError(json.error || "That code is incorrect.");
+        return;
+      }
+      setOtp("");
+      setNeedOtp(false);
+      await load();
+      return;
+    }
     const res = await fetch("/api/admin/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ password }),
+      body: JSON.stringify({ username, password }),
     });
     const json = await res.json();
     setBusy(false);
@@ -117,7 +145,8 @@ export default function AdminPage() {
       return;
     }
     setPassword("");
-    await load();
+    setNeedOtp(true);
+    setEmailHint(json.emailHint || "airstaytravel@gmail.com");
   }
 
   async function logout() {
@@ -145,22 +174,67 @@ export default function AdminPage() {
         <form onSubmit={onLogin} className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-card">
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-sky-700">AIRSTAY</p>
           <h1 className="mt-2 text-2xl font-black text-navy">Admin sign in</h1>
-          <p className="mt-1 text-sm text-navy/60">Staff only. Uses ADMIN_PASSWORD from the server environment.</p>
-          <label className="mt-5 block text-xs font-bold uppercase tracking-wide text-navy/50">
-            Password
-            <input
-              className="field mt-1"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete="current-password"
-              required
-            />
-          </label>
+          <p className="mt-1 text-sm text-navy/60">
+            {needOtp
+              ? `We sent a 6-digit code to ${emailHint}.`
+              : "Staff only. Username, password, then an email code."}
+          </p>
+          {!needOtp && (
+            <label className="mt-5 block text-xs font-bold uppercase tracking-wide text-navy/50">
+              Username
+              <input
+                className="field mt-1"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                autoComplete="username"
+                required
+              />
+            </label>
+          )}
+          {!needOtp && (
+            <label className="mt-4 block text-xs font-bold uppercase tracking-wide text-navy/50">
+              Password
+              <input
+                className="field mt-1"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
+                required
+              />
+            </label>
+          )}
+          {needOtp && (
+            <label className="mt-5 block text-xs font-bold uppercase tracking-wide text-navy/50">
+              Email code
+              <input
+                className="field mt-1 tracking-[0.4em]"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength={6}
+                value={otp}
+                onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                required
+              />
+            </label>
+          )}
           {error && <p className="mt-3 text-sm font-semibold text-red-600">{error}</p>}
           <button disabled={busy} className="mt-5 w-full rounded-full bg-navy py-3 text-sm font-bold text-white disabled:opacity-60">
-            {busy ? "Checking…" : "Enter dashboard"}
+            {busy ? "Please wait…" : needOtp ? "Verify code" : "Send login code"}
           </button>
+          {needOtp && (
+            <button
+              type="button"
+              className="mt-3 w-full text-sm font-semibold text-navy/60"
+              onClick={() => {
+                setNeedOtp(false);
+                setOtp("");
+                setError("");
+              }}
+            >
+              Back to username and password
+            </button>
+          )}
         </form>
       </div>
     );
