@@ -111,6 +111,21 @@ function ResultsInner() {
       });
       refreshUser();
     }
+    fetch("/api/analytics", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        type: "outbound",
+        kind: q.kind,
+        origin: q.from,
+        destination: q.to,
+        destCity: destName,
+        destCountry: dest ? (locale === "fr" ? dest.countryFr : dest.country) : undefined,
+        partner: name,
+        depart: q.depart,
+        returnDate: q.returnDate,
+      }),
+    }).catch(() => undefined);
     window.open(offer.url, "_blank", "noopener,noreferrer");
     setLeaving(null);
   }

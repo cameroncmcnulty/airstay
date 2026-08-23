@@ -11,13 +11,44 @@ import {
   Database,
   AlertTriangle,
   CheckCircle2,
+  Car,
+  MousePointerClick,
+  MapPin,
 } from "lucide-react";
+
+type Mix = { flights: number; stays: number; cars: number };
+type DestRow = {
+  code: string;
+  city: string;
+  country: string;
+  total: number;
+  flights: number;
+  stays: number;
+  cars: number;
+};
+
+type Analytics = {
+  selectedMonth: string;
+  months: string[];
+  totals: { searches: number; outbounds: number; uniqueDests: number; topKind: string };
+  mixAll: Mix;
+  bookedAll: Mix;
+  byMonth: Array<{ month: string; searches: number; outbounds: number; mix: Mix; booked: Mix }>;
+  daily: Array<{ day: string; searches: number; outbounds: number }>;
+  topDestinationsMonth: DestRow[];
+  topDestinationsAll: DestRow[];
+  topBookedMonth: DestRow[];
+  topPartners: Array<{ name: string; count: number }>;
+  monthSearchCount: number;
+  monthOutboundCount: number;
+};
 
 type Overview = {
   generatedAt: string;
   providers: { travelpayouts: boolean };
   env: { travelpayoutsToken: boolean; travelpayoutsMarker: string; adminPassword: boolean };
   stats: { searches: number; bookings: number; offers: number };
+  analytics?: Analytics;
   searches: Array<{
     id: string;
     at: string;
@@ -28,13 +59,6 @@ type Overview = {
     results: number;
     source?: string;
   }>;
-  bookings: Array<{
-    id: string;
-    status: string;
-    createdAt: string;
-    contactEmail: string;
-    offer: { title: string; supplier: string };
-  }>;
 };
 
 type Ping = {
@@ -44,6 +68,9 @@ type Ping = {
   flights?: { count: number; sample: Array<{ name?: string; priceCad?: number }>; error: string | null };
 };
 
+const KIND_COLOR = { flights: "#4381C7", stays: "#7BB3E1", cars: "#071840" };
+const KIND_LABEL = { flights: "Flights", stays: "Hotels", cars: "Cars" };
+
 export default function AdminPage() {
   const [authed, setAuthed] = useState<boolean | null>(null);
   const [password, setPassword] = useState("");
@@ -51,9 +78,11 @@ export default function AdminPage() {
   const [data, setData] = useState<Overview | null>(null);
   const [ping, setPing] = useState<Ping | null>(null);
   const [busy, setBusy] = useState(false);
+  const [month, setMonth] = useState<string>("");
 
-  async function load() {
-    const res = await fetch("/api/admin/overview", { cache: "no-store" });
+  async function load(nextMonth?: string) {
+    const q = nextMonth || month;
+    const res = await fetch(`/api/admin/overview${q ? `?month=${q}` : ""}`, { cache: "no-store" });
     if (res.status === 401) {
       setAuthed(false);
       setData(null);
@@ -63,11 +92,13 @@ export default function AdminPage() {
     if (json.ok) {
       setAuthed(true);
       setData(json);
+      if (!month && json.analytics?.selectedMonth) setMonth(json.analytics.selectedMonth);
     } else setAuthed(false);
   }
 
   useEffect(() => {
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function onLogin(e: FormEvent) {
@@ -135,7 +166,9 @@ export default function AdminPage() {
     );
   }
 
+  const a = data?.analytics;
   const tpOn = Boolean(data?.providers.travelpayouts);
+  const topKind = a?.totals.topKind || "flights";
 
   return (
     <div className="relative z-10 min-h-screen bg-[#071428] text-white">
@@ -146,6 +179,23 @@ export default function AdminPage() {
             <h1 className="text-xl font-black">Admin dashboard</h1>
           </div>
           <div className="flex items-center gap-2">
+            <label className="hidden text-xs font-bold text-white/50 sm:block">
+              Month
+              <select
+                className="ml-2 rounded-full bg-white/10 px-3 py-2 text-xs font-bold text-white"
+                value={month}
+                onChange={(e) => {
+                  setMonth(e.target.value);
+                  load(e.target.value);
+                }}
+              >
+                {(a?.months || []).map((m) => (
+                  <option key={m} value={m} className="text-navy">
+                    {labelMonth(m)}
+                  </option>
+                ))}
+              </select>
+            </label>
             <button
               type="button"
               onClick={() => load()}
@@ -164,10 +214,73 @@ export default function AdminPage() {
 
       <div className="mx-auto max-w-6xl space-y-6 px-4 py-8">
         <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <Stat icon={Shield} label="Travelpayouts" value={tpOn ? "Live" : "Off"} ok={tpOn} />
-          <Stat icon={Plane} label="Marker" value={data?.env.travelpayoutsMarker || "564250"} ok />
-          <Stat icon={Activity} label="Searches (this instance)" value={String(data?.stats.searches ?? 0)} />
-          <Stat icon={Hotel} label="Bookings (this instance)" value={String(data?.stats.bookings ?? 0)} />
+          <Stat icon={Activity} label="Searches" value={String(a?.totals.searches ?? 0)} />
+          <Stat icon={MousePointerClick} label="Partner click-throughs" value={String(a?.totals.outbounds ?? 0)} />
+          <Stat icon={MapPin} label="Destinations searched" value={String(a?.totals.uniqueDests ?? 0)} />
+          <Stat
+            icon={topKind === "stays" ? Hotel : topKind === "cars" ? Car : Plane}
+            label="Most searched"
+            value={KIND_LABEL[topKind as keyof typeof KIND_LABEL] || "—"}
+            ok={tpOn}
+          />
+        </section>
+
+        <section className="grid gap-4 lg:grid-cols-3">
+          <div className="rounded-3xl bg-white/5 p-5 ring-1 ring-white/10 lg:col-span-2">
+            <h2 className="font-black">Searches by product · last 12 months</h2>
+            <p className="text-sm text-white/50">What people compare on AIRSTAY, so you can lean into demand.</p>
+            <StackedBars
+              rows={(a?.byMonth || []).map((row) => ({
+                label: row.month.slice(5),
+                flights: row.mix.flights,
+                stays: row.mix.stays,
+                cars: row.mix.cars,
+              }))}
+            />
+            <Legend />
+          </div>
+          <div className="rounded-3xl bg-white/5 p-5 ring-1 ring-white/10">
+            <h2 className="font-black">Click-through mix</h2>
+            <p className="text-sm text-white/50">Users who left for a partner checkout.</p>
+            <Donut mix={a?.bookedAll || { flights: 0, stays: 0, cars: 0 }} />
+          </div>
+        </section>
+
+        <section className="grid gap-4 lg:grid-cols-2">
+          <DestChart
+            title={`Top 10 destinations · ${labelMonth(a?.selectedMonth || month)}`}
+            subtitle="Most searched this month. Use this to feature deals and homepage tiles."
+            rows={a?.topDestinationsMonth || []}
+          />
+          <DestChart
+            title="Top destinations · all time"
+            subtitle="Running demand across this server’s recorded searches."
+            rows={a?.topDestinationsAll || []}
+          />
+        </section>
+
+        <section className="grid gap-4 lg:grid-cols-2">
+          <div className="rounded-3xl bg-white/5 p-5 ring-1 ring-white/10">
+            <h2 className="font-black">Last 30 days</h2>
+            <p className="text-sm text-white/50">Searches vs partner click-throughs.</p>
+            <Sparkline daily={a?.daily || []} />
+          </div>
+          <div className="rounded-3xl bg-white/5 p-5 ring-1 ring-white/10">
+            <h2 className="font-black">Partners people open</h2>
+            <p className="text-sm text-white/50">Click-throughs after “Continue to partner”.</p>
+            {(a?.topPartners || []).length === 0 ? (
+              <Empty>No partner clicks recorded yet.</Empty>
+            ) : (
+              <ul className="mt-4 space-y-2">
+                {(a?.topPartners || []).map((p) => (
+                  <li key={p.name} className="flex items-center justify-between text-sm">
+                    <span className="font-semibold">{p.name}</span>
+                    <span className="font-black text-sky-200">{p.count}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </section>
 
         <section className="rounded-3xl bg-white/5 p-5 ring-1 ring-white/10">
@@ -192,76 +305,58 @@ export default function AdminPage() {
           )}
         </section>
 
-        <section className="grid gap-4 lg:grid-cols-2">
-          <div className="overflow-hidden rounded-3xl bg-white/5 ring-1 ring-white/10">
-            <div className="flex items-center gap-2 border-b border-white/10 px-5 py-4">
-              <Database className="h-4 w-4 text-sky-300" />
-              <h2 className="font-black">Recent searches</h2>
-            </div>
-            <div className="max-h-[420px] overflow-auto">
-              <table className="w-full text-left text-sm">
-                <thead className="text-[11px] uppercase tracking-wide text-white/45">
-                  <tr>
-                    <th className="px-5 py-2">When</th>
-                    <th className="px-2 py-2">Kind</th>
-                    <th className="px-2 py-2">Route</th>
-                    <th className="px-5 py-2">Hits</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(data?.searches || []).length === 0 && (
-                    <tr>
-                      <td colSpan={4} className="px-5 py-6 text-white/45">
-                        No searches on this server instance yet.
-                      </td>
-                    </tr>
-                  )}
-                  {(data?.searches || []).map((s) => (
-                    <tr key={s.id} className="border-t border-white/5">
-                      <td className="whitespace-nowrap px-5 py-2 text-white/70">{new Date(s.at).toLocaleString("en-CA")}</td>
-                      <td className="px-2 py-2 font-semibold">{s.kind}</td>
-                      <td className="px-2 py-2">
-                        {s.origin || "—"} → {s.destination || "—"}
-                      </td>
-                      <td className="px-5 py-2">{s.results}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+        <section className="overflow-hidden rounded-3xl bg-white/5 ring-1 ring-white/10">
+          <div className="flex items-center gap-2 border-b border-white/10 px-5 py-4">
+            <Database className="h-4 w-4 text-sky-300" />
+            <h2 className="font-black">Recent searches</h2>
           </div>
-
-          <div className="overflow-hidden rounded-3xl bg-white/5 ring-1 ring-white/10">
-            <div className="flex items-center gap-2 border-b border-white/10 px-5 py-4">
-              <Hotel className="h-4 w-4 text-sky-300" />
-              <h2 className="font-black">Stay bookings</h2>
-            </div>
-            <div className="max-h-[420px] overflow-auto">
-              {(data?.bookings || []).length === 0 ? (
-                <p className="px-5 py-6 text-sm text-white/45">No Duffel stay bookings on this instance yet.</p>
-              ) : (
-                <ul className="divide-y divide-white/5 text-sm">
-                  {(data?.bookings || []).map((b) => (
-                    <li key={b.id} className="px-5 py-3">
-                      <p className="font-bold">{b.offer.title}</p>
-                      <p className="text-white/55">
-                        {b.id} · {b.status} · {b.contactEmail}
-                      </p>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
+          <div className="max-h-[420px] overflow-auto">
+            <table className="w-full text-left text-sm">
+              <thead className="text-[11px] uppercase tracking-wide text-white/45">
+                <tr>
+                  <th className="px-5 py-2">When</th>
+                  <th className="px-2 py-2">Kind</th>
+                  <th className="px-2 py-2">Route</th>
+                  <th className="px-5 py-2">Hits</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(data?.searches || []).length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="px-5 py-6 text-white/45">
+                      No searches on this server instance yet. They appear here as soon as people search.
+                    </td>
+                  </tr>
+                )}
+                {(data?.searches || []).map((s) => (
+                  <tr key={s.id} className="border-t border-white/5">
+                    <td className="whitespace-nowrap px-5 py-2 text-white/70">{new Date(s.at).toLocaleString("en-CA")}</td>
+                    <td className="px-2 py-2 font-semibold">{s.kind}</td>
+                    <td className="px-2 py-2">
+                      {s.origin || "—"} → {s.destination || "—"}
+                    </td>
+                    <td className="px-5 py-2">{s.results}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </section>
 
         <p className="text-xs text-white/40">
-          Last refresh {data?.generatedAt ? new Date(data.generatedAt).toLocaleString("en-CA") : "—"}. Search and booking
-          counts are per serverless instance until a database is added.
+          Last refresh {data?.generatedAt ? new Date(data.generatedAt).toLocaleString("en-CA") : "—"}. Charts count searches
+          and partner click-throughs (AIRSTAY does not complete the booking). Counts persist on this server when the
+          filesystem is writable; Vercel instances reset unless you add a database later.
         </p>
       </div>
     </div>
   );
+}
+
+function labelMonth(ym?: string) {
+  if (!ym) return "—";
+  const [y, m] = ym.split("-").map(Number);
+  return new Date(y, (m || 1) - 1, 1).toLocaleDateString("en-CA", { month: "long", year: "numeric" });
 }
 
 function Stat({
@@ -284,6 +379,163 @@ function Stat({
       <p className="mt-3 text-xs font-bold uppercase tracking-wide text-white/45">{label}</p>
       <p className="mt-1 text-lg font-black">{value}</p>
     </div>
+  );
+}
+
+function Legend() {
+  return (
+    <div className="mt-3 flex flex-wrap gap-3 text-[11px] font-bold uppercase tracking-wide text-white/55">
+      <span className="inline-flex items-center gap-1.5">
+        <i className="h-2 w-2 rounded-full" style={{ background: KIND_COLOR.flights }} /> Flights
+      </span>
+      <span className="inline-flex items-center gap-1.5">
+        <i className="h-2 w-2 rounded-full" style={{ background: KIND_COLOR.stays }} /> Hotels
+      </span>
+      <span className="inline-flex items-center gap-1.5">
+        <i className="h-2 w-2 rounded-full" style={{ background: KIND_COLOR.cars }} /> Cars
+      </span>
+    </div>
+  );
+}
+
+function Empty({ children }: { children: React.ReactNode }) {
+  return <p className="mt-6 text-sm text-white/45">{children}</p>;
+}
+
+function StackedBars({
+  rows,
+}: {
+  rows: Array<{ label: string; flights: number; stays: number; cars: number }>;
+}) {
+  const max = Math.max(1, ...rows.map((r) => r.flights + r.stays + r.cars));
+  if (rows.every((r) => r.flights + r.stays + r.cars === 0)) {
+    return <Empty>No searches yet this year. Charts fill in as travellers search.</Empty>;
+  }
+  return (
+    <div className="mt-4 flex h-48 items-end gap-2">
+      {rows.map((r) => {
+        const total = r.flights + r.stays + r.cars;
+        const h = Math.max(total ? 8 : 2, Math.round((total / max) * 160));
+        const f = total ? (r.flights / total) * h : 0;
+        const s = total ? (r.stays / total) * h : 0;
+        const c = total ? (r.cars / total) * h : 0;
+        return (
+          <div key={r.label} className="flex flex-1 flex-col items-center gap-1">
+            <div className="flex h-40 w-full flex-col justify-end overflow-hidden rounded-t-lg bg-white/5">
+              <div style={{ height: c, background: KIND_COLOR.cars }} />
+              <div style={{ height: s, background: KIND_COLOR.stays }} />
+              <div style={{ height: f, background: KIND_COLOR.flights }} />
+            </div>
+            <span className="text-[10px] font-bold text-white/45">{r.label}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function Donut({ mix }: { mix: Mix }) {
+  const total = mix.flights + mix.stays + mix.cars;
+  if (!total) return <Empty>No click-throughs yet.</Empty>;
+  const segs = [
+    { key: "flights", n: mix.flights, color: KIND_COLOR.flights },
+    { key: "stays", n: mix.stays, color: KIND_COLOR.stays },
+    { key: "cars", n: mix.cars, color: KIND_COLOR.cars },
+  ];
+  let acc = 0;
+  const r = 54;
+  const c = 2 * Math.PI * r;
+  return (
+    <div className="mt-4 flex items-center gap-4">
+      <svg viewBox="0 0 140 140" className="h-36 w-36 -rotate-90">
+        <circle cx="70" cy="70" r={r} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="18" />
+        {segs.map((s) => {
+          const len = (s.n / total) * c;
+          const dash = `${len} ${c - len}`;
+          const offset = -acc;
+          acc += len;
+          return (
+            <circle
+              key={s.key}
+              cx="70"
+              cy="70"
+              r={r}
+              fill="none"
+              stroke={s.color}
+              strokeWidth="18"
+              strokeDasharray={dash}
+              strokeDashoffset={offset}
+              strokeLinecap="butt"
+            />
+          );
+        })}
+      </svg>
+      <ul className="space-y-2 text-sm">
+        {segs.map((s) => (
+          <li key={s.key} className="flex items-center justify-between gap-6">
+            <span className="inline-flex items-center gap-2 font-semibold">
+              <i className="h-2.5 w-2.5 rounded-full" style={{ background: s.color }} />
+              {KIND_LABEL[s.key as keyof typeof KIND_LABEL]}
+            </span>
+            <span className="font-black">{s.n}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function DestChart({ title, subtitle, rows }: { title: string; subtitle: string; rows: DestRow[] }) {
+  const max = Math.max(1, ...rows.map((r) => r.total));
+  return (
+    <div className="rounded-3xl bg-white/5 p-5 ring-1 ring-white/10">
+      <h2 className="font-black">{title}</h2>
+      <p className="text-sm text-white/50">{subtitle}</p>
+      {rows.length === 0 ? (
+        <Empty>No destinations recorded for this period.</Empty>
+      ) : (
+        <ul className="mt-4 space-y-3">
+          {rows.map((r, i) => (
+            <li key={r.code}>
+              <div className="flex items-baseline justify-between text-sm">
+                <p className="font-bold">
+                  <span className="mr-2 text-white/35">{i + 1}</span>
+                  {r.city} <span className="font-semibold text-white/45">{r.code}</span>
+                </p>
+                <p className="font-black text-sky-200">{r.total}</p>
+              </div>
+              <div className="mt-1 flex h-2 overflow-hidden rounded-full bg-white/10">
+                <span className="h-full" style={{ width: `${(r.flights / max) * 100}%`, background: KIND_COLOR.flights }} />
+                <span className="h-full" style={{ width: `${(r.stays / max) * 100}%`, background: KIND_COLOR.stays }} />
+                <span className="h-full" style={{ width: `${(r.cars / max) * 100}%`, background: KIND_COLOR.cars }} />
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function Sparkline({ daily }: { daily: Array<{ day: string; searches: number; outbounds: number }> }) {
+  const w = 520;
+  const h = 140;
+  const max = Math.max(1, ...daily.map((d) => Math.max(d.searches, d.outbounds)));
+  const pts = (key: "searches" | "outbounds") =>
+    daily
+      .map((d, i) => {
+        const x = daily.length <= 1 ? w / 2 : (i / (daily.length - 1)) * w;
+        const y = h - 8 - (d[key] / max) * (h - 20);
+        return `${x},${y}`;
+      })
+      .join(" ");
+  const empty = daily.every((d) => d.searches === 0 && d.outbounds === 0);
+  if (empty) return <Empty>No activity in the last 30 days yet.</Empty>;
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} className="mt-4 h-36 w-full">
+      <polyline fill="none" stroke="#4381C7" strokeWidth="3" points={pts("searches")} />
+      <polyline fill="none" stroke="#A9CDEC" strokeWidth="3" strokeDasharray="6 6" points={pts("outbounds")} />
+    </svg>
   );
 }
 

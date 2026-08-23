@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookieName, readAdminToken } from "@/lib/admin";
 import { listBookings, listSearches, stats } from "@/lib/travel-api/store";
+import { analyticsSummary } from "@/lib/analytics";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   const authed = readAdminToken(req.cookies.get(cookieName())?.value);
   if (!authed) return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
+  const month = req.nextUrl.searchParams.get("month") || undefined;
   return NextResponse.json({
     ok: true,
     generatedAt: new Date().toISOString(),
@@ -19,6 +22,7 @@ export async function GET(req: NextRequest) {
       adminPassword: Boolean(process.env.ADMIN_PASSWORD),
     },
     stats: stats(),
+    analytics: analyticsSummary(month),
     searches: listSearches().slice(0, 40),
     bookings: listBookings().slice(0, 40),
   });

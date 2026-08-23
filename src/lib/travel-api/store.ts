@@ -46,7 +46,7 @@ export function logSearch(entry: Omit<SearchLog, "id" | "at">) {
     at: new Date().toISOString(),
     ...entry,
   });
-  if (searches.length > 80) searches.length = 80;
+  if (searches.length > 250) searches.length = 250;
 }
 
 export function listSearches() {

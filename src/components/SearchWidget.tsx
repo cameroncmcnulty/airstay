@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plane, Building2, Car, TreePalm, Search, Minus, Plus } from "lucide-react";
+import { DateBubble, DateRangePicker } from "@/components/DateRangePicker";
 import { useApp } from "@/context/AppContext";
 import {
   getAirport,
@@ -67,15 +68,20 @@ export function SearchWidget({
   const [cabin, setCabin] = useState<SearchQuery["cabin"]>(initial?.cabin || "economy");
   const [fromOpen, setFromOpen] = useState(false);
   const [toOpen, setToOpen] = useState(false);
+  const [calOpen, setCalOpen] = useState(false);
+  const [calOn, setCalOn] = useState<"start" | "end">("start");
   const [error, setError] = useState("");
   const fromRef = useRef<HTMLLabelElement>(null);
   const toRef = useRef<HTMLLabelElement>(null);
+  const calRef = useRef<HTMLDivElement>(null);
 
   const fromOpts = useMemo(() => searchCanadianAirports(from), [from]);
   const toOpts = useMemo(() => searchDestinations(to), [to]);
 
+  const rangeTrip = kind !== "flights" || trip === "roundtrip";
+
   useEffect(() => {
-    if (!fromOpen && !toOpen) return;
+    if (!fromOpen && !toOpen && !calOpen) return;
 
     function onPointerDown(e: PointerEvent) {
       const target = e.target as Node;
@@ -85,12 +91,16 @@ export function SearchWidget({
       if (toOpen && toRef.current && !toRef.current.contains(target)) {
         setToOpen(false);
       }
+      if (calOpen && calRef.current && !calRef.current.contains(target)) {
+        setCalOpen(false);
+      }
     }
 
     function onKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape") {
         setFromOpen(false);
         setToOpen(false);
+        setCalOpen(false);
       }
     }
 
@@ -100,7 +110,7 @@ export function SearchWidget({
       document.removeEventListener("pointerdown", onPointerDown);
       document.removeEventListener("keydown", onKeyDown);
     };
-  }, [fromOpen, toOpen]);
+  }, [fromOpen, toOpen, calOpen]);
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -157,6 +167,7 @@ export function SearchWidget({
                 setError("");
                 setFromOpen(false);
                 setToOpen(false);
+                setCalOpen(false);
               }}
               className={`inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-bold transition ${
                 active
@@ -187,7 +198,10 @@ export function SearchWidget({
               <button
                 key={opt}
                 type="button"
-                onClick={() => setTrip(opt)}
+                onClick={() => {
+                  setTrip(opt);
+                  if (opt === "oneway") setCalOpen(false);
+                }}
                 className={`rounded-full px-3 py-1.5 text-xs font-bold ${
                   trip === opt ? "bg-sky-100 text-navy" : "text-navy/60"
                 }`}
@@ -264,14 +278,76 @@ export function SearchWidget({
             )}
           </Field>
 
-          <Field label={kind === "stays" ? m.search.checkin : m.search.depart}>
-            <input type="date" value={depart} onChange={(e) => setDepart(e.target.value)} className="field" required />
-          </Field>
-          {(kind !== "flights" || trip === "roundtrip") && (
-            <Field label={kind === "stays" ? m.search.checkout : m.search.return}>
-              <input type="date" value={ret} min={depart} onChange={(e) => setRet(e.target.value)} className="field" required />
-            </Field>
-          )}
+          <div className="md:col-span-2" ref={calRef}>
+            <div className={`grid gap-3 ${rangeTrip ? "md:grid-cols-2" : ""}`}>
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wide text-navy/50">
+                  {kind === "stays" ? m.search.checkin : m.search.depart}
+                </p>
+                <div className="mt-1">
+                  <DateBubble
+                    label={kind === "stays" ? m.search.checkin : m.search.depart}
+                    value={depart}
+                    locale={locale}
+                    active={calOpen && calOn === "start"}
+                    onClick={() => {
+                      setCalOn("start");
+                      setCalOpen(true);
+                      setFromOpen(false);
+                      setToOpen(false);
+                    }}
+                  />
+                </div>
+              </div>
+              {rangeTrip && (
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wide text-navy/50">
+                    {kind === "stays" ? m.search.checkout : kind === "cars" ? m.search.dropoff : m.search.return}
+                  </p>
+                  <div className="mt-1">
+                    <DateBubble
+                      label={kind === "stays" ? m.search.checkout : m.search.return}
+                      value={ret}
+                      locale={locale}
+                      active={calOpen && calOn === "end"}
+                      onClick={() => {
+                        setCalOn("end");
+                        setCalOpen(true);
+                        setFromOpen(false);
+                        setToOpen(false);
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+            {calOpen && (
+              <DateRangePicker
+                key={`${rangeTrip ? "range" : "single"}-${calOn}`}
+                mode={rangeTrip ? "range" : "single"}
+                start={depart}
+                end={rangeTrip ? ret : undefined}
+                locale={locale}
+                weekStartsOn={locale === "fr" ? 1 : 0}
+                openOn={calOn}
+                labels={{
+                  start: kind === "stays" ? m.search.checkin : m.search.depart,
+                  end: kind === "stays" ? m.search.checkout : m.search.return,
+                  nights: kind === "cars" ? m.search.days : m.search.nights,
+                  confirm: m.search.confirmDates,
+                  pickStart: m.search.pickStart,
+                  pickEnd: m.search.pickEnd,
+                  nextDay: m.search.nextDay,
+                }}
+                onConfirm={(s, e) => {
+                  setDepart(s);
+                  if (e) setRet(e);
+                  setCalOpen(false);
+                }}
+                onClose={() => setCalOpen(false)}
+              />
+            )}
+          </div>
         </div>
 
         <div className="flex flex-wrap items-end gap-3">
