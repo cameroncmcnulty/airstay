@@ -6,7 +6,7 @@ import { useApp } from "@/context/AppContext";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
-const STORE = "airstay.aria.v1";
+const STORE = "airstay.aria.v2";
 
 export function AriaChat() {
   const { m, locale, settings } = useApp();
@@ -124,9 +124,9 @@ export function AriaChat() {
   }
 
   return (
-    <div className="pointer-events-none fixed bottom-5 right-5 z-[60] sm:bottom-6 sm:right-6">
+    <div className="pointer-events-none fixed bottom-4 right-4 z-[60] sm:bottom-6 sm:right-6">
       {open && (
-        <div className="aria-panel pointer-events-auto mb-4 flex h-[min(620px,78vh)] w-[min(420px,calc(100vw-1.75rem))] flex-col overflow-hidden rounded-[1.7rem] border border-sky-300/30 bg-[#050d1c]/96 shadow-[0_28px_90px_-24px_rgba(4,16,48,.85)] backdrop-blur-2xl">
+        <div className="aria-panel pointer-events-auto mb-3 flex h-[min(620px,78vh)] w-[min(420px,calc(100vw-1.75rem))] flex-col overflow-hidden rounded-[1.7rem] border border-sky-300/25 bg-[#071428] shadow-[0_28px_90px_-24px_rgba(4,16,48,.85)] sm:mb-4">
           <div className="relative overflow-hidden border-b border-white/10 px-4 py-3.5">
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_80%_at_0%_0%,rgba(67,129,199,.35),transparent_55%),radial-gradient(90%_70%_at_100%_0%,rgba(125,186,232,.18),transparent_50%)]" />
             <div className="relative flex items-center gap-3">
@@ -232,13 +232,13 @@ export function AriaChat() {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="aria-launcher pointer-events-auto relative grid h-[4.25rem] w-[4.25rem] place-items-center rounded-full bg-gradient-to-br from-sky via-[#5aa0e0] to-navy text-white"
+        className="aria-launcher pointer-events-auto relative grid h-12 w-12 place-items-center rounded-full bg-gradient-to-br from-sky via-[#5aa0e0] to-navy text-white sm:h-[4.25rem] sm:w-[4.25rem]"
         aria-label={open ? m.aria.close : m.aria.open}
       >
         <span className="aria-pulse" />
         <span className="aria-pulse aria-pulse-delay" />
         <span className="aria-ring" />
-        {open ? <X className="relative z-[1] h-6 w-6" /> : <Sparkles className="relative z-[1] h-6 w-6" />}
+        {open ? <X className="relative z-[1] h-5 w-5 sm:h-6 sm:w-6" /> : <Sparkles className="relative z-[1] h-5 w-5 sm:h-6 sm:w-6" />}
       </button>
     </div>
   );

@@ -106,6 +106,10 @@ footer {
   }
 }
 
+.aria-panel {
+  background-color: #071428;
+}
+
 .aria-orb,
 .aria-launcher {
   animation: aria-glow 2.4s ease-in-out infinite;

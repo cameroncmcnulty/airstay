@@ -289,7 +289,7 @@ export const t = {
       name: "Aria",
       title: "AIRSTAY · AI Travel Expert",
       greeting:
-        "Hey, I’m Aria with AIRSTAY — your AI travel expert. Beaches, cities, packing, visas, or how we work… I’ve got you. Where should we start?",
+        "Hey, I’m Aria with AIRSTAY — an AI Travel Expert. Most popular beaches, questions about cities or what to pack, obtaining visas, or simply how the site works… I’ve got you covered. Where should we start?",
       placeholder: "Ask Aria anything…",
       send: "Send",
       open: "Chat with Aria",
@@ -613,7 +613,7 @@ export const t = {
       name: "Aria",
       title: "AIRSTAY · Experte voyage IA",
       greeting:
-        "Salut, je suis Aria avec AIRSTAY — votre experte voyage IA. Plages, villes, valises, visas ou comment on fonctionne… je suis là. On commence où ?",
+        "Salut, je suis Aria avec AIRSTAY — experte voyage IA. Plages les plus populaires, questions sur les villes ou quoi mettre dans la valise, visas, ou simplement comment le site fonctionne… je m’en occupe. On commence où ?",
       placeholder: "Demandez à Aria…",
       send: "Envoyer",
       open: "Discuter avec Aria",
