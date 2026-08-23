@@ -308,15 +308,14 @@ function score(hay: string[], qTokens: string[]) {
 
 export function retrieveGuides(message: string, limit = 3): Guide[] {
   const q = tokens(message);
-  return GUIDES.map((g) => {
+  const ranked = GUIDES.map((g) => {
     const nameScore = score([...g.codes, ...g.names], q);
     const tagScore = score([...g.tags, g.region], q);
-    return { g, s: nameScore * 4 + tagScore };
-  })
-    .filter((x) => x.s >= 6)
-    .sort((a, b) => b.s - a.s)
-    .slice(0, limit)
-    .map((x) => x.g);
+    return { g, nameScore, s: nameScore * 4 + tagScore };
+  }).sort((a, b) => b.s - a.s);
+  const named = ranked.filter((x) => x.nameScore > 0);
+  const pool = named.length ? named : ranked.filter((x) => x.s >= 6);
+  return pool.slice(0, limit).map((x) => x.g);
 }
 
 export function retrieveTopics(message: string): Topic[] {
@@ -343,11 +342,15 @@ export function knowledgeBlock(message: string, locale: Locale) {
 
 export function fallbackAria(message: string, locale: Locale) {
   const fr = locale === "fr";
-  const guides = retrieveGuides(message, 2);
+  const guides = retrieveGuides(message, 1);
   const topics = retrieveTopics(message);
   const parts: string[] = [];
   if (guides.length) parts.push(guides.map((g) => (fr ? g.fr : g.en)).join("\n\n"));
-  const extra = topics.filter((t) => t.id !== "airstay" || !guides.length);
+  const extra = topics.filter((t) => {
+    if (t.id === "airstay") return !guides.length;
+    if (guides.length) return t.id === "seasons" && /when|best time|saison|month|hiver|summer|winter|february|février/i.test(message);
+    return true;
+  });
   if (extra.length) parts.push(extra.map((t) => (fr ? t.fr : t.en)).join("\n\n"));
   if (!parts.length) {
     return fr
