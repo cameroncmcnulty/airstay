@@ -281,19 +281,27 @@ const TOPICS: Topic[] = [
   },
 ];
 
-function tokens(q: string) {
-  return q
+function norm(s: string) {
+  return s
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+function tokens(q: string) {
+  return norm(q)
     .split(/[^a-z0-9+]+/)
     .filter((w) => w.length > 1);
 }
 
 function score(hay: string[], qTokens: string[]) {
+  const fields = hay.map(norm);
   let n = 0;
   for (const t of qTokens) {
-    if (hay.some((h) => h === t || h.includes(t) || t.includes(h))) n += 1;
+    for (const h of fields) {
+      if (h === t) n += 3;
+      else if (t.length >= 4 && h.includes(t)) n += 2;
+    }
   }
   return n;
 }
@@ -312,11 +320,14 @@ export function retrieveGuides(message: string, limit = 3): Guide[] {
 
 export function retrieveTopics(message: string): Topic[] {
   const q = tokens(message);
-  return TOPICS.map((t) => ({ t, s: score(t.tags, q) }))
+  const ranked = TOPICS.map((t) => ({ t, s: score(t.tags, q) }))
     .filter((x) => x.s > 0)
-    .sort((a, b) => b.s - a.s)
-    .slice(0, 3)
-    .map((x) => x.t);
+    .sort((a, b) => b.s - a.s);
+  if (/\bairstay\b/i.test(message) && !ranked.some((x) => x.t.id === "airstay")) {
+    const home = TOPICS.find((t) => t.id === "airstay");
+    if (home) ranked.unshift({ t: home, s: 99 });
+  }
+  return ranked.slice(0, 3).map((x) => x.t);
 }
 
 export function knowledgeBlock(message: string, locale: Locale) {
