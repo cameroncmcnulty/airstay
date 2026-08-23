@@ -1,4 +1,4 @@
-import { GEO_CHEATSHEET, knowledgeBlock, type Locale } from "./aria-knowledge";
+import { GEO_CHEATSHEET, type Locale } from "./aria-knowledge";
 
 export { fallbackAria } from "./aria-knowledge";
 

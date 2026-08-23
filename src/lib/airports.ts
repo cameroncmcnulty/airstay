@@ -356,7 +356,10 @@ function rankScore(keys: string[], s: string) {
 }
 
 export function searchCanadianAirports(q: string): Airport[] {
-  const s = q.trim().toLowerCase();
+  const s = q
+    .replace(/\([^)]*\)/g, " ")
+    .trim()
+    .toLowerCase();
   if (!s) return CANADIAN_AIRPORTS.filter((a) => a.major);
   return CANADIAN_AIRPORTS.filter((a) => matches(haystackAirport(a), s))
     .sort((a, b) => rankScore(haystackAirport(a), s) - rankScore(haystackAirport(b), s))
@@ -372,11 +375,13 @@ export function searchDestinations(q: string): Destination[] {
 }
 
 export function getAirport(code: string) {
-  return CANADIAN_AIRPORTS.find((a) => a.code === code);
+  const c = code.toUpperCase();
+  return CANADIAN_AIRPORTS.find((a) => a.code === c);
 }
 
 export function getDestination(code: string) {
-  return ALL_DESTINATIONS.find((d) => d.code === code);
+  const c = code.toUpperCase();
+  return ALL_DESTINATIONS.find((d) => d.code === c);
 }
 
 export function isCanadianAirport(code: string) {

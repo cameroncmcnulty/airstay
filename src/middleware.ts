@@ -20,7 +20,7 @@ export function middleware(req: NextRequest) {
 
   if (!isAdminHost(host)) return NextResponse.next();
 
-  if (pathname.startsWith("/api/admin") || pathname.startsWith("/_next") || pathname.startsWith("/admin")) {
+  if (pathname.startsWith("/api/") || pathname.startsWith("/_next") || pathname.startsWith("/admin")) {
     return NextResponse.next();
   }
 

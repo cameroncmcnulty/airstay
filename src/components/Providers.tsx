@@ -6,12 +6,14 @@ import { Header } from "./Header";
 import { Footer } from "./Footer";
 import { CookieBanner } from "./CookieBanner";
 import { AriaChat } from "./AriaChat";
+import { TravelpayoutsPixel } from "./TravelpayoutsPixel";
 import { useApp } from "@/context/AppContext";
 
 function Shell({ children }: { children: React.ReactNode }) {
   const { m } = useApp();
   const path = usePathname();
-  if (path.startsWith("/admin")) return <>{children}</>;
+  const adminHost = typeof window !== "undefined" && window.location.host.startsWith("admin.");
+  if (path.startsWith("/admin") || adminHost) return <>{children}</>;
   return (
     <>
       <a
@@ -26,6 +28,7 @@ function Shell({ children }: { children: React.ReactNode }) {
       <Footer />
       <CookieBanner />
       <AriaChat />
+      <TravelpayoutsPixel />
     </>
   );
 }

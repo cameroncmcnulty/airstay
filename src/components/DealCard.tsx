@@ -9,15 +9,18 @@ export function DealCard({ deal }: { deal: Deal }) {
   const { locale, m } = useApp();
   const price = locale === "fr" ? cadFr(deal.priceCad) : cad(deal.priceCad);
   const was = deal.wasCad ? (locale === "fr" ? cadFr(deal.wasCad) : cad(deal.wasCad)) : null;
-  const href = `/results?${queryToParams({
-    kind: deal.kind === "flight" ? "flights" : deal.kind === "car" ? "cars" : "stays",
-    from: deal.from,
-    to: deal.to,
-    toCity: locale === "fr" ? deal.toCityFr : deal.toCity,
-    depart: defaultDepart(),
-    returnDate: defaultReturn(),
-    adults: 1,
-  })}`;
+  const href =
+    deal.kind === "package"
+      ? "/packages"
+      : `/results?${queryToParams({
+          kind: kindToSearch(deal.kind),
+          from: deal.from,
+          to: deal.to,
+          toCity: locale === "fr" ? deal.toCityFr : deal.toCity,
+          depart: defaultDepart(),
+          returnDate: defaultReturn(),
+          adults: 1,
+        })}`;
   return (
     <Link href={href} className="group flex flex-col overflow-hidden rounded-card bg-white shadow-card ring-1 ring-navy/5 transition hover:-translate-y-1 hover:shadow-lift">
       <div className="relative h-36 overflow-hidden sm:h-44">
@@ -63,9 +66,9 @@ export function DealGrid({ limit, heading = true }: { limit?: number; heading?: 
           <p className="mt-1 max-w-2xl text-sm text-navy/60">{m.deals.subtitle}</p>
         </div>
         {limit && (
-          <a href="/deals" className="hidden text-sm font-bold text-sky-700 md:inline">
+          <Link href="/deals" className="hidden text-sm font-bold text-sky-700 md:inline">
             {m.deals.viewAll}
-          </a>
+          </Link>
         )}
       </div>
       )}

@@ -5,16 +5,16 @@ import { useState } from "react";
 import { useApp } from "@/context/AppContext";
 
 export function CookieBanner() {
-  const { m, consent, setConsent } = useApp();
+  const { m, consent, setConsent, ready } = useApp();
   const [analytics, setAnalytics] = useState(false);
   const [marketing, setMarketing] = useState(false);
-  if (consent) return null;
+  if (!ready || consent) return null;
 
   return (
     <div
       role="dialog"
       aria-labelledby="cookie-title"
-      className="fixed bottom-4 left-4 right-4 z-50 mx-auto max-w-3xl rounded-3xl border border-navy/10 bg-white p-5 shadow-card"
+      className="fixed bottom-20 left-4 right-4 z-50 mx-auto max-w-3xl rounded-3xl bg-white p-5 shadow-card ring-1 ring-navy/10 sm:bottom-4 sm:right-24"
     >
       <h2 id="cookie-title" className="text-lg font-bold text-navy">
         {m.cookie.title}

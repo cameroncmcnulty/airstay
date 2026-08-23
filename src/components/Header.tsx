@@ -22,6 +22,10 @@ export function Header() {
   const menuRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
+    setOpen(false);
+  }, [path]);
+
+  useEffect(() => {
     if (!open) return;
 
     function onPointerDown(e: PointerEvent) {

@@ -20,6 +20,7 @@ import {
   type SearchKind,
   type SearchQuery,
 } from "@/lib/deeplinks";
+import { addDays } from "@/lib/dates";
 
 const TABS: { id: SearchKind; icon: typeof Plane; labelKey: "flights" | "stays" | "cars" | "packages" }[] = [
   { id: "flights", icon: Plane, labelKey: "flights" },
@@ -63,7 +64,12 @@ export function SearchWidget({
   const [trip, setTrip] = useState<"roundtrip" | "oneway">(initial?.trip || "roundtrip");
   const [adults, setAdults] = useState(initial?.adults || 1);
   const [children, setChildren] = useState(initial?.children || 0);
-  const [childAges, setChildAges] = useState<Array<number | "">>(initial?.childAges || []);
+  const [childAges, setChildAges] = useState<Array<number | "">>(() => {
+    const ages = [...(initial?.childAges || [])] as Array<number | "">;
+    const n = initial?.children || 0;
+    while (ages.length < n) ages.push("");
+    return ages;
+  });
   const [rooms, setRooms] = useState(initial?.rooms || 1);
   const [cabin, setCabin] = useState<SearchQuery["cabin"]>(initial?.cabin || "economy");
   const [fromOpen, setFromOpen] = useState(false);
@@ -132,6 +138,10 @@ export function SearchWidget({
     }
     if (kind === "flights" && !fromCode) {
       setError(m.results.noOrigin);
+      return;
+    }
+    if ((kind === "flights" || kind === "cars") && !toCode) {
+      setError(m.results.noTo);
       return;
     }
     if (!toCode && !to) {
@@ -213,6 +223,7 @@ export function SearchWidget({
                 onClick={() => {
                   setTrip(opt);
                   if (opt === "oneway") setCalOpen(false);
+                  if (opt === "roundtrip" && ret <= depart) setRet(addDays(depart, 7));
                 }}
                 className={`rounded-full px-3 py-1.5 text-xs font-bold ${
                   trip === opt ? "bg-sky-100 text-navy" : "text-navy/60"
@@ -249,10 +260,11 @@ export function SearchWidget({
                 <Suggest
                   items={fromOpts.map((a) => ({
                     key: a.code,
-                    title: `${a.city} (${a.code})`,
+                    title: `${locale === "fr" ? a.cityFr : a.city} (${a.code})`,
                     sub: locale === "fr" ? a.nameFr : a.name,
                     onPick: () => pickFrom(a),
                   }))}
+                  emptyLabel={m.search.noMatches}
                   onClose={() => setFromOpen(false)}
                 />
               )}
@@ -285,6 +297,7 @@ export function SearchWidget({
                   sub: locale === "fr" ? d.countryFr : d.country,
                   onPick: () => pickTo(d),
                 }))}
+                emptyLabel={m.search.noMatches}
                 onClose={() => setToOpen(false)}
               />
             )}
@@ -354,6 +367,7 @@ export function SearchWidget({
                 onConfirm={(s, e) => {
                   setDepart(s);
                   if (e) setRet(e);
+                  else if (s >= ret) setRet(addDays(s, 7));
                   setCalOpen(false);
                 }}
                 onClose={() => setCalOpen(false)}
@@ -469,13 +483,16 @@ function Field({
 
 function Suggest({
   items,
+  emptyLabel,
   onClose,
 }: {
   items: { key: string; title: string; sub: string; onPick: () => void }[];
+  emptyLabel: string;
   onClose: () => void;
 }) {
   return (
-    <ul className="absolute z-20 mt-1 max-h-64 w-full overflow-auto rounded-2xl border border-navy/10 bg-white py-1 shadow-card">
+    <ul className="absolute z-20 mt-1 max-h-64 w-full overflow-auto rounded-2xl bg-white py-1 shadow-card ring-1 ring-navy/10">
+      {items.length === 0 && <li className="px-3 py-2 text-sm text-navy/50">{emptyLabel}</li>}
       {items.map((it) => (
         <li key={it.key}>
           <button

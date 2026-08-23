@@ -1,3 +1,5 @@
+import { toIso } from "@/lib/dates";
+
 export type SearchKind = "flights" | "stays" | "cars" | "packages";
 
 export type SearchQuery = {
@@ -69,17 +71,13 @@ function offer(
 export function defaultDepart() {
   const d = new Date();
   d.setDate(d.getDate() + 21);
-  return iso(d);
+  return toIso(d);
 }
 
 export function defaultReturn() {
   const d = new Date();
   d.setDate(d.getDate() + 28);
-  return iso(d);
-}
-
-function iso(d: Date) {
-  return d.toISOString().slice(0, 10);
+  return toIso(d);
 }
 
 export function cad(n: number) {
@@ -117,21 +115,26 @@ export function queryToParams(q: SearchQuery) {
 
 export function paramsToQuery(sp: URLSearchParams): SearchQuery {
   const kind = (sp.get("kind") as SearchKind) || "flights";
+  const trip = (sp.get("trip") as SearchQuery["trip"]) || "roundtrip";
+  const children = Number(sp.get("children") || 0);
+  const ages = (sp.get("childAges") || "")
+    .split(",")
+    .map((n) => Number(n))
+    .filter((n) => Number.isFinite(n) && n >= 0 && n <= 17);
+  while (ages.length < children) ages.push(2);
+  const oneway = kind === "flights" && trip === "oneway";
   return {
     kind,
     from: sp.get("from") || undefined,
     to: sp.get("to") || undefined,
     toCity: sp.get("toCity") || undefined,
     depart: sp.get("depart") || defaultDepart(),
-    returnDate: sp.get("return") || defaultReturn(),
+    returnDate: oneway ? undefined : sp.get("return") || defaultReturn(),
     adults: Number(sp.get("adults") || 1),
-    children: Number(sp.get("children") || 0),
-    childAges: (sp.get("childAges") || "")
-      .split(",")
-      .map((n) => Number(n))
-      .filter((n) => Number.isFinite(n) && n >= 0 && n <= 17),
+    children,
+    childAges: ages.slice(0, children),
     rooms: Number(sp.get("rooms") || 1),
     cabin: (sp.get("cabin") as SearchQuery["cabin"]) || "economy",
-    trip: (sp.get("trip") as SearchQuery["trip"]) || "roundtrip",
+    trip,
   };
 }

@@ -71,6 +71,13 @@ export async function createUser(input: {
   const users = readUsers();
   const email = input.email.trim().toLowerCase();
   if (users.some((u) => u.email === email)) return { ok: false, error: "exists" };
+  try {
+    const status = await fetch(`/api/account/status?email=${encodeURIComponent(email)}`);
+    const json = await status.json();
+    if (json?.disabled) return { ok: false, error: "exists" };
+  } catch {
+    /* offline */
+  }
   const id = crypto.randomUUID();
   const passwordHash = await hashPassword(input.password, id);
   const user: User = {
@@ -152,9 +159,17 @@ export function updateUser(id: string, patch: Partial<User>) {
 }
 
 export function deleteUser(id: string) {
+  const user = readUsers().find((u) => u.id === id);
   writeUsers(readUsers().filter((u) => u.id !== id));
   const sid = localStorage.getItem(SESSION_KEY);
   if (sid === id) localStorage.removeItem(SESSION_KEY);
+  if (user?.email) {
+    fetch("/api/account/delete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: user.email }),
+    }).catch(() => undefined);
+  }
 }
 
 export function toPublic(user: User): PublicUser {

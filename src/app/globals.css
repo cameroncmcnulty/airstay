@@ -28,10 +28,14 @@ body::before {
 }
 
 #main,
-header,
 footer {
   position: relative;
   z-index: 1;
+}
+
+header {
+  position: relative;
+  z-index: 40;
 }
 
 @keyframes hero-drift {
@@ -104,10 +108,6 @@ footer {
     transform: translateY(-4px);
     opacity: 1;
   }
-}
-
-.aria-panel {
-  background-color: #071428;
 }
 
 .aria-orb,

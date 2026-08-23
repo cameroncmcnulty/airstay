@@ -3,14 +3,6 @@ import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
 
-const travelpayoutsLoader = `(function () {
-var script = document.createElement("script");
-script.async = 1;
-script.setAttribute("data-cmp-ab","2");
-script.src = 'https://tp-em.com/NTY0MjUw.js?t=564250';
-document.head.appendChild(script);
-})();`;
-
 const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
   variable: "--font-plus-jakarta",
@@ -73,11 +65,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en-CA">
       <head>
         <link rel="image_src" href="https://airstay.ca/og.jpg?v=4" />
-        <script
-          data-cmp-ab="2"
-          data-no-defer="1"
-          dangerouslySetInnerHTML={{ __html: travelpayoutsLoader }}
-        />
       </head>
       <body className={`${jakarta.variable} font-sans`}>
         <Providers>{children}</Providers>

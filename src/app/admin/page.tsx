@@ -16,6 +16,7 @@ import {
   MapPin,
   Users,
   Settings,
+  Inbox,
 } from "lucide-react";
 
 type Mix = { flights: number; stays: number; cars: number };
@@ -94,7 +95,10 @@ export default function AdminPage() {
   const [ping, setPing] = useState<Ping | null>(null);
   const [busy, setBusy] = useState(false);
   const [month, setMonth] = useState<string>("");
-  const [tab, setTab] = useState<"overview" | "users" | "settings">("overview");
+  const [tab, setTab] = useState<"overview" | "users" | "inbox" | "settings">("overview");
+  const [inbox, setInbox] = useState<
+    Array<{ id: string; name: string; email: string; message: string; createdAt: string; read: boolean }>
+  >([]);
   const [users, setUsers] = useState<
     Array<{
       id: string;
@@ -190,6 +194,12 @@ export default function AdminPage() {
     const res = await fetch("/api/admin/users", { cache: "no-store" });
     const json = await res.json();
     if (json.ok) setUsers(json.users || []);
+  }
+
+  async function loadInbox() {
+    const res = await fetch("/api/admin/inbox", { cache: "no-store" });
+    const json = await res.json();
+    if (json.ok) setInbox(json.messages || []);
   }
 
   async function loadSettings() {
@@ -386,6 +396,7 @@ export default function AdminPage() {
             [
               { id: "overview" as const, label: "Overview", icon: Activity },
               { id: "users" as const, label: "Members", icon: Users },
+              { id: "inbox" as const, label: "Inbox", icon: Inbox },
               { id: "settings" as const, label: "Settings", icon: Settings },
             ] as const
           ).map((item) => (
@@ -395,6 +406,7 @@ export default function AdminPage() {
               onClick={() => {
                 setTab(item.id);
                 if (item.id === "users") loadUsers();
+                if (item.id === "inbox") loadInbox();
                 if (item.id === "settings") loadSettings();
               }}
               className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold ${
@@ -494,6 +506,63 @@ export default function AdminPage() {
                   </tbody>
                 </table>
               </div>
+            )}
+          </section>
+        )}
+
+        {tab === "inbox" && (
+          <section className="overflow-hidden rounded-3xl bg-white/5 ring-1 ring-white/10">
+            <div className="border-b border-white/10 px-5 py-4">
+              <h2 className="font-black">Inbox</h2>
+              <p className="text-sm text-white/50">Messages from the contact form. {inbox.filter((m) => !m.read).length} unread.</p>
+            </div>
+            {inbox.length === 0 ? (
+              <p className="px-5 py-8 text-sm text-white/45">No messages yet.</p>
+            ) : (
+              <ul className="max-h-[640px] divide-y divide-white/5 overflow-auto">
+                {inbox.map((msg) => (
+                  <li key={msg.id} className={`px-5 py-4 ${msg.read ? "opacity-70" : ""}`}>
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <div>
+                        <p className="font-bold">
+                          {msg.name}{" "}
+                          <a className="font-semibold text-sky-200" href={`mailto:${msg.email}`}>
+                            {msg.email}
+                          </a>
+                        </p>
+                        <p className="text-xs text-white/45">{new Date(msg.createdAt).toLocaleString("en-CA")}</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          className="rounded-full bg-white/10 px-3 py-1 text-xs font-bold"
+                          onClick={async () => {
+                            await fetch("/api/admin/inbox", {
+                              method: "PATCH",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ id: msg.id, read: !msg.read }),
+                            });
+                            await loadInbox();
+                          }}
+                        >
+                          {msg.read ? "Unread" : "Read"}
+                        </button>
+                        <button
+                          type="button"
+                          className="rounded-full px-3 py-1 text-xs font-bold text-rose-200 hover:bg-rose-500/20"
+                          onClick={async () => {
+                            await fetch(`/api/admin/inbox?id=${encodeURIComponent(msg.id)}`, { method: "DELETE" });
+                            await loadInbox();
+                          }}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                    <p className="mt-2 whitespace-pre-wrap text-sm text-white/80">{msg.message}</p>
+                  </li>
+                ))}
+              </ul>
             )}
           </section>
         )}

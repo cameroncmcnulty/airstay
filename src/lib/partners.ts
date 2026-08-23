@@ -163,9 +163,9 @@ function aviaClass(cabin?: SearchQuery["cabin"]) {
 }
 
 export function nightsBetween(a?: string, b?: string) {
-  if (!a || !b) return 7;
-  const ms = Date.parse(b) - Date.parse(a);
-  if (!Number.isFinite(ms) || ms <= 0) return 7;
+  if (!a || !b) return 1;
+  const ms = Date.parse(`${b}T12:00:00`) - Date.parse(`${a}T12:00:00`);
+  if (!Number.isFinite(ms) || ms <= 0) return 1;
   return Math.max(1, Math.round(ms / 86400000));
 }
 
@@ -192,7 +192,7 @@ export function countryLabel(q: SearchQuery, locale: "en" | "fr" = "en") {
 function kayakPlace(code: string, city: string, country: string) {
   if (code && code.length === 3) return `${code}-a1200`;
   const bits = [city, country].filter(Boolean).map(fold);
-  return bits.join(",") || "CUN-a1200";
+  return bits.join(",") || undefined;
 }
 
 function kayakHotelPlace(city: string, country: string) {
@@ -392,7 +392,9 @@ export function skyscannerFlightsUrl(q: SearchQuery) {
     inboundaltsenabled: "false",
     ref: "airstay",
   });
-  if (q.children) params.set("childrenv2", String(q.children));
+  const ages = (q.childAges || []).filter((n) => n >= 2).join("|");
+  if (ages) params.set("childrenv2", ages);
+  else if (q.children) params.set("childrenv2", Array.from({ length: q.children }, () => "8").join("|"));
   return `${base}?${params.toString()}`;
 }
 
@@ -524,7 +526,7 @@ export function kayakCarsUrl(q: SearchQuery) {
   const place = kayakPlace(code, dest?.city || q.toCity || "", dest?.country || "");
   const pickup = q.depart || "";
   const drop = q.returnDate || q.depart || "";
-  if (!pickup) return undefined;
+  if (!place || !pickup) return undefined;
   return `https://www.ca.kayak.com/cars/${place}/${pickup}/${drop}`;
 }
 

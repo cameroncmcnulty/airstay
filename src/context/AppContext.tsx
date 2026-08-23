@@ -30,7 +30,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const stored = localStorage.getItem("airstay.locale") as Locale | null;
-    if (stored === "fr" || stored === "en") setLocaleState(stored);
+    if (stored === "fr" || stored === "en") {
+      setLocaleState(stored);
+      document.documentElement.lang = stored === "fr" ? "fr-CA" : "en-CA";
+    }
     setUser(currentUser());
     setConsentState(readConsent());
     setReady(true);

@@ -6,7 +6,7 @@ import { useApp } from "@/context/AppContext";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
-const STORE = "airstay.aria.v2";
+const STORE = "airstay.aria.v3";
 
 export function AriaChat() {
   const { m, locale, settings } = useApp();
@@ -17,7 +17,7 @@ export function AriaChat() {
   const [hydrated, setHydrated] = useState(false);
   const scroller = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-
+  const abortRef = useRef<AbortController | null>(null);
   const enabled = settings?.chatEnabled !== false;
 
   useEffect(() => {
@@ -58,8 +58,13 @@ export function AriaChat() {
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") setOpen(false);
     }
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener("keydown", onKey);
+    };
   }, [open]);
 
   if (!enabled) return null;
@@ -71,10 +76,14 @@ export function AriaChat() {
     setMsgs(history);
     setInput("");
     setBusy(true);
+    abortRef.current?.abort();
+    const ac = new AbortController();
+    abortRef.current = ac;
     try {
       const res = await fetch("/api/aria", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        signal: ac.signal,
         body: JSON.stringify({ messages: history.filter((x) => x.content), locale }),
       });
       if (!res.ok || !res.body) throw new Error("aria");
@@ -107,7 +116,8 @@ export function AriaChat() {
         }
       }
       if (!acc) setMsgs([...history, { role: "assistant", content: m.aria.error }]);
-    } catch {
+    } catch (err) {
+      if ((err as { name?: string }).name === "AbortError") return;
       setMsgs([...history, { role: "assistant", content: m.aria.error }]);
     } finally {
       setBusy(false);
@@ -126,48 +136,45 @@ export function AriaChat() {
   return (
     <div className="pointer-events-none fixed bottom-4 right-4 z-[60] sm:bottom-6 sm:right-6">
       {open && (
-        <div className="aria-panel pointer-events-auto mb-3 flex h-[min(620px,78vh)] w-[min(420px,calc(100vw-1.75rem))] flex-col overflow-hidden rounded-[1.7rem] border border-sky-300/25 bg-[#071428] shadow-[0_28px_90px_-24px_rgba(4,16,48,.85)] sm:mb-4">
-          <div className="relative overflow-hidden border-b border-white/10 px-4 py-3.5">
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_80%_at_0%_0%,rgba(67,129,199,.35),transparent_55%),radial-gradient(90%_70%_at_100%_0%,rgba(125,186,232,.18),transparent_50%)]" />
-            <div className="relative flex items-center gap-3">
-              <span className="aria-orb grid h-11 w-11 place-items-center rounded-full bg-gradient-to-br from-sky via-[#7bb3e1] to-navy text-white">
-                <Sparkles className="h-5 w-5" />
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-black tracking-wide text-white">{m.aria.name}</p>
-                <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-sky-200/85">
-                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]" />
-                  {m.aria.title}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={reset}
-                className="grid h-8 w-8 place-items-center rounded-full text-white/60 hover:bg-white/10 hover:text-white"
-                aria-label={m.aria.reset}
-                title={m.aria.reset}
-              >
-                <RotateCcw className="h-3.5 w-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                className="grid h-8 w-8 place-items-center rounded-full text-white/70 hover:bg-white/10 hover:text-white"
-                aria-label={m.aria.close}
-              >
-                <X className="h-4 w-4" />
-              </button>
+        <div className="pointer-events-auto mb-3 flex h-[min(560px,74vh)] w-[min(400px,calc(100vw-1.75rem))] flex-col overflow-hidden rounded-[1.5rem] bg-white shadow-card ring-1 ring-navy/10 sm:mb-4">
+          <div className="flex items-center gap-3 bg-mist px-4 py-3">
+            <span className="aria-orb grid h-10 w-10 place-items-center rounded-full bg-gradient-to-br from-sky to-navy text-white">
+              <Sparkles className="h-4 w-4" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-black text-navy">{m.aria.name}</p>
+              <p className="flex items-center gap-1.5 text-[11px] font-semibold text-navy/55">
+                <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                {m.aria.title}
+              </p>
             </div>
+            <button
+              type="button"
+              onClick={reset}
+              className="grid h-8 w-8 place-items-center rounded-full text-navy/45 hover:bg-white hover:text-navy"
+              aria-label={m.aria.reset}
+              title={m.aria.reset}
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              className="grid h-8 w-8 place-items-center rounded-full text-navy/45 hover:bg-white hover:text-navy"
+              aria-label={m.aria.close}
+            >
+              <X className="h-4 w-4" />
+            </button>
           </div>
 
-          <div ref={scroller} className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
+          <div ref={scroller} className="flex-1 space-y-3 overflow-y-auto bg-white px-4 py-4">
             {msgs.map((msg, i) => (
               <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                 <div
-                  className={`max-w-[88%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${
+                  className={`max-w-[88%] px-3.5 py-2.5 text-sm leading-relaxed ${
                     msg.role === "user"
-                      ? "rounded-br-md bg-gradient-to-br from-sky to-[#2f6cb3] text-white"
-                      : "rounded-bl-md bg-white/[0.07] text-sky-50 ring-1 ring-white/10"
+                      ? "rounded-2xl rounded-br-md bg-sky text-white"
+                      : "rounded-2xl rounded-bl-md bg-mist text-navy"
                   }`}
                 >
                   {msg.role === "assistant" ? <AriaMarkdown text={msg.content} /> : msg.content}
@@ -175,13 +182,13 @@ export function AriaChat() {
               </div>
             ))}
             {busy && (
-              <div className="flex items-center gap-2 pl-1 text-sky-200/80">
+              <div className="flex items-center gap-2 pl-1 text-navy/45">
                 <span className="aria-dots" aria-hidden>
                   <i />
                   <i />
                   <i />
                 </span>
-                <span className="text-[11px] font-semibold uppercase tracking-[0.16em]">{m.aria.thinking}</span>
+                <span className="text-[11px] font-semibold">{m.aria.thinking}</span>
               </div>
             )}
             {msgs.length <= 1 && !busy && (
@@ -191,7 +198,7 @@ export function AriaChat() {
                     key={chip}
                     type="button"
                     onClick={() => send(chip)}
-                    className="rounded-full border border-sky-300/30 bg-white/5 px-3 py-1.5 text-xs font-semibold text-sky-100 transition hover:border-sky-200/60 hover:bg-white/10"
+                    className="rounded-full bg-sky-50 px-3 py-1.5 text-xs font-semibold text-navy transition hover:bg-sky-100"
                   >
                     {chip}
                   </button>
@@ -201,25 +208,25 @@ export function AriaChat() {
           </div>
 
           <form
-            className="border-t border-white/10 p-3"
+            className="bg-white px-3 pb-3 pt-1"
             onSubmit={(e: FormEvent) => {
               e.preventDefault();
               send();
             }}
           >
-            <div className="flex items-center gap-2 rounded-full bg-white/8 ring-1 ring-white/15 focus-within:ring-2 focus-within:ring-sky/60">
+            <div className="flex items-center gap-2 rounded-full bg-mist px-2 py-1.5 focus-within:bg-sky-50">
               <input
                 ref={inputRef}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder={m.aria.placeholder}
-                className="min-w-0 flex-1 bg-transparent px-4 py-2.5 text-sm text-white outline-none placeholder:text-white/35"
+                className="min-w-0 flex-1 bg-transparent px-3 py-2 text-sm text-navy outline-none placeholder:text-navy/35"
                 maxLength={2000}
               />
               <button
                 type="submit"
                 disabled={busy || !input.trim()}
-                className="mr-1 grid h-9 w-9 place-items-center rounded-full bg-sky text-white transition hover:bg-sky-600 disabled:opacity-40"
+                className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-sky text-white transition hover:bg-sky-600 disabled:bg-navy/15 disabled:text-navy/30"
                 aria-label={m.aria.send}
               >
                 <Send className="h-4 w-4" />
@@ -232,7 +239,7 @@ export function AriaChat() {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="aria-launcher pointer-events-auto relative grid h-12 w-12 place-items-center rounded-full bg-gradient-to-br from-sky via-[#5aa0e0] to-navy text-white sm:h-[4.25rem] sm:w-[4.25rem]"
+        className="aria-launcher pointer-events-auto relative grid h-12 w-12 place-items-center rounded-full bg-gradient-to-br from-sky via-[#5aa0e0] to-navy text-white sm:h-16 sm:w-16"
         aria-label={open ? m.aria.close : m.aria.open}
       >
         <span className="aria-pulse" />
@@ -279,20 +286,20 @@ function inline(s: string): ReactNode[] {
   const re = /(\*\*[^*]+\*\*|`[^`]+`|\[[^\]]+\]\([^)]+\))/g;
   const out: ReactNode[] = [];
   let last = 0;
-  let m: RegExpExecArray | null;
+  let match: RegExpExecArray | null;
   let k = 0;
-  while ((m = re.exec(s))) {
-    if (m.index > last) out.push(s.slice(last, m.index));
-    const token = m[0];
+  while ((match = re.exec(s))) {
+    if (match.index > last) out.push(s.slice(last, match.index));
+    const token = match[0];
     if (token.startsWith("**")) {
       out.push(
-        <strong key={k++} className="font-bold text-white">
+        <strong key={k++} className="font-bold text-navy">
           {token.slice(2, -2)}
         </strong>
       );
     } else if (token.startsWith("`")) {
       out.push(
-        <code key={k++} className="rounded bg-black/30 px-1 font-mono text-[0.85em]">
+        <code key={k++} className="rounded bg-white px-1 font-mono text-[0.85em] text-navy">
           {token.slice(1, -1)}
         </code>
       );
@@ -305,7 +312,7 @@ function inline(s: string): ReactNode[] {
             <a
               key={k++}
               href={href}
-              className="font-semibold text-sky-200 underline decoration-sky-400/60 underline-offset-2 hover:text-white"
+              className="font-semibold text-sky-700 underline decoration-sky/40 underline-offset-2 hover:text-navy"
               {...(href.startsWith("http") ? { target: "_blank", rel: "noreferrer" } : {})}
             >
               {link[1]}
@@ -314,7 +321,7 @@ function inline(s: string): ReactNode[] {
         } else out.push(link[1]);
       }
     }
-    last = m.index + token.length;
+    last = match.index + token.length;
   }
   if (last < s.length) out.push(s.slice(last));
   return out;

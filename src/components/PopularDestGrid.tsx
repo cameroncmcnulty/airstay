@@ -13,7 +13,8 @@ export function PopularDestGrid({
   kind?: SearchKind;
   from?: string;
 }) {
-  const { m, locale } = useApp();
+  const { m, locale, settings } = useApp();
+  const origin = settings?.defaultFrom || from;
   return (
     <section className="mx-auto max-w-6xl px-4">
       <h2 className="text-2xl font-extrabold text-navy">{m.popular.title}</h2>
@@ -24,7 +25,7 @@ export function PopularDestGrid({
           if (!d) return null;
           const href = `/results?${queryToParams({
             kind,
-            from: kind === "flights" ? from : undefined,
+            from: kind === "flights" ? origin : undefined,
             to: d.code,
             toCity: locale === "fr" ? d.cityFr : d.city,
             depart: defaultDepart(),

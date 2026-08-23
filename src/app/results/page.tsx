@@ -50,7 +50,7 @@ function ResultsInner() {
   const dest = q.to ? getDestination(q.to) : undefined;
   const destName = dest ? (locale === "fr" ? dest.cityFr : dest.city) : q.toCity || q.to || "";
   const originName = origin ? `${locale === "fr" ? origin.cityFr : origin.city}` : q.from || "";
-  const destPhoto = (q.to && DEST_PHOTOS[q.to]) || DEST_PHOTOS.CUN;
+  const destPhoto = (q.to && DEST_PHOTOS[q.to]) || DEST_PHOTOS.LHR || DEST_PHOTOS.CUN;
   const nights = nightsBetween(q.depart, q.returnDate);
   const money = (n: number) => (locale === "fr" ? cadFr(n) : cad(n));
 
@@ -62,6 +62,7 @@ function ResultsInner() {
   });
 
   useEffect(() => {
+    setSaved(false);
     let cancelled = false;
     setLoading(true);
     fetch(`/api/search?${sp.toString()}`)
@@ -80,6 +81,15 @@ function ResultsInner() {
       cancelled = true;
     };
   }, [sp]);
+
+  useEffect(() => {
+    if (!leaving) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setLeaving(null);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [leaving]);
 
   function save() {
     const u = currentUser();
@@ -195,7 +205,7 @@ function ResultsInner() {
 
       <div className="relative z-20 mx-auto -mt-6 max-w-6xl px-3 sm:-mt-8 sm:px-4">
         <div className="rounded-[1.6rem] bg-white p-3 shadow-card ring-1 ring-navy/5 sm:p-5">
-          <SearchWidget kind={q.kind} hideTabs embedded initial={q} />
+          <SearchWidget key={sp.toString()} kind={q.kind} hideTabs embedded initial={q} />
         </div>
       </div>
 
@@ -233,7 +243,7 @@ function ResultsInner() {
                         </span>
                       )}
                       <div>
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-sky-700">Live fare</p>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-sky-700">{m.results.liveFare}</p>
                         <h3 className="text-lg font-black text-navy">{o.airlineName || o.title}</h3>
                         {o.airline && (
                           <p className="text-xs font-semibold text-navy/45">
@@ -345,7 +355,14 @@ function ResultsInner() {
       </div>
 
       {leaving && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-navy/55 p-4 backdrop-blur-sm" role="dialog" aria-modal="true">
+        <div
+          className="fixed inset-0 z-50 grid place-items-center bg-navy/55 p-4 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setLeaving(null);
+          }}
+        >
           <div className="w-full max-w-md rounded-card bg-white p-6 shadow-card">
             <div className="flex items-center gap-3">
               {leaving.domain && (
@@ -437,7 +454,10 @@ function PartnerResultCard({
                 {money(offer.priceToCad || 0)}
               </p>
               <p className="text-[11px] text-navy/45">
-                {nights} {qKindUnit(offer, m)} · {m.results.rangeNote}
+                {offer.kind === "cars"
+                  ? m.results.days.replace("{n}", String(nights))
+                  : m.results.nights.replace("{n}", String(nights))}{" "}
+                · {m.results.rangeNote}
               </p>
             </>
           ) : (
@@ -451,12 +471,6 @@ function PartnerResultCard({
       </div>
     </article>
   );
-}
-
-function qKindUnit(offer: LiveOffer, m: ReturnType<typeof useApp>["m"]) {
-  if (offer.kind === "cars") return m.nav.cars.toLowerCase();
-  if (offer.kind === "stays") return m.nav.stays.toLowerCase();
-  return m.nav.flights.toLowerCase();
 }
 
 function SkeletonList() {
