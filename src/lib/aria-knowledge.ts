@@ -308,11 +308,12 @@ function score(hay: string[], qTokens: string[]) {
 
 export function retrieveGuides(message: string, limit = 3): Guide[] {
   const q = tokens(message);
-  return GUIDES.map((g) => ({
-    g,
-    s: score([...g.codes.map((c) => c.toLowerCase()), ...g.names, ...g.tags, g.region.toLowerCase()], q),
-  }))
-    .filter((x) => x.s > 0)
+  return GUIDES.map((g) => {
+    const nameScore = score([...g.codes, ...g.names], q);
+    const tagScore = score([...g.tags, g.region], q);
+    return { g, s: nameScore * 4 + tagScore };
+  })
+    .filter((x) => x.s >= 6)
     .sort((a, b) => b.s - a.s)
     .slice(0, limit)
     .map((x) => x.g);
