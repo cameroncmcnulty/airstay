@@ -502,8 +502,8 @@ export function fallbackAria(message: string, locale: Locale) {
       : "Give me a city, a season, a budget, a ‘I just need heat’ — or I’ll open flights, hotels, or cars for you.";
   }
   const closer = fr
-    ? "Je mets des boutons en dessous pour chercher sur AIRSTAY. On affine ?"
-    : "I’ll drop buttons below to search on AIRSTAY. Want to sharpen it?";
+    ? "Tape un bouton si tu veux chercher ça tout de suite — ou dis-moi la vibe."
+    : "Tap a button if you want to search that now — or tell me the vibe.";
   return `${parts.join("\n\n")}\n\n${closer}`;
 }
 
