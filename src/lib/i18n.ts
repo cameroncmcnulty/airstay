@@ -299,7 +299,7 @@ export const t = {
       reset: "New chat",
       thinking: "Aria is thinking…",
       error: "I lost the signal for a second. Try that again.",
-      chips: ["Weekend in Cancún", "Best time for Japan", "How AIRSTAY works", "Sun in February"],
+      chips: ["Weekend in Cancún", "Surprise me", "Best time for Japan", "How AIRSTAY works", "What to pack for Mexico"],
     },
     contact: {
       title: "Contact AIRSTAY",
@@ -626,7 +626,7 @@ export const t = {
       reset: "Nouveau clavardage",
       thinking: "Aria réfléchit…",
       error: "J’ai perdu le fil une seconde. Réessayez.",
-      chips: ["Week-end à Cancún", "Meilleure saison pour le Japon", "Comment marche AIRSTAY", "Du soleil en février"],
+      chips: ["Week-end à Cancún", "Surprends-moi", "Meilleure saison pour le Japon", "Comment marche AIRSTAY", "Valise pour le Mexique"],
     },
     contact: {
       title: "Contacter AIRSTAY",

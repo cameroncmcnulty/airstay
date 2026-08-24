@@ -216,6 +216,87 @@ const GUIDES: Guide[] = [
     en: "East Coast Canada: Halifax as a hub, Newfoundland for drama and kindness, Québec City for stone walls and winter magic, PEI for beaches and red roads. September is chef’s-kiss. Drive if you can; distances look small and feel bigger.",
     fr: "Est du Canada : Halifax en hub, Terre-Neuve pour le grand large, Québec pour les fortifs, Î.-P.-É. pour les routes rouges. Septembre est parfait.",
   },
+  {
+    id: "costarica",
+    codes: ["SJO", "LIR"],
+    names: ["costa rica", "san jose", "liberia", "tamarindo", "la fortuna", "manuel antonio"],
+    tags: ["central america", "adventure", "nature", "wildlife", "pura vida"],
+    region: "Costa Rica",
+    en: "Costa Rica: pura vida, rainforests, sloths, volcanoes, Pacific and Caribbean coasts. Liberia (LIR) is closer to Guanacaste beaches; San José (SJO) for the centre and La Fortuna. Green season is May–November — lush, fewer crowds, afternoon showers. Directs from YYZ/YUL in high season. Pair a rainforest lodge with a beach tail.",
+    fr: "Costa Rica : forêts, paresseux, volcans, deux océans. Liberia plus près des plages Guanacaste, San José pour le centre. Saison verte mai–nov. Directs YYZ/YUL en haute saison.",
+  },
+  {
+    id: "cartagena",
+    codes: ["CTG", "BOG"],
+    names: ["cartagena", "colombia", "colombie", "bogota", "medellin"],
+    tags: ["south america", "caribbean", "colonial", "food", "salsa"],
+    region: "Colombia",
+    en: "Cartagena: walled old town, heat, colour, Caribbean evenings. Bogotá is altitude and museums; Medellín is spring-forever and hills. Canada usually connects once. Pack light linen. Old-town hotels beat the high-rises if you want atmosphere.",
+    fr: "Carthagène : vieille ville fortifiée, chaleur, couleur. Bogotá en altitude, Medellín au printemps éternel. Un stop depuis le Canada en général.",
+  },
+  {
+    id: "bali",
+    codes: ["DPS"],
+    names: ["bali", "ubud", "canggu", "seminyak", "indonesia", "indonésie"],
+    tags: ["asia", "island", "yoga", "honeymoon", "temples"],
+    region: "Indonesia · Bali",
+    en: "Bali: temples, rice terraces, surf towns, Ubud for green quiet. Long-haul from Canada — usually via Asia. Dry-ish April–October; rainy November–March still works if you pick lodging well. Scooter only if you’re confident. Reef-safe sunscreen.",
+    fr: "Bali : temples, rizières, surf, Ubud au calme. Long-courrier via l’Asie. Plus sec avril–octobre. Scooter seulement si vous êtes à l’aise.",
+  },
+  {
+    id: "iceland",
+    codes: ["KEF"],
+    names: ["iceland", "islande", "reykjavik", "blue lagoon", "golden circle"],
+    tags: ["nordic", "nature", "aurora", "road", "summer"],
+    region: "Iceland",
+    en: "Iceland: Reykjavík as base, Golden Circle, south-coast waterfalls, summer midnight sun, winter northern lights. Directs from YYZ/YUL in season. Ring Road is a 7–10 day dream. Weather changes in ten minutes — layers, always. Book the famous lagoons ahead.",
+    fr: "Islande : Reykjavík, Cercle d’or, côte sud. Soleil de minuit l’été, aurores l’hiver. Directs YYZ/YUL. La Route 1 en 7–10 jours. Couches, toujours.",
+  },
+  {
+    id: "athens",
+    codes: ["ATH"],
+    names: ["athens", "athènes", "greece", "grèce", "santorini", "mykonos", "crete"],
+    tags: ["europe", "islands", "history", "summer", "sea"],
+    region: "Greece",
+    en: "Athens: Acropolis at golden hour, then ferries to islands. Santorini for the postcard, Naxos or Milos if you want quieter. May–June and September beat August heat and prices. From Canada, often via Europe. Comfortable shoes — marble is slippery.",
+    fr: "Athènes : Acropole au soleil rasant, puis ferries. Santorin pour la carte postale, Naxos ou Milos plus calmes. Mai–juin et septembre battent août.",
+  },
+  {
+    id: "dubai",
+    codes: ["DXB"],
+    names: ["dubai", "dubaï", "uae", "abu dhabi"],
+    tags: ["middle east", "hub", "luxury", "winter sun", "city"],
+    region: "United Arab Emirates",
+    en: "Dubai: winter sun (Nov–March), malls, desert, a stopover to Asia/Africa that can be the trip. Summer is brutal. Directs from YYZ. Dress codes are more relaxed than people fear, still modest in malls and mosques. Combine with Abu Dhabi if you have a spare day.",
+    fr: "Dubaï : soleil d’hiver nov.–mars, désert, escale vers l’Asie. L’été brûle. Directs YYZ. Abu Dhabi si vous avez une journée.",
+  },
+  {
+    id: "edinburgh",
+    codes: ["EDI"],
+    names: ["edinburgh", "édimbourg", "scotland", "écosse", "highlands"],
+    tags: ["uk", "culture", "whisky", "festival", "castles"],
+    region: "Scotland",
+    en: "Edinburgh: castle, closes, August Festival madness, whisky, a launch pad to the Highlands. Cooler than you think even in July. Rain is a personality. Pair with Glasgow or a train to the west coast.",
+    fr: "Édimbourg : château, ruelles, Festival en août, whisky, tremplin vers les Highlands. Plus frais qu’on croit. La pluie a du caractère.",
+  },
+  {
+    id: "aruba",
+    codes: ["AUA"],
+    names: ["aruba", "oranjestad"],
+    tags: ["caribbean", "beach", "outside hurricane", "dutch"],
+    region: "Aruba",
+    en: "Aruba: south of the hurricane belt, trade-wind beaches, easy English/Dutch vibe. A Canadian winter favourite when you want reliability. Directs in season from YYZ. Drier and windier than Jamaica. Good for first-time Caribbean.",
+    fr: "Aruba : hors ceinture des ouragans, alizés, plages faciles. Chouchou d’hiver fiable. Directs YYZ en saison.",
+  },
+  {
+    id: "chicago",
+    codes: ["ORD", "MDW"],
+    names: ["chicago", "illinois"],
+    tags: ["usa", "city", "food", "architecture", "weekend"],
+    region: "United States · Midwest",
+    en: "Chicago: architecture river cruise, neighbourhood food, lake in summer, serious winters. Directs from most Canadian hubs. Shoulder spring and fall are the sweet spot. Walkable downtown; the L is easy.",
+    fr: "Chicago : architecture, tables de quartier, lac l’été. Directs depuis les hubs canadiens. Printemps et automne en or.",
+  },
 ];
 
 const TOPICS: Topic[] = [
@@ -278,6 +359,42 @@ const TOPICS: Topic[] = [
     tags: ["hotel", "hôtel", "resort", "all-inclusive", "tout-inclus", "stay"],
     en: "Hotels: beach resorts vs city boutique vs apartment-with-kitchen. All-inclusive shines for families and first-time sun. City trips often eat better (and cheaper) outside the hotel. Check location on the map, not just the star rating. AIRSTAY never adds a booking fee.",
     fr: "Hôtels : complexe plage, boutique en ville, ou appart avec cuisine. Le tout-inclus brille en famille. En ville, on mange souvent mieux dehors. Regardez la carte, pas seulement les étoiles.",
+  },
+  {
+    id: "chat",
+    tags: ["hello", "hi", "hey", "salut", "thanks", "merci", "bye", "who", "joke", "bored", "help", "hola"],
+    en: "I’m Aria — AIRSTAY’s AI travel expert. I can chat, then get you moving: beaches, cities, packing, visas at a high level, or how this site works. Point me at a vibe and I’ll open the right search.",
+    fr: "Je suis Aria — experte voyage IA d’AIRSTAY. On peut jaser, puis avancer : plages, villes, valise, visas en gros, ou comment le site marche. Donnez-moi une vibe, j’ouvre la bonne recherche.",
+  },
+  {
+    id: "budget",
+    tags: ["budget", "cheap", "afford", "pas cher", "save", "économique", "deal"],
+    en: "Stretch CAD: fly mid-week, shoulder seasons, one checked bag, kitchens in cities, all-inclusive when you’d eat out three times a day anyway. Lisbon, Mexico City, Varadero, and Puerto Vallarta usually play nicer than Paris or Cabos. AIRSTAY never adds a booking fee — compare, then pick.",
+    fr: "Faire durer le $ CA : milieu de semaine, épaules de saison, une valise, cuisine en ville. Lisbonne, Mexico, Varadero, Vallarta plus doux que Paris ou Cabos. Aucun frais AIRSTAY.",
+  },
+  {
+    id: "romance",
+    tags: ["romantic", "honeymoon", "couple", "anniversary", "lune de miel", "amoureux"],
+    en: "Couples: Vallarta and Cabos for Pacific sunsets, Paris or Lisbon for walking dinners, Kyoto in November, Bali if you have the long-haul appetite. Skip mega kids’ clubs. Book the dinner with a view on night two, not night one — you’ll be wrecked.",
+    fr: "Couples : Vallarta et Cabos pour le Pacifique, Paris ou Lisbonne à pied, Kyoto en novembre, Bali si le long-courrier passe. Le dîner vue mer, soir 2, pas soir 1.",
+  },
+  {
+    id: "food",
+    tags: ["food", "eat", "restaurant", "cuisine", "bouffe", "wine", "coffee"],
+    en: "Eat-first trips: Mexico City, Tokyo, Paris, Bangkok, Montreal (staycation energy), Lima if you’ll go farther. Book one splashy table; wander the rest. Markets in the morning beat a ‘food tour’ if you like wandering.",
+    fr: "Voyages-goût : Mexico, Tokyo, Paris, Bangkok, Montréal, Lima plus loin. Une belle table, le reste en flânant. Les marchés le matin battent souvent le food tour.",
+  },
+  {
+    id: "weekend",
+    tags: ["weekend", "short", "3 days", "quick", "getaway", "escapade"],
+    en: "Canadian long-weekends that work: NYC, Chicago, Montreal, Quebec City, Chicago, Vegas, Florida if you live east. Don’t fly farther than ~5 hours if you’re back Monday. Directs or don’t bother.",
+    fr: "Fins de semaine qui marchent : NYC, Chicago, Montréal, Québec, Vegas, Floride à l’est. Pas plus de ~5 h si vous rentrez lundi. Direct, sinon laissez faire.",
+  },
+  {
+    id: "surprise",
+    tags: ["surprise", "idea", "recommend", "where should", "inspire", "random", "anywhere"],
+    en: "Need a nudge? Winter: Cancún or Vallarta. Shoulder: Lisbon or London. Long-haul appetite: Tokyo via Vancouver. Mountains: Banff from Calgary. I’ll open the search — you just say the mood.",
+    fr: "Un coup de pouce ? Hiver : Cancún ou Vallarta. Épaule : Lisbonne ou Londres. Long-courrier : Tokyo via Vancouver. Montagne : Banff depuis Calgary. Je lance la recherche.",
   },
 ];
 
@@ -342,24 +459,51 @@ export function knowledgeBlock(message: string, locale: Locale) {
 
 export function fallbackAria(message: string, locale: Locale) {
   const fr = locale === "fr";
+  const q = message.trim();
+  const low = q.toLowerCase();
+
+  if (/^(hi|hey|hello|yo|sup|salut|bonjour|allo)\b/i.test(low) && low.length < 24) {
+    return fr
+      ? "Salut — Aria, experte voyage AIRSTAY. Une plage, une ville, une valise trop lourde, ou juste « sors-moi d’ici » ?"
+      : "Hey — Aria, AIRSTAY’s travel expert. A beach, a city, a packing spiral, or just ‘get me out of here’?";
+  }
+  if (/^(thanks|thank you|merci|ty|cheers)\b/i.test(low)) {
+    return fr
+      ? "Avec plaisir. Si le voyage change de forme, je suis dans le coin."
+      : "Anytime. If the trip shapeshifts, I’m in the corner.";
+  }
+  if (/^(bye|goodbye|ciao|a plus|à plus|see ya)/i.test(low)) {
+    return fr ? "Bon vol — même si c’est encore dans votre tête." : "Safe travels — even if they’re still in your head.";
+  }
+  if (/who are you|t.?.es qui|c.?est qui|what can you|que peux/i.test(low)) {
+    return fr
+      ? "Je suis Aria avec AIRSTAY — experte voyage IA. Plages, villes, valises, visas en gros, et je t’envoie au bon endroit sur le site pour chercher. Je ne réserve pas à ta place : je t’oriente, tu compares en $ CA, sans frais de notre part."
+      : "I’m Aria with AIRSTAY — an AI travel expert. Beaches, cities, packing, visas at a high level, and I’ll send you to the right place on the site to search. I don’t book for you: I aim, you compare in CAD, no fee from us.";
+  }
+  if (/\b(joke|blague|funny)\b/i.test(low)) {
+    return fr
+      ? "Pourquoi les avions n’ont pas de valise émotionnelle ? Parce que le décalage horaire suffit. Allez, une vraie destination maintenant ?"
+      : "Why don’t planes carry emotional baggage? Jet lag already does. Okay — a real destination now?";
+  }
+
   const guides = retrieveGuides(message, 1);
   const topics = retrieveTopics(message);
   const parts: string[] = [];
   if (guides.length) parts.push(guides.map((g) => (fr ? g.fr : g.en)).join("\n\n"));
   const extra = topics.filter((t) => {
-    if (t.id === "airstay") return !guides.length;
+    if (t.id === "airstay" || t.id === "chat") return !guides.length;
     if (guides.length) return t.id === "seasons" && /when|best time|saison|month|hiver|summer|winter|february|février/i.test(message);
-    return true;
+    return t.id !== "chat";
   });
   if (extra.length) parts.push(extra.map((t) => (fr ? t.fr : t.en)).join("\n\n"));
   if (!parts.length) {
     return fr
-      ? "Je suis Aria, l’experte voyage IA d’AIRSTAY. Parle-moi d’une ville, d’une saison, d’un budget ou d’un « j’ai besoin de chaleur ». On cherche en $ CA, sans frais de réservation de notre part. Où est-ce qu’on vise ?"
-      : "I’m Aria, AIRSTAY’s AI travel expert. Throw me a city, a season, a budget, or a ‘I just need heat.’ We search in CAD, with no booking fee from us. Where are we aiming?";
+      ? "Dis-moi une ville, une saison, un budget, un « j’ai besoin de chaleur » — ou ouvre un vol, un hôtel, une auto. Je t’y amène."
+      : "Give me a city, a season, a budget, a ‘I just need heat’ — or I’ll open flights, hotels, or cars for you.";
   }
   const closer = fr
-    ? "Tu veux que je t’oriente vols, hôtel ou auto — ou on affine la vibe ?"
-    : "Want me to point you at flights, a stay, or a car — or shall we sharpen the vibe?";
+    ? "Je mets des boutons en dessous pour chercher sur AIRSTAY. On affine ?"
+    : "I’ll drop buttons below to search on AIRSTAY. Want to sharpen it?";
   return `${parts.join("\n\n")}\n\n${closer}`;
 }
 

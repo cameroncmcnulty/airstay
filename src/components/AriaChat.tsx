@@ -1,12 +1,13 @@
 "use client";
 
 import { FormEvent, useEffect, useRef, useState, type ReactNode } from "react";
-import { Send, X, Sparkles, RotateCcw } from "lucide-react";
+import { Send, X, Sparkles, RotateCcw, ArrowUpRight } from "lucide-react";
 import { useApp } from "@/context/AppContext";
+import { parseFence, type AriaAction } from "@/lib/aria-actions";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
-const STORE = "airstay.aria.v3";
+const STORE = "airstay.aria.v4";
 
 export function AriaChat() {
   const { m, locale, settings } = useApp();
@@ -168,19 +169,30 @@ export function AriaChat() {
           </div>
 
           <div ref={scroller} className="flex-1 space-y-3 overflow-y-auto bg-white px-4 py-4">
-            {msgs.map((msg, i) => (
-              <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                <div
-                  className={`max-w-[88%] px-3.5 py-2.5 text-sm leading-relaxed ${
-                    msg.role === "user"
-                      ? "rounded-2xl rounded-br-md bg-sky text-white"
-                      : "rounded-2xl rounded-bl-md bg-mist text-navy"
-                  }`}
-                >
-                  {msg.role === "assistant" ? <AriaMarkdown text={msg.content} /> : msg.content}
+            {msgs.map((msg, i) => {
+              if (msg.role === "user") {
+                return (
+                  <div key={i} className="flex justify-end">
+                    <div className="max-w-[88%] rounded-2xl rounded-br-md bg-sky px-3.5 py-2.5 text-sm leading-relaxed text-white">
+                      {msg.content}
+                    </div>
+                  </div>
+                );
+              }
+              const parsed = parseFence(msg.content);
+              return (
+                <div key={i} className="flex justify-start">
+                  <div className="max-w-[92%] space-y-2">
+                    {parsed.text && (
+                      <div className="rounded-2xl rounded-bl-md bg-mist px-3.5 py-2.5 text-sm leading-relaxed text-navy">
+                        <AriaMarkdown text={parsed.text} />
+                      </div>
+                    )}
+                    {parsed.actions.length > 0 && <AriaActions actions={parsed.actions} />}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
             {busy && (
               <div className="flex items-center gap-2 pl-1 text-navy/45">
                 <span className="aria-dots" aria-hidden>
@@ -247,6 +259,23 @@ export function AriaChat() {
         <span className="aria-ring" />
         {open ? <X className="relative z-[1] h-5 w-5 sm:h-6 sm:w-6" /> : <Sparkles className="relative z-[1] h-5 w-5 sm:h-6 sm:w-6" />}
       </button>
+    </div>
+  );
+}
+
+function AriaActions({ actions }: { actions: AriaAction[] }) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      {actions.map((a) => (
+        <a
+          key={a.href}
+          href={a.href}
+          className="inline-flex items-center justify-between gap-2 rounded-full bg-navy px-3.5 py-2 text-xs font-bold text-white transition hover:bg-sky"
+        >
+          <span>{a.label}</span>
+          <ArrowUpRight className="h-3.5 w-3.5 shrink-0" />
+        </a>
+      ))}
     </div>
   );
 }

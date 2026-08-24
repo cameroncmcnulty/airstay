@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { buildAriaSystem, fallbackAria } from "@/lib/aria-persona";
 import { knowledgeBlock } from "@/lib/aria-knowledge";
 import { getSettings } from "@/lib/site-settings";
+import { withActions } from "@/lib/aria-actions";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -64,12 +65,12 @@ export async function POST(req: NextRequest) {
   const retrieved = knowledgeBlock(last, locale);
   const system = buildAriaSystem(locale, retrieved);
   const key = process.env.XAI_API_KEY;
-  if (!key) return textResponse(fallbackAria(last, locale));
+  if (!key) return textResponse(withActions(fallbackAria(last, locale), last, locale));
 
   const chatBody = {
     model: "grok-4.6",
     stream: true,
-    temperature: 0.7,
+    temperature: 0.9,
     messages: [{ role: "system", content: system }, ...messages],
     tools: [{ type: "web_search" as const }],
   };
@@ -99,7 +100,7 @@ export async function POST(req: NextRequest) {
     if (retry.ok) {
       const data = await retry.json();
       const text = data?.choices?.[0]?.message?.content || fallbackAria(last, locale);
-      return textResponse(String(text));
+      return textResponse(withActions(String(text), last, locale));
     }
 
     const responses = await fetch("https://api.x.ai/v1/responses", {
@@ -121,11 +122,11 @@ export async function POST(req: NextRequest) {
           ?.content?.map((c: { text?: string }) => c.text || "")
           .join("") ||
         fallbackAria(last, locale);
-      return textResponse(String(text));
+      return textResponse(withActions(String(text), last, locale));
     }
-    return textResponse(fallbackAria(last, locale));
+    return textResponse(withActions(fallbackAria(last, locale), last, locale));
   } catch {
-    return textResponse(fallbackAria(last, locale));
+    return textResponse(withActions(fallbackAria(last, locale), last, locale));
   }
 }
 
@@ -167,16 +168,21 @@ function relayXaiStream(body: ReadableStream<Uint8Array>, last: string, locale: 
             }
           }
         }
+        const finished = withActions(acc || fallbackAria(last, locale), last, locale);
+        const extra = acc ? finished.slice(acc.length) : finished;
         if (!acc) {
-          const fb = fallbackAria(last, locale);
           controller.enqueue(
-            encoder.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: fb } }] })}\n\n`)
+            encoder.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: finished } }] })}\n\n`)
+          );
+        } else if (extra) {
+          controller.enqueue(
+            encoder.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: extra } }] })}\n\n`)
           );
         }
         controller.enqueue(encoder.encode("data: [DONE]\n\n"));
         controller.close();
       } catch {
-        const fb = fallbackAria(last, locale);
+        const fb = withActions(fallbackAria(last, locale), last, locale);
         controller.enqueue(
           encoder.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: fb } }] })}\n\ndata: [DONE]\n\n`)
         );
