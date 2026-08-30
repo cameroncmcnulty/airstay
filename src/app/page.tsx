@@ -10,6 +10,7 @@ import { HeroPeek } from "@/components/HeroPeek";
 import { HowItWorks, TrustStrip } from "@/components/HowItWorks";
 import { PopularDestGrid } from "@/components/PopularDestGrid";
 import { ExpediaOffer } from "@/components/ExpediaOffer";
+import { TravelpayoutsEmbed } from "@/components/TravelpayoutsEmbed";
 import { useApp } from "@/context/AppContext";
 import { type SearchKind } from "@/lib/deeplinks";
 
@@ -72,6 +73,7 @@ export default function HomePage() {
       <div className="space-y-16 py-14 sm:space-y-24 sm:py-20">
         <TrustStrip />
         <ExpediaOffer />
+        <TravelpayoutsEmbed />
         <HowItWorks />
         <DealGrid limit={4} />
 

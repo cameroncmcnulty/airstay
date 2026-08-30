@@ -94,6 +94,11 @@ header {
   transform: scale(min(1, calc(100cqi / 728px)));
 }
 
+.tp-embed iframe,
+.tp-embed > div {
+  max-width: 100% !important;
+}
+
 @keyframes aria-glow {
   0%,
   100% {

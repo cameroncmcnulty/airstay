@@ -299,6 +299,8 @@ export const t = {
       title: "Vacation Packages by Expedia",
       cta: "View on Expedia",
       note: "You book on Expedia.ca. AIRSTAY never adds a fee.",
+      hotelsTitle: "Search hotels",
+      hotelsNote: "You finish on a partner site. AIRSTAY never adds a fee.",
     },
     comingSoon: {
       title: "Packages are almost here",
@@ -672,6 +674,8 @@ export const t = {
       title: "Forfaits vacances par Expedia",
       cta: "Voir sur Expedia",
       note: "Vous réservez sur Expedia.ca. AIRSTAY n’ajoute jamais de frais.",
+      hotelsTitle: "Chercher un hôtel",
+      hotelsNote: "Vous terminez chez un partenaire. AIRSTAY n’ajoute jamais de frais.",
     },
     comingSoon: {
       title: "Les forfaits arrivent",
