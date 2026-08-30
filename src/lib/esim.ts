@@ -136,7 +136,7 @@ export async function searchEsim(q: SearchQuery): Promise<LiveOffer[]> {
     const cadEach = Math.max(1, Math.round(usd * fx));
     const priceCad = cadEach * sims;
     const networks = (pkg.operator?.networks || []).map((n) => [n.network, n.service_type].filter(Boolean).join(" ")).filter(Boolean);
-    const href = `https://www.airalo.com/${country.slug}-esim/${pkg.slug}`;
+    const href = `https://airalo.com/${country.slug}-esim`;
     rows.push({
       id: `esim-airalo-${pkg.slug}`,
       source: "travelpayouts",
@@ -177,7 +177,6 @@ export async function searchEsim(q: SearchQuery): Promise<LiveOffer[]> {
   const pool = covering.length ? covering : rows;
   pool.sort((a, b) => (a.priceCad || 0) - (b.priceCad || 0) || (b.dataGb || 0) - (a.dataGb || 0));
   const priced = pool.slice(0, 36);
-  const slug = country.slug;
   const extras: LiveOffer[] = [
     {
       id: "esim-yesim",
@@ -188,7 +187,7 @@ export async function searchEsim(q: SearchQuery): Promise<LiveOffer[]> {
       domain: "yesim.tech",
       tagline: "More eSIM plans on Yesim",
       taglineFr: "D’autres forfaits eSIM sur Yesim",
-      url: tpTrack("yesim", `https://yesim.app/country/${slug}/`),
+      url: tpTrack("yesim"),
       live: true,
     },
     {
@@ -200,7 +199,7 @@ export async function searchEsim(q: SearchQuery): Promise<LiveOffer[]> {
       domain: "saily.com",
       tagline: "NordVPN’s eSIM brand",
       taglineFr: "La marque eSIM de NordVPN",
-      url: tpTrack("saily", `https://saily.com/destinations/${slug}`),
+      url: tpTrack("saily"),
       live: true,
     },
     {
@@ -212,7 +211,7 @@ export async function searchEsim(q: SearchQuery): Promise<LiveOffer[]> {
       domain: "drimsim.com",
       tagline: "Compare on Drimsim",
       taglineFr: "Comparer sur Drimsim",
-      url: tpTrack("drimsim", "https://w1.drimsim.com"),
+      url: tpTrack("drimsim"),
       live: true,
     },
   ];

@@ -1,5 +1,14 @@
-/** Travelpayouts partner ID (marker) and project (trs), from the account short links. */
-export const TP_MARKER = process.env.TRAVELPAYOUTS_MARKER || "766682";
+/**
+ * 766682 = partner marker (from your tpx.li links).
+ * 564250 = project / trs. Never send 564250 as marker — Airalo/Impact rejects it.
+ */
+function partnerMarker() {
+  const m = (process.env.TRAVELPAYOUTS_MARKER || "").trim();
+  if (m && m !== "564250") return m;
+  return "766682";
+}
+
+export const TP_MARKER = partnerMarker();
 export const TP_TRS = process.env.TRAVELPAYOUTS_TRS || "564250";
 
 type Brand = {
@@ -11,7 +20,7 @@ type Brand = {
 };
 
 export const TP_BRANDS = {
-  airalo: { short: "https://airalo.tpx.li/jM2n8Qvr", campaign: 541, p: 8310, hosts: ["airalo.com"], home: "https://www.airalo.com" },
+  airalo: { short: "https://airalo.tpx.li/jM2n8Qvr", campaign: 541, p: 8310, hosts: ["airalo.com"], home: "https://airalo.com" },
   aviasales: { short: "https://aviasales.tpx.li/GAEX5Ehz", campaign: 100, p: 4114, hosts: ["aviasales.com", "aviasales.ru"], home: "https://www.aviasales.com" },
   yesim: { short: "https://yesim.tpx.li/S0EdIOgu", campaign: 224, p: 5998, hosts: ["yesim.tech", "yesim.app"], home: "https://yesim.tech" },
   saily: { short: "https://saily.tpx.li/RCcs7dny", campaign: 629, p: 8979, hosts: ["saily.com"], home: "https://saily.com" },
@@ -54,11 +63,38 @@ function brandForHost(host: string): TpBrand | undefined {
   );
 }
 
-/** Official short link → destination page. Travelpayouts records the click, then sends the traveller to `dest`. */
+function normalizeDest(url: string, brand: TpBrand) {
+  try {
+    const u = new URL(url);
+    if (u.hostname.startsWith("www.")) u.hostname = u.hostname.slice(4);
+    if (brand === "airalo") {
+      const m = u.pathname.match(/^\/([a-z0-9-]+-esim)(?:\/.*)?$/i);
+      if (m) {
+        u.pathname = `/${m[1]}`;
+        u.search = "";
+        u.hash = "";
+      }
+    }
+    let out = u.toString();
+    if (out.endsWith("/") && u.pathname !== "/") out = out.slice(0, -1);
+    return out;
+  } catch {
+    return url;
+  }
+}
+
+/** Travelpayouts click → brand page. Uses the official tp.media template from your short links. */
 export function tpTrack(brand: TpBrand, dest?: string) {
   const b = TP_BRANDS[brand];
-  const target = dest || b.home;
-  return `${b.short}?u=${encodeURIComponent(target)}`;
+  const target = normalizeDest(dest || b.home, brand);
+  const params = new URLSearchParams({
+    campaign_id: String(b.campaign),
+    marker: TP_MARKER,
+    p: String(b.p),
+    trs: TP_TRS,
+    u: target,
+  });
+  return `https://tp.media/r?${params.toString()}`;
 }
 
 /** If the URL is a Travelpayouts brand we have a short link for, wrap it. Otherwise leave it. */

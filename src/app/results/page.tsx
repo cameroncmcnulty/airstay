@@ -146,7 +146,7 @@ function ResultsInner() {
         returnDate: q.returnDate,
       }),
     }).catch(() => undefined);
-    window.open(offer.url, "_blank", "noopener,noreferrer");
+    window.open(offer.url, "_blank", "noopener");
     setLeaving(null);
   }
 
