@@ -19,14 +19,20 @@ export type LiveOffer = {
   airlineName?: string;
   airlineLogo?: string;
   flightNumber?: string;
+  originAirport?: string;
+  destAirport?: string;
   priceCad?: number;
   priceFromCad?: number;
   priceToCad?: number;
   priceUnit?: "trip" | "night" | "day" | "person";
+  adults?: number;
   stops?: number;
+  returnStops?: number;
   departAt?: string;
   returnAt?: string;
+  arriveAt?: string;
   durationMin?: number;
+  durationBack?: number;
   url: string;
   foundAt?: string;
   featured?: boolean;
@@ -141,6 +147,7 @@ export async function searchLive(q: SearchQuery): Promise<LiveOffer[]> {
     for (const dest of dests.slice(0, 2)) {
       const batch = await Promise.allSettled([
         fetchDates(origin, dest, q, names, adults),
+        fetchDirect(origin, dest, q, names, adults),
         fetchWeek(origin, dest, q, names, adults),
         fetchCheap(origin, dest, q, names, adults),
         fetchCalendar(origin, dest, q, names, adults),
@@ -189,18 +196,65 @@ async function fetchDates(
       id: `dates-${origin}-${dest}-${i}`,
       origin: String(row.origin || origin),
       dest: String(row.destination || dest),
+      originAirport: String(row.origin_airport || row.origin || origin),
+      destAirport: String(row.destination_airport || row.destination || dest),
       price: Number(row.price),
       stops: Number(row.transfers ?? row.number_of_changes ?? 0),
+      returnStops: row.return_transfers != null ? Number(row.return_transfers) : undefined,
       airline: String(row.airline || ""),
       flightNumber: String(row.flight_number || ""),
       departAt: String(row.departure_at || q.depart || ""),
       returnAt: String(row.return_at || q.returnDate || ""),
-      durationMin: row.duration != null ? Number(row.duration) : undefined,
+      durationMin: minutes(row.duration_to ?? row.duration),
+      durationBack: minutes(row.duration_back),
+      link: typeof row.link === "string" ? row.link : undefined,
       names,
       adults,
       q,
     })
   );
+}
+
+async function fetchDirect(
+  origin: string,
+  dest: string,
+  q: SearchQuery,
+  names: Map<string, string>,
+  adults: number
+) {
+  const params = new URLSearchParams({ origin, destination: dest, currency: "cad" });
+  if (q.depart) params.set("depart_date", q.depart);
+  if (q.returnDate && q.trip !== "oneway") params.set("return_date", q.returnDate);
+  const json = await tp(`https://api.travelpayouts.com/v1/prices/direct?${params.toString()}`);
+  const grouped = json?.data && typeof json.data === "object" ? json.data : {};
+  const out: LiveOffer[] = [];
+  for (const destKey of Object.keys(grouped)) {
+    const row = grouped[destKey] as Record<string, unknown>;
+    out.push(
+      toOffer({
+        id: `direct-${origin}-${destKey}`,
+        origin,
+        dest: destKey,
+        price: Number(row.price),
+        stops: 0,
+        airline: String(row.airline || ""),
+        flightNumber: String(row.flight_number || ""),
+        departAt: String(row.departure_at || q.depart || ""),
+        returnAt: String(row.return_at || q.returnDate || ""),
+        names,
+        adults,
+        q,
+      })
+    );
+  }
+  return out;
+}
+
+function minutes(raw: unknown) {
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n <= 0) return undefined;
+  if (n > 3000) return Math.round(n / 60);
+  return Math.round(n);
 }
 
 async function fetchHotelPrices(q: SearchQuery): Promise<LiveOffer[]> {
@@ -359,21 +413,26 @@ function toOffer(input: {
   id: string;
   origin: string;
   dest: string;
+  originAirport?: string;
+  destAirport?: string;
   price: number;
   stops?: number;
+  returnStops?: number;
   airline?: string;
   flightNumber?: string;
   departAt?: string;
   returnAt?: string;
   durationMin?: number;
+  durationBack?: number;
   foundAt?: string;
+  link?: string;
   names: Map<string, string>;
   adults: number;
   q: SearchQuery;
 }): LiveOffer {
-  const airline = input.airline || undefined;
+  const airline = input.airline && input.airline !== "undefined" ? input.airline : undefined;
   const name = airline ? input.names.get(airline) || airline : "Live fare";
-  const url =
+  const built =
     aviasalesUrl({
       ...input.q,
       from: input.origin,
@@ -382,6 +441,12 @@ function toOffer(input: {
       returnDate: input.returnAt?.slice(0, 10) || input.q.returnDate,
       adults: input.adults,
     }) || "#";
+  const link = input.link
+    ? input.link.startsWith("http")
+      ? input.link
+      : `https://www.aviasales.com${input.link.startsWith("/") ? "" : "/"}${input.link}`
+    : built;
+  const durationMin = minutes(input.durationMin);
   return {
     id: input.id,
     source: "travelpayouts",
@@ -394,15 +459,28 @@ function toOffer(input: {
     airline,
     airlineName: airline ? input.names.get(airline) : undefined,
     airlineLogo: airlineLogo(airline),
-    flightNumber: input.flightNumber || undefined,
+    flightNumber: input.flightNumber && input.flightNumber !== "undefined" ? input.flightNumber : undefined,
+    originAirport: (input.originAirport || input.origin).toUpperCase(),
+    destAirport: (input.destAirport || input.dest).toUpperCase(),
     priceCad: Math.round(input.price),
     priceUnit: "person",
+    adults: input.adults,
     stops: input.stops,
+    returnStops: input.returnStops,
     departAt: input.departAt,
     returnAt: input.returnAt,
-    durationMin: input.durationMin,
-    url,
+    arriveAt: arriveIso(input.departAt, durationMin),
+    durationMin,
+    durationBack: minutes(input.durationBack),
+    url: link,
     foundAt: input.foundAt,
     live: true,
   };
+}
+
+function arriveIso(depart?: string, min?: number) {
+  if (!depart || !min || depart.length < 16) return undefined;
+  const d = new Date(depart);
+  if (Number.isNaN(d.getTime())) return undefined;
+  return new Date(d.getTime() + min * 60000).toISOString();
 }
