@@ -1,10 +1,16 @@
 "use client";
 
-import { useEffect } from "react";
-import { useApp } from "@/context/AppContext";
-import { expediaPackagesUrl } from "@/lib/partners";
+import { useEffect, useRef } from "react";
 
-const SCRIPT_SRC = "https://creator.expediagroup.com/products/banners/assets/eg-affiliate-banners.js";
+const BANNERS_URL = "https://creator.expediagroup.com/products/banners";
+const ORIGINS = [
+  "https://creator.expediagroup.com",
+  "https://creatorexpediagroupcom.staging.exp-test.net",
+];
+
+function instanceId() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2);
+}
 
 export function ExpediaPackageBanner({
   image = "resort",
@@ -13,52 +19,68 @@ export function ExpediaPackageBanner({
   image?: string;
   message?: string;
 }) {
-  const { consent, m } = useApp();
-  const href = expediaPackagesUrl();
+  const hostRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!consent?.marketing) return;
-    document.querySelectorAll("script.eg-affiliate-banners-script").forEach((node) => node.remove());
-    const s = document.createElement("script");
-    s.className = "eg-affiliate-banners-script";
-    s.async = true;
-    s.src = SCRIPT_SRC;
-    document.body.appendChild(s);
-    return () => {
-      s.remove();
-    };
-  }, [consent?.marketing]);
+    const host = hostRef.current;
+    if (!host || host.querySelector("iframe")) return;
 
-  if (!consent?.marketing) {
-    return (
-      <a
-        href={href}
-        target="_blank"
-        rel="noopener noreferrer sponsored"
-        className="grid min-h-[250px] w-full max-w-[300px] place-items-center rounded-xl bg-gradient-to-br from-sky-50 to-mist px-4 text-center ring-1 ring-navy/10"
-      >
-        <span>
-          <span className="text-[11px] font-black uppercase tracking-[0.18em] text-sky-700">{m.ad.kicker}</span>
-          <span className="mt-2 block text-lg font-black text-navy">{m.ad.title}</span>
-          <span className="mt-3 inline-flex rounded-full bg-sky px-3 py-1.5 text-xs font-bold text-white">{m.ad.cta}</span>
-        </span>
-      </a>
-    );
-  }
+    const instance = instanceId();
+    host.setAttribute("data-instance", instance);
+
+    const params = new URLSearchParams({
+      program: "ca-expedia",
+      layout: "medium-rectangle",
+      image,
+      message,
+      link: "packages",
+      network: "pz",
+      camref: "1110lLNKz",
+      instance,
+    });
+
+    const frame = document.createElement("iframe");
+    frame.className = "eg-affiliate-banners-frame";
+    frame.title = "Expedia";
+    frame.src = `${BANNERS_URL}?${params.toString()}`;
+    frame.setAttribute("scrolling", "no");
+    frame.style.width = "300px";
+    frame.style.height = "250px";
+    frame.style.margin = "auto";
+    frame.style.border = "none";
+    frame.style.maxWidth = "100%";
+    host.appendChild(frame);
+
+    function onMessage(event: MessageEvent) {
+      if (!ORIGINS.includes(event.origin)) return;
+      const data = event.data as { type?: string; meta?: { instance?: string }; payload?: { frame?: { style?: { width?: string; height?: string } } } };
+      if (data?.type !== "eg-affiliate-banners/resize") return;
+      if (data.meta?.instance !== instance) return;
+      const w = data.payload?.frame?.style?.width;
+      const h = data.payload?.frame?.style?.height;
+      if (w) frame.style.width = w;
+      if (h) frame.style.height = h;
+    }
+
+    window.addEventListener("message", onMessage);
+    return () => {
+      window.removeEventListener("message", onMessage);
+      frame.remove();
+    };
+  }, [image, message]);
 
   return (
-    <div className="flex min-h-[250px] w-full max-w-[300px] items-center justify-center">
-      <div
-        className="eg-affiliate-banners"
-        data-program="ca-expedia"
-        data-network="pz"
-        data-layout="medium-rectangle"
-        data-image={image}
-        data-message={message}
-        data-camref="1110lLNKz"
-        data-pubref=""
-        data-link="packages"
-      />
-    </div>
+    <div
+      ref={hostRef}
+      className="eg-affiliate-banners"
+      data-program="ca-expedia"
+      data-network="pz"
+      data-layout="medium-rectangle"
+      data-image={image}
+      data-message={message}
+      data-camref="1110lLNKz"
+      data-pubref=""
+      data-link="packages"
+    />
   );
 }

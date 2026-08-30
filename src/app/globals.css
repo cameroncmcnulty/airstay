@@ -77,7 +77,8 @@ header {
   justify-content: center;
 }
 
-.eg-affiliate-banners iframe {
+.eg-affiliate-banners-frame {
+  display: block;
   max-width: 100%;
 }
 
