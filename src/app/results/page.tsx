@@ -13,7 +13,6 @@ import {
   Moon,
   Clock,
   ShieldCheck,
-  Sparkles,
   Car,
   Building2,
 } from "lucide-react";
@@ -22,7 +21,7 @@ import { getAirport, getDestination } from "@/lib/airports";
 import { DEST_PHOTOS } from "@/lib/deals";
 import { useApp } from "@/context/AppContext";
 import { currentUser, updateUser } from "@/lib/auth";
-import type { LiveOffer } from "@/lib/live-search";
+import { rankOffers, type LiveOffer } from "@/lib/live-search";
 import { nightsBetween, partnerFavicon } from "@/lib/partners";
 import { SearchWidget } from "@/components/SearchWidget";
 
@@ -44,7 +43,7 @@ function ResultsInner() {
   const [saved, setSaved] = useState(false);
   const [live, setLive] = useState<LiveOffer[]>([]);
   const [loading, setLoading] = useState(true);
-  const [sort, setSort] = useState<"price" | "partner">("price");
+  const [sort, setSort] = useState<"best" | "price" | "fast">("best");
 
   const origin = q.from ? getAirport(q.from) : undefined;
   const dest = q.to ? getDestination(q.to) : undefined;
@@ -54,12 +53,19 @@ function ResultsInner() {
   const nights = nightsBetween(q.depart, q.returnDate);
   const money = (n: number) => (locale === "fr" ? cadFr(n) : cad(n));
 
-  const fares = live.filter((o) => o.priceCad && o.priceCad > 0);
-  const checkouts = live.filter((o) => !o.priceCad);
-  const sortedCheckouts = [...checkouts].sort((a, b) => {
-    if (sort === "partner") return (a.partner || a.title).localeCompare(b.partner || b.title);
-    return (a.priceFromCad || 0) - (b.priceFromCad || 0);
-  });
+  const ranked = useMemo(() => rankOffers(live), [live]);
+  const list = useMemo(() => {
+    const rows = ranked.ranked;
+    if (sort === "price") return [...rows].sort((a, b) => (a.priceCad || 0) - (b.priceCad || 0));
+    if (sort === "fast") {
+      return [...rows].sort((a, b) => {
+        const da = a.durationMin ?? (a.stops == null ? 9999 : 180 + a.stops * 140);
+        const db = b.durationMin ?? (b.stops == null ? 9999 : 180 + b.stops * 140);
+        return da - db || (a.priceCad || 0) - (b.priceCad || 0);
+      });
+    }
+    return rows;
+  }, [ranked, sort]);
 
   useEffect(() => {
     setSaved(false);
@@ -215,123 +221,46 @@ function ResultsInner() {
           <p className="text-sm font-semibold">{m.results.trust}</p>
         </div>
 
-        {q.kind === "flights" && (
-          <section className="mt-10">
-            <div className="flex flex-wrap items-end justify-between gap-3">
-              <div>
-                <h2 className="text-2xl font-extrabold text-navy">{m.results.liveTitle}</h2>
-                <p className="mt-1 text-sm text-navy/60">{m.results.liveSub}</p>
-              </div>
-            </div>
-            {loading && <SkeletonList />}
-            {!loading && fares.length === 0 && (
-              <p className="mt-4 rounded-2xl bg-mist px-4 py-3 text-sm text-navy/70">{m.results.liveEmpty}</p>
-            )}
-            <ul className="mt-5 space-y-4">
-              {fares.map((o) => (
-                <li
-                  key={o.id}
-                  className="group overflow-hidden rounded-card bg-white shadow-card ring-1 ring-navy/5 transition hover:-translate-y-0.5 hover:shadow-lift"
-                >
-                  <div className="flex flex-col md:flex-row">
-                    <div className="flex items-center gap-4 border-b border-navy/5 p-5 md:w-56 md:flex-col md:items-start md:border-b-0 md:border-r md:bg-mist/60">
-                      {o.airlineLogo ? (
-                        <img src={o.airlineLogo} alt="" className="h-12 w-12 rounded-2xl bg-white object-contain ring-1 ring-navy/10" />
-                      ) : (
-                        <span className="grid h-12 w-12 place-items-center rounded-2xl bg-navy text-white">
-                          <Plane className="h-5 w-5" />
-                        </span>
-                      )}
-                      <div>
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-sky-700">{m.results.liveFare}</p>
-                        <h3 className="text-lg font-black text-navy">{o.airlineName || o.title}</h3>
-                        {o.airline && (
-                          <p className="text-xs font-semibold text-navy/45">
-                            {o.airline}
-                            {o.flightNumber || ""}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex flex-1 flex-wrap items-center justify-between gap-4 p-5">
-                      <div className="flex flex-wrap gap-2">
-                        {o.departAt && (
-                          <Amenity
-                            icon={CalendarDays}
-                            label={new Date(o.departAt).toLocaleDateString(locale === "fr" ? "fr-CA" : "en-CA", {
-                              month: "short",
-                              day: "numeric",
-                            })}
-                          />
-                        )}
-                        {o.stops != null && <Amenity icon={MapPin} label={stopsLabel(o.stops)} />}
-                        {o.durationMin ? (
-                          <Amenity icon={Clock} label={m.results.duration.replace("{n}", String(Math.round(o.durationMin / 60)))} />
-                        ) : null}
-                        <Amenity icon={Sparkles} label="Aviasales" />
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <div className="text-right">
-                          <p className="text-xs font-semibold text-navy/45">{m.results.advertised}</p>
-                          <p className="text-3xl font-black tracking-tight text-navy">{money(o.priceCad || 0)}</p>
-                          <p className="text-[11px] text-navy/45">{m.results.cadNote}</p>
-                        </div>
-                        <button type="button" onClick={() => setLeaving(o)} className="btn-primary">
-                          {m.results.bookLive}
-                          <ExternalLink className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
-
-        <section className="mt-12">
+        <section className="mt-10">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
-              <h2 className="text-2xl font-extrabold text-navy">{m.results.partnersTitle}</h2>
-              <p className="mt-1 text-sm text-navy/60">
-                {m.results.partnersReady.replace("{n}", String(sortedCheckouts.length || (loading ? "…" : 0)))}
-                {" · "}
-                {m.results.prefilled}
-              </p>
+              <h2 className="text-2xl font-extrabold text-navy">{m.results.rankedTitle}</h2>
+              <p className="mt-1 text-sm text-navy/60">{m.results.rankedSub}</p>
             </div>
-            {sortedCheckouts.length > 1 && (
+            {list.length > 1 && (
               <div className="flex rounded-full bg-mist p-1 text-xs font-bold">
-                <button
-                  type="button"
-                  className={`rounded-full px-3 py-1.5 ${sort === "price" ? "bg-white text-navy shadow-sm" : "text-navy/55"}`}
-                  onClick={() => setSort("price")}
-                >
-                  {m.results.sortPrice}
-                </button>
-                <button
-                  type="button"
-                  className={`rounded-full px-3 py-1.5 ${sort === "partner" ? "bg-white text-navy shadow-sm" : "text-navy/55"}`}
-                  onClick={() => setSort("partner")}
-                >
-                  {m.results.sortPartner}
-                </button>
+                {(["best", "price", "fast"] as const).map((key) => (
+                  <button
+                    key={key}
+                    type="button"
+                    className={`rounded-full px-3 py-1.5 ${sort === key ? "bg-white text-navy shadow-sm" : "text-navy/55"}`}
+                    onClick={() => setSort(key)}
+                  >
+                    {key === "best" ? m.results.sortBest : key === "price" ? m.results.sortPrice : m.results.sortFast}
+                  </button>
+                ))}
               </div>
             )}
           </div>
-          <p className="mt-3 rounded-2xl bg-sky-50 px-4 py-3 text-sm text-navy/75">{m.partners.note}</p>
-          {loading && q.kind !== "flights" && <SkeletonList />}
-          {!loading && sortedCheckouts.length === 0 && (
-            <p className="mt-4 rounded-2xl bg-mist px-4 py-3 text-sm text-navy/70">{m.results.emptyHint}</p>
+          {loading && <SkeletonList />}
+          {!loading && list.length === 0 && (
+            <p className="mt-4 rounded-2xl bg-mist px-4 py-3 text-sm text-navy/70">{m.results.noPrice}</p>
           )}
-          <ul className="mt-5 grid gap-4 md:grid-cols-2">
-            {sortedCheckouts.map((o) => (
+          <ul className="mt-5 space-y-4">
+            {list.map((o, i) => (
               <li key={o.id}>
-                <PartnerResultCard
+                <RankedCard
                   offer={o}
+                  rank={i + 1}
+                  badges={{
+                    best: o.id === ranked.bestId,
+                    cheap: o.id === ranked.cheapestId,
+                    fast: o.id === ranked.fastestId,
+                  }}
                   locale={locale}
                   money={money}
-                  nights={nights}
                   m={m}
+                  stopsLabel={stopsLabel}
                   onOpen={() => setLeaving(o)}
                 />
               </li>
@@ -391,86 +320,104 @@ function ResultsInner() {
   );
 }
 
-function PartnerResultCard({
+function RankedCard({
   offer,
+  rank,
+  badges,
   locale,
   money,
-  nights,
   m,
+  stopsLabel,
   onOpen,
 }: {
   offer: LiveOffer;
+  rank: number;
+  badges: { best: boolean; cheap: boolean; fast: boolean };
   locale: "en" | "fr";
   money: (n: number) => string;
-  nights: number;
   m: ReturnType<typeof useApp>["m"];
+  stopsLabel: (n?: number) => string;
   onOpen: () => void;
 }) {
-  const tagline = locale === "fr" ? offer.taglineFr || offer.tagline : offer.tagline;
-  const highlights = locale === "fr" ? offer.highlightsFr || offer.highlights : offer.highlights;
-  const hasRange = Boolean(offer.priceFromCad && offer.priceToCad);
   return (
-    <article className="flex h-full flex-col overflow-hidden rounded-card bg-white shadow-card ring-1 ring-navy/5 transition hover:-translate-y-0.5 hover:shadow-lift">
-      <div className="flex items-start gap-4 p-5">
-        <span
-          className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl ring-1 ring-black/5"
-          style={{ background: offer.color || "#071840" }}
-        >
-          {offer.domain ? (
-            <img src={partnerFavicon(offer.domain)} alt="" className="h-8 w-8 rounded-md bg-white p-0.5" />
+    <article
+      className={`overflow-hidden rounded-card bg-white shadow-card ring-1 transition hover:-translate-y-0.5 hover:shadow-lift ${
+        badges.best ? "ring-sky ring-2" : "ring-navy/5"
+      }`}
+    >
+      <div className="flex flex-col md:flex-row">
+        <div className="flex items-center gap-4 border-b border-navy/5 p-5 md:w-56 md:flex-col md:items-start md:border-b-0 md:border-r md:bg-mist/60">
+          <span className="grid h-10 w-10 place-items-center rounded-full bg-navy text-sm font-black text-white">
+            {rank}
+          </span>
+          {offer.airlineLogo ? (
+            <img src={offer.airlineLogo} alt="" className="h-12 w-12 rounded-2xl bg-white object-contain ring-1 ring-navy/10" />
+          ) : offer.domain ? (
+            <img src={partnerFavicon(offer.domain)} alt="" className="h-12 w-12 rounded-2xl bg-white object-contain p-1 ring-1 ring-navy/10" />
           ) : (
-            <Sparkles className="h-6 w-6 text-white" />
+            <span className="grid h-12 w-12 place-items-center rounded-2xl bg-navy text-white">
+              <Plane className="h-5 w-5" />
+            </span>
           )}
-        </span>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <h3 className="truncate text-lg font-black text-navy">{offer.partner || offer.title}</h3>
-            {offer.featured && (
-              <span className="rounded-full bg-sky-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-sky-800">
-                {locale === "fr" ? "Suggéré" : "Featured"}
-              </span>
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-sky-700">{m.results.liveFare}</p>
+            <h3 className="text-lg font-black text-navy">{offer.airlineName || offer.title}</h3>
+            {offer.airline && (
+              <p className="text-xs font-semibold text-navy/45">
+                {offer.airline}
+                {offer.flightNumber || ""}
+              </p>
             )}
           </div>
-          <p className="mt-0.5 text-sm text-navy/55">{tagline || m.results.checkoutHint}</p>
-          {highlights && highlights.length > 0 && (
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              {highlights.map((h) => (
-                <span key={h} className="rounded-full bg-mist px-2.5 py-1 text-[11px] font-bold text-navy/70">
-                  {h}
-                </span>
-              ))}
+        </div>
+        <div className="flex flex-1 flex-wrap items-center justify-between gap-4 p-5">
+          <div>
+            <div className="flex flex-wrap gap-1.5">
+              {badges.best && <Badge tone="sky">{m.results.badgeBest}</Badge>}
+              {badges.cheap && <Badge tone="navy">{m.results.badgeCheap}</Badge>}
+              {badges.fast && <Badge tone="mist">{m.results.badgeFast}</Badge>}
             </div>
-          )}
+            <div className="mt-3 flex flex-wrap gap-2">
+              {offer.departAt && (
+                <Amenity
+                  icon={CalendarDays}
+                  label={new Date(offer.departAt).toLocaleDateString(locale === "fr" ? "fr-CA" : "en-CA", {
+                    month: "short",
+                    day: "numeric",
+                  })}
+                />
+              )}
+              {offer.stops != null && <Amenity icon={MapPin} label={stopsLabel(offer.stops)} />}
+              {offer.durationMin ? (
+                <Amenity icon={Clock} label={m.results.duration.replace("{n}", String(Math.round(offer.durationMin / 60)))} />
+              ) : null}
+            </div>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="text-right">
+              <p className="text-xs font-semibold text-navy/45">{m.results.advertised}</p>
+              <p className="text-3xl font-black tracking-tight text-navy">{money(offer.priceCad || 0)}</p>
+              <p className="text-[11px] text-navy/45">{m.results.cadNote}</p>
+            </div>
+            <button type="button" onClick={onOpen} className="btn-primary">
+              {m.results.bookLive}
+              <ExternalLink className="h-4 w-4" />
+            </button>
+          </div>
         </div>
-      </div>
-      <div className="mt-auto flex items-end justify-between gap-3 border-t border-navy/5 px-5 py-4">
-        <div>
-          {hasRange ? (
-            <>
-              <p className="text-[11px] font-bold uppercase tracking-wide text-navy/40">{m.results.typicalRange}</p>
-              <p className="text-xl font-black text-navy">
-                {money(offer.priceFromCad || 0)}
-                <span className="text-navy/35"> – </span>
-                {money(offer.priceToCad || 0)}
-              </p>
-              <p className="text-[11px] text-navy/45">
-                {offer.kind === "cars"
-                  ? m.results.days.replace("{n}", String(nights))
-                  : m.results.nights.replace("{n}", String(nights))}{" "}
-                · {m.results.rangeNote}
-              </p>
-            </>
-          ) : (
-            <p className="text-sm font-semibold text-navy/55">{m.results.checkoutHint}</p>
-          )}
-        </div>
-        <button type="button" onClick={onOpen} className="btn-primary shrink-0">
-          {m.results.viewOn.replace("{partner}", (offer.partner || offer.title).split(" ")[0])}
-          <ExternalLink className="h-4 w-4" />
-        </button>
       </div>
     </article>
   );
+}
+
+function Badge({ tone, children }: { tone: "sky" | "navy" | "mist"; children: React.ReactNode }) {
+  const cls =
+    tone === "sky"
+      ? "bg-sky text-white"
+      : tone === "navy"
+        ? "bg-navy text-white"
+        : "bg-mist text-navy ring-1 ring-navy/10";
+  return <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wide ${cls}`}>{children}</span>;
 }
 
 function SkeletonList() {

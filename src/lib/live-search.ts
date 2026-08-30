@@ -1,28 +1,6 @@
 import type { SearchQuery } from "@/lib/deeplinks";
 import { searchCodes } from "@/lib/iata-cities";
-import {
-  PARTNER_META,
-  type PartnerKey,
-  airlineLogo,
-  agodaUrl,
-  aviasalesUrl,
-  bookingHotelsUrl,
-  discoverCarsUrl,
-  expediaCarsUrl,
-  expediaFlightsUrl,
-  expediaHotelsUrl,
-  googleFlightsUrl,
-  hotelsComUrl,
-  kayakCarsUrl,
-  kayakFlightsUrl,
-  kayakHotelsUrl,
-  nightsBetween,
-  rentalcarsUrl,
-  skyscannerCarsUrl,
-  skyscannerFlightsUrl,
-  typicalCarRange,
-  typicalStayRange,
-} from "@/lib/partners";
+import { PARTNER_META, type PartnerKey, airlineLogo, aviasalesUrl, bookingHotelsUrl } from "@/lib/partners";
 
 export type LiveOffer = {
   id: string;
@@ -102,45 +80,40 @@ function offerFromPartner(
   };
 }
 
+export function pricedOnly(offers: LiveOffer[]) {
+  return offers.filter((o) => (o.priceCad || 0) > 0);
+}
+
+function speedValue(o: LiveOffer) {
+  if (o.durationMin && o.durationMin > 0) return o.durationMin;
+  if (o.stops == null) return 9999;
+  return 180 + o.stops * 140;
+}
+
+export function rankOffers(offers: LiveOffer[]) {
+  const priced = pricedOnly(offers);
+  if (!priced.length) {
+    return { ranked: [] as LiveOffer[], cheapestId: "", fastestId: "", bestId: "" };
+  }
+  const minPrice = Math.min(...priced.map((o) => o.priceCad || Infinity));
+  const minSpeed = Math.min(...priced.map(speedValue));
+  const scored = priced.map((o) => {
+    const p = (o.priceCad || minPrice) / minPrice;
+    const s = speedValue(o) / (minSpeed || 1);
+    return { o, score: p * 0.62 + s * 0.38 };
+  });
+  scored.sort((a, b) => a.score - b.score || (a.o.priceCad || 0) - (b.o.priceCad || 0));
+  const cheapest = priced.reduce((a, b) => ((a.priceCad || 0) <= (b.priceCad || 0) ? a : b));
+  const fastest = priced.reduce((a, b) => (speedValue(a) <= speedValue(b) ? a : b));
+  return {
+    ranked: scored.map((x) => x.o),
+    cheapestId: cheapest.id,
+    fastestId: fastest.id,
+    bestId: scored[0].o.id,
+  };
+}
+
 export function travelpayoutsCheckouts(q: SearchQuery): LiveOffer[] {
-  const code = (q.to || "").toUpperCase();
-  const nights = nightsBetween(q.depart, q.returnDate);
-  const days = nights;
-
-  if (q.kind === "flights") {
-    return [
-      offerFromPartner("aviasales", q, aviasalesUrl(q), { featured: true }),
-      offerFromPartner("kayak", q, kayakFlightsUrl(q)),
-      offerFromPartner("skyscanner", q, skyscannerFlightsUrl(q)),
-      offerFromPartner("google", q, googleFlightsUrl(q)),
-      offerFromPartner("expedia", q, expediaFlightsUrl(q)),
-    ].filter((o): o is LiveOffer => Boolean(o));
-  }
-
-  if (q.kind === "stays") {
-    const [lo, hi] = typicalStayRange(code);
-    const range = { priceFromCad: lo * nights, priceToCad: hi * nights, priceUnit: "trip" as const };
-    return [
-      offerFromPartner("booking", q, bookingHotelsUrl(q), { ...range, featured: true }),
-      offerFromPartner("kayak", q, kayakHotelsUrl(q), range),
-      offerFromPartner("expedia", q, expediaHotelsUrl(q), range),
-      offerFromPartner("hotels", q, hotelsComUrl(q), range),
-      offerFromPartner("agoda", q, agodaUrl(q), range),
-    ].filter((o): o is LiveOffer => Boolean(o));
-  }
-
-  if (q.kind === "cars") {
-    const [lo, hi] = typicalCarRange(code);
-    const range = { priceFromCad: lo * days, priceToCad: hi * days, priceUnit: "trip" as const };
-    return [
-      offerFromPartner("kayak", q, kayakCarsUrl(q), { ...range, featured: true }),
-      offerFromPartner("skyscanner", q, skyscannerCarsUrl(q), range),
-      offerFromPartner("expedia", q, expediaCarsUrl(q), range),
-      offerFromPartner("discover", q, discoverCarsUrl(q), range),
-      offerFromPartner("rentalcars", q, rentalcarsUrl(q), range),
-    ].filter((o): o is LiveOffer => Boolean(o));
-  }
-
   return [];
 }
 
@@ -155,7 +128,8 @@ async function tp(path: string) {
 }
 
 export async function searchLive(q: SearchQuery): Promise<LiveOffer[]> {
-  if (q.kind === "stays" || q.kind === "cars") return travelpayoutsCheckouts(q);
+  if (q.kind === "stays") return fetchHotelPrices(q);
+  if (q.kind === "cars") return [];
   if (q.kind !== "flights") return [];
   const origins = searchCodes(q.from);
   const dests = searchCodes(q.to);
@@ -163,9 +137,10 @@ export async function searchLive(q: SearchQuery): Promise<LiveOffer[]> {
   const found: LiveOffer[] = [];
   const adults = q.adults || 1;
 
-  for (const origin of origins) {
-    for (const dest of dests) {
+  for (const origin of origins.slice(0, 2)) {
+    for (const dest of dests.slice(0, 2)) {
       const batch = await Promise.allSettled([
+        fetchDates(origin, dest, q, names, adults),
         fetchWeek(origin, dest, q, names, adults),
         fetchCheap(origin, dest, q, names, adults),
         fetchCalendar(origin, dest, q, names, adults),
@@ -177,19 +152,85 @@ export async function searchLive(q: SearchQuery): Promise<LiveOffer[]> {
   }
 
   const seen = new Set<string>();
-  const fares = found
+  return found
     .filter((o) => (o.priceCad || 0) > 0)
     .sort((a, b) => (a.priceCad || 0) - (b.priceCad || 0))
     .filter((o) => {
-      const key = `${o.airline}-${o.priceCad}-${o.departAt?.slice(0, 10)}-${o.stops}`;
+      const key = `${o.airline || o.title}-${o.priceCad}-${o.departAt?.slice(0, 10)}-${o.stops}-${o.durationMin || 0}`;
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
     })
-    .slice(0, 12);
+    .slice(0, 20);
+}
 
-  const checkout = travelpayoutsCheckouts(q);
-  return [...fares, ...checkout.filter((c) => !fares.some((f) => f.url === c.url))];
+async function fetchDates(
+  origin: string,
+  dest: string,
+  q: SearchQuery,
+  names: Map<string, string>,
+  adults: number
+) {
+  const params = new URLSearchParams({
+    origin,
+    destination: dest,
+    currency: "cad",
+    sorting: "price",
+    direct: "false",
+    limit: "30",
+    unique: "false",
+  });
+  if (q.depart) params.set("departure_at", q.depart);
+  if (q.returnDate && q.trip !== "oneway") params.set("return_at", q.returnDate);
+  const json = await tp(`https://api.travelpayouts.com/aviasales/v3/prices_for_dates?${params.toString()}`);
+  const rows = Array.isArray(json?.data) ? json.data : [];
+  return rows.map((row: Record<string, unknown>, i: number) =>
+    toOffer({
+      id: `dates-${origin}-${dest}-${i}`,
+      origin: String(row.origin || origin),
+      dest: String(row.destination || dest),
+      price: Number(row.price),
+      stops: Number(row.transfers ?? row.number_of_changes ?? 0),
+      airline: String(row.airline || ""),
+      flightNumber: String(row.flight_number || ""),
+      departAt: String(row.departure_at || q.depart || ""),
+      returnAt: String(row.return_at || q.returnDate || ""),
+      durationMin: row.duration != null ? Number(row.duration) : undefined,
+      names,
+      adults,
+      q,
+    })
+  );
+}
+
+async function fetchHotelPrices(q: SearchQuery): Promise<LiveOffer[]> {
+  const loc = q.toCity || q.to || "";
+  if (!loc || !q.depart || !q.returnDate) return [];
+  const params = new URLSearchParams({
+    location: loc,
+    checkIn: q.depart,
+    checkOut: q.returnDate,
+    currency: "cad",
+    limit: "12",
+    token: TOKEN,
+  });
+  const json = await tp(`https://engine.hotellook.com/api/v2/cache.json?${params.toString()}`);
+  const rows = Array.isArray(json) ? json : Array.isArray(json?.data) ? json.data : [];
+  const out: LiveOffer[] = [];
+  rows.forEach((row: Record<string, unknown>, i: number) => {
+    const price = Math.round(Number(row.priceFrom || row.priceAvg || row.price || 0));
+    if (!price) return;
+    const name = String(row.hotelName || row.name || "Hotel");
+    const offer = offerFromPartner("booking", q, bookingHotelsUrl(q), {
+      id: `stay-${row.hotelId || i}`,
+      title: name,
+      partner: name,
+      priceCad: price,
+      priceUnit: "trip",
+    });
+    if (offer) out.push(offer);
+  });
+  return out;
 }
 
 async function fetchWeek(
