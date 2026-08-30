@@ -8,18 +8,26 @@ const ORIGINS = [
   "https://creatorexpediagroupcom.staging.exp-test.net",
 ];
 
+const SIZES: Record<string, { w: number; h: number }> = {
+  leaderboard: { w: 728, h: 90 },
+  "medium-rectangle": { w: 300, h: 250 },
+};
+
 function instanceId() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2);
 }
 
 export function ExpediaPackageBanner({
+  layout = "leaderboard",
   image = "resort",
   message = "find-perfect-getaway-package",
 }: {
+  layout?: "leaderboard" | "medium-rectangle";
   image?: string;
   message?: string;
 }) {
   const hostRef = useRef<HTMLDivElement>(null);
+  const size = SIZES[layout] || SIZES.leaderboard;
 
   useEffect(() => {
     const host = hostRef.current;
@@ -30,7 +38,7 @@ export function ExpediaPackageBanner({
 
     const params = new URLSearchParams({
       program: "ca-expedia",
-      layout: "medium-rectangle",
+      layout,
       image,
       message,
       link: "packages",
@@ -41,19 +49,23 @@ export function ExpediaPackageBanner({
 
     const frame = document.createElement("iframe");
     frame.className = "eg-affiliate-banners-frame";
-    frame.title = "Expedia";
+    frame.title = "Vacation Packages by Expedia";
     frame.src = `${BANNERS_URL}?${params.toString()}`;
     frame.setAttribute("scrolling", "no");
-    frame.style.width = "300px";
-    frame.style.height = "250px";
-    frame.style.margin = "auto";
+    frame.style.width = `${size.w}px`;
+    frame.style.height = `${size.h}px`;
+    frame.style.margin = "0";
     frame.style.border = "none";
-    frame.style.maxWidth = "100%";
+    frame.style.display = "block";
     host.appendChild(frame);
 
     function onMessage(event: MessageEvent) {
       if (!ORIGINS.includes(event.origin)) return;
-      const data = event.data as { type?: string; meta?: { instance?: string }; payload?: { frame?: { style?: { width?: string; height?: string } } } };
+      const data = event.data as {
+        type?: string;
+        meta?: { instance?: string };
+        payload?: { frame?: { style?: { width?: string; height?: string } } };
+      };
       if (data?.type !== "eg-affiliate-banners/resize") return;
       if (data.meta?.instance !== instance) return;
       const w = data.payload?.frame?.style?.width;
@@ -67,7 +79,7 @@ export function ExpediaPackageBanner({
       window.removeEventListener("message", onMessage);
       frame.remove();
     };
-  }, [image, message]);
+  }, [layout, image, message, size.w, size.h]);
 
   return (
     <div
@@ -75,12 +87,13 @@ export function ExpediaPackageBanner({
       className="eg-affiliate-banners"
       data-program="ca-expedia"
       data-network="pz"
-      data-layout="medium-rectangle"
+      data-layout={layout}
       data-image={image}
       data-message={message}
       data-camref="1110lLNKz"
       data-pubref=""
       data-link="packages"
+      style={{ width: size.w, height: size.h }}
     />
   );
 }

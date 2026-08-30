@@ -295,10 +295,10 @@ export const t = {
       perk3: "No AIRSTAY fee",
     },
     ad: {
-      kicker: "Partner · Expedia",
-      title: "Find a getaway on Expedia",
+      kicker: "Sponsored",
+      title: "Vacation Packages by Expedia",
       cta: "View on Expedia",
-      note: "Sponsored. You book on Expedia.ca. AIRSTAY never adds a fee.",
+      note: "You book on Expedia.ca. AIRSTAY never adds a fee.",
     },
     comingSoon: {
       title: "Packages are almost here",
@@ -668,10 +668,10 @@ export const t = {
       perk3: "Aucun frais AIRSTAY",
     },
     ad: {
-      kicker: "Partenaire · Expedia",
-      title: "Trouvez une escapade sur Expedia",
+      kicker: "Commandité",
+      title: "Forfaits vacances par Expedia",
       cta: "Voir sur Expedia",
-      note: "Commandité. Vous réservez sur Expedia.ca. AIRSTAY n’ajoute jamais de frais.",
+      note: "Vous réservez sur Expedia.ca. AIRSTAY n’ajoute jamais de frais.",
     },
     comingSoon: {
       title: "Les forfaits arrivent",

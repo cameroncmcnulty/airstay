@@ -69,17 +69,29 @@ header {
 }
 
 .eg-affiliate-banners {
-  display: flex;
-  min-height: 250px;
-  width: 300px;
-  max-width: 100%;
-  align-items: center;
-  justify-content: center;
+  display: block;
+  margin: 0;
+  overflow: hidden;
+  line-height: 0;
 }
 
 .eg-affiliate-banners-frame {
   display: block;
-  max-width: 100%;
+  border: 0;
+}
+
+.eg-leaderboard-fit {
+  container-type: inline-size;
+  width: 100%;
+  height: calc(90px * min(1, 100cqi / 728px));
+  overflow: hidden;
+}
+
+.eg-leaderboard-fit .eg-leaderboard-inner {
+  width: 728px;
+  height: 90px;
+  transform-origin: top left;
+  transform: scale(min(1, calc(100cqi / 728px)));
 }
 
 @keyframes aria-glow {
