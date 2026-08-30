@@ -132,17 +132,29 @@ export function rankOffers(offers: LiveOffer[]) {
 }
 
 export function travelpayoutsCheckouts(q: SearchQuery): LiveOffer[] {
-  return [];
+  if (q.kind !== "flights") return [];
+  const offer = offerFromPartner("aviasales", q, aviasalesUrl(q), { id: "tp-aviasales-open" });
+  return offer ? [offer] : [];
 }
 
 async function tp(path: string) {
   const url = path.includes("?") ? `${path}&token=${TOKEN}` : `${path}?token=${TOKEN}`;
   const res = await fetch(url, {
     headers: { "x-access-token": TOKEN, Accept: "application/json" },
-    next: { revalidate: 1800 },
+    next: { revalidate: 600 },
   });
   if (!res.ok) return null;
   return res.json();
+}
+
+function dateBand(offer: LiveOffer, wanted?: string) {
+  const day = isoDay(offer.departAt);
+  if (!wanted || !day) return 3;
+  const n = daysBetween(day, wanted);
+  if (n === 0) return 0;
+  if (n <= 3) return 1;
+  if (n <= 10) return 2;
+  return 3;
 }
 
 export async function searchLive(q: SearchQuery): Promise<LiveOffer[]> {
@@ -153,29 +165,34 @@ export async function searchLive(q: SearchQuery): Promise<LiveOffer[]> {
   const origins = searchCodes(q.from);
   const dests = searchCodes(q.to);
   const names = await airlines();
-  const found: LiveOffer[] = [];
   const adults = q.adults || 1;
+  const pairs: Promise<PromiseSettledResult<LiveOffer[]>[]>[] = [];
 
   for (const origin of origins.slice(0, 2)) {
     for (const dest of dests.slice(0, 2)) {
-      const batch = await Promise.allSettled([
-        fetchDates(origin, dest, q, names, adults, "price", 50),
-        fetchDates(origin, dest, q, names, adults, "duration_to", 30),
-        fetchDirect(origin, dest, q, names, adults),
-        fetchWeek(origin, dest, q, names, adults),
-        fetchCheap(origin, dest, q, names, adults),
-        fetchCalendar(origin, dest, q, names, adults),
-      ]);
-      for (const item of batch) {
-        if (item.status === "fulfilled") found.push(...item.value);
-      }
+      pairs.push(
+        Promise.allSettled([
+          fetchDates(origin, dest, q, names, adults, "price", 50),
+          fetchDirect(origin, dest, q, names, adults),
+          fetchWeek(origin, dest, q, names, adults),
+          fetchCheap(origin, dest, q, names, adults),
+          fetchCalendar(origin, dest, q, names, adults),
+        ])
+      );
+    }
+  }
+
+  const found: LiveOffer[] = [];
+  for (const batch of await Promise.all(pairs)) {
+    for (const item of batch) {
+      if (item.status === "fulfilled") found.push(...item.value);
     }
   }
 
   const seen = new Set<string>();
   return found
     .filter((o) => (o.priceCad || 0) > 0)
-    .sort((a, b) => (a.priceCad || 0) - (b.priceCad || 0))
+    .sort((a, b) => dateBand(a, q.depart) - dateBand(b, q.depart) || (a.priceCad || 0) - (b.priceCad || 0))
     .filter((o) => {
       const key = [
         o.airline || o.title,
@@ -281,14 +298,19 @@ function pricesForDatesPath(origin: string, dest: string, departAt: string, retu
     origin,
     destination: dest,
     currency: "cad",
+    cy: "cad",
     sorting: "price",
     direct: "false",
     limit: "30",
     unique: "false",
+    page: "1",
     departure_at: departAt,
   });
   if (oneWay || !returnAt) params.set("one_way", "true");
-  else params.set("return_at", returnAt);
+  else {
+    params.set("one_way", "false");
+    params.set("return_at", returnAt);
+  }
   return `https://api.travelpayouts.com/aviasales/v3/prices_for_dates?${params.toString()}`;
 }
 
@@ -465,19 +487,36 @@ async function fetchDates(
   sorting = "price",
   limit = 50
 ) {
-  const params = new URLSearchParams({
-    origin,
-    destination: dest,
-    currency: "cad",
-    sorting,
-    direct: "false",
-    limit: String(limit),
-    unique: "false",
-  });
-  if (q.depart) params.set("departure_at", q.depart);
-  if (q.returnDate && q.trip !== "oneway") params.set("return_at", q.returnDate);
-  const json = await tp(`https://api.travelpayouts.com/aviasales/v3/prices_for_dates?${params.toString()}`);
-  const rows = Array.isArray(json?.data) ? json.data : [];
+  const round = q.trip !== "oneway" && Boolean(q.returnDate);
+  const periods: Array<{ dep: string; ret?: string }> = [];
+  if (q.depart) periods.push({ dep: q.depart, ret: round ? q.returnDate : undefined });
+  if (q.depart) {
+    const depMonth = q.depart.slice(0, 7);
+    const retMonth = round && q.returnDate ? q.returnDate.slice(0, 7) : undefined;
+    if (!periods.some((p) => p.dep === depMonth && p.ret === retMonth)) {
+      periods.push({ dep: depMonth, ret: retMonth });
+    }
+  }
+  const jsons = await Promise.all(
+    periods.map((period) => {
+      const params = new URLSearchParams({
+        origin,
+        destination: dest,
+        currency: "cad",
+        cy: "cad",
+        sorting,
+        direct: "false",
+        limit: String(limit),
+        unique: "false",
+        one_way: round && period.ret ? "false" : "true",
+        departure_at: period.dep,
+        page: "1",
+      });
+      if (period.ret) params.set("return_at", period.ret);
+      return tp(`https://api.travelpayouts.com/aviasales/v3/prices_for_dates?${params.toString()}`);
+    })
+  );
+  const rows = jsons.flatMap((json) => (Array.isArray(json?.data) ? json.data : []));
   return rows.map((row: Record<string, unknown>, i: number) =>
     toOffer({
       id: `dates-${sorting}-${origin}-${dest}-${i}`,
@@ -622,9 +661,8 @@ async function fetchCheap(
     destination: dest,
     currency: "cad",
   });
-  if (q.depart) params.set("depart_date", q.depart);
-  else if (month) params.set("depart_date", month);
-  if (q.returnDate && q.trip !== "oneway") params.set("return_date", q.returnDate);
+  if (month) params.set("depart_date", month);
+  if (q.returnDate && q.trip !== "oneway") params.set("return_date", q.returnDate.slice(0, 7));
   const json = await tp(`https://api.travelpayouts.com/v1/prices/cheap?${params.toString()}`);
   const grouped = json?.data && typeof json.data === "object" ? json.data : {};
   const out: LiveOffer[] = [];
@@ -676,7 +714,7 @@ async function fetchCalendar(
   const grouped = json?.data && typeof json.data === "object" ? json.data : {};
   const wanted = q.depart;
   return Object.entries(grouped)
-    .filter(([day]) => !wanted || day === wanted || Math.abs(Date.parse(day) - Date.parse(wanted)) <= 3 * 86400000)
+    .filter(([day]) => !wanted || day === wanted || Math.abs(Date.parse(day) - Date.parse(wanted)) <= 14 * 86400000)
     .map(([day, row]) => {
       const r = row as Record<string, unknown>;
       return toOffer({

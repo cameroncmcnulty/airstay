@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { paramsToQuery } from "@/lib/deeplinks";
-import { searchLive, suggestFlightDates } from "@/lib/live-search";
+import { searchLive, suggestFlightDates, travelpayoutsCheckouts } from "@/lib/live-search";
 import { logSearch } from "@/lib/travel-api/store";
 import { recordEvent } from "@/lib/analytics";
 import { getDestination } from "@/lib/airports";
@@ -8,12 +8,31 @@ import { getDestination } from "@/lib/airports";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
+function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T) {
+  return new Promise<T>((resolve) => {
+    const timer = setTimeout(() => resolve(fallback), ms);
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      () => {
+        clearTimeout(timer);
+        resolve(fallback);
+      }
+    );
+  });
+}
+
 export async function GET(req: NextRequest) {
   const q = paramsToQuery(req.nextUrl.searchParams);
   try {
-    const live = q.kind === "packages" ? [] : await searchLive(q);
+    const priced = q.kind === "packages" ? [] : await searchLive(q);
     const dateSuggestions =
-      q.kind === "flights" && live.length === 0 ? await suggestFlightDates(q) : null;
+      q.kind === "flights" && priced.length === 0
+        ? await withTimeout(suggestFlightDates(q), 5000, null)
+        : null;
+    const live = [...priced, ...travelpayoutsCheckouts(q)];
     const dest = q.to ? getDestination(q.to) : undefined;
     logSearch({
       kind: q.kind,
@@ -50,7 +69,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(
       {
         ok: false,
-        live: [],
+        live: travelpayoutsCheckouts(q),
         dateSuggestions: null,
         packages: [],
         error: err instanceof Error ? err.message : "search_failed",

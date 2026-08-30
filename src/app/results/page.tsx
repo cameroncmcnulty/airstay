@@ -59,6 +59,7 @@ function ResultsInner() {
   const nights = nightsBetween(q.depart, q.returnDate);
   const money = (n: number) => (locale === "fr" ? cadFr(n) : cad(n));
 
+  const queryString = sp.toString();
   const extras = useMemo(() => live.filter((o) => !(o.priceCad && o.priceCad > 0)), [live]);
   const ranked = useMemo(() => rankOffers(live), [live]);
   const list = useMemo(() => {
@@ -79,7 +80,7 @@ function ResultsInner() {
     let cancelled = false;
     setLoading(true);
     setAlts(null);
-    fetch(`/api/search?${sp.toString()}`)
+    fetch(`/api/search?${queryString}`)
       .then((r) => r.json())
       .then((data) => {
         if (cancelled) return;
@@ -98,7 +99,7 @@ function ResultsInner() {
     return () => {
       cancelled = true;
     };
-  }, [sp]);
+  }, [queryString]);
 
   useEffect(() => {
     if (!leaving) return;
@@ -344,6 +345,7 @@ function ResultsInner() {
                   stopsLabel={stopsLabel}
                   onOpen={() => setLeaving(o)}
                   cheapestPrice={list.find((x) => x.id === ranked.cheapestId)?.priceCad || 0}
+                  wantedDepart={q.depart}
                 />
               </li>
             ))}
@@ -442,9 +444,9 @@ function DateAltPanel({
   onPick: (opt: FlightDateOption) => void;
 }) {
   const loc = locale === "fr" ? "fr-CA" : "en-CA";
-  const departOpts = alts?.options.filter((o) => o.change === "depart") || [];
-  const returnOpts = alts?.options.filter((o) => o.change === "return") || [];
-  const bothOpts = alts?.options.filter((o) => o.change === "both") || [];
+  const departOpts = alts?.options?.filter((o) => o.change === "depart") || [];
+  const returnOpts = alts?.options?.filter((o) => o.change === "return") || [];
+  const bothOpts = alts?.options?.filter((o) => o.change === "both") || [];
   const hasAlts = Boolean(departOpts.length || returnOpts.length || bothOpts.length);
   const groupCount = [departOpts, returnOpts, bothOpts].filter((g) => g.length).length;
   const title =
@@ -579,6 +581,7 @@ function RankedCard({
   stopsLabel,
   onOpen,
   cheapestPrice,
+  wantedDepart,
 }: {
   offer: LiveOffer;
   rank: number;
@@ -589,9 +592,12 @@ function RankedCard({
   stopsLabel: (n?: number) => string;
   onOpen: () => void;
   cheapestPrice: number;
+  wantedDepart?: string;
 }) {
   const loc = locale === "fr" ? "fr-CA" : "en-CA";
   const extra = cheapestPrice && offer.priceCad && offer.priceCad > cheapestPrice ? offer.priceCad - cheapestPrice : 0;
+  const offerDay = (offer.departAt || "").slice(0, 10);
+  const nearby = Boolean(wantedDepart && offerDay && offerDay !== wantedDepart);
   return (
     <article
       className={`overflow-hidden rounded-[1.4rem] bg-white shadow-card transition hover:-translate-y-0.5 hover:shadow-lift ${
@@ -643,6 +649,11 @@ function RankedCard({
               )}
               {!badges.best && !badges.cheap && !badges.fast && (
                 <span className="text-[10px] font-bold uppercase tracking-wide text-sky-700">{m.results.liveFare}</span>
+              )}
+              {nearby && (
+                <span className="rounded-full bg-sky/15 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wide text-sky-700">
+                  {m.results.nearbyDate}
+                </span>
               )}
             </div>
             {offer.kind === "esim" ? (
@@ -714,12 +725,21 @@ function FlightLine({
 }) {
   const from = offer.originAirport || "";
   const to = offer.destAirport || "";
+  const departDay = (offer.departAt || "").slice(0, 10);
+  const returnDay = (offer.returnAt || "").slice(0, 10);
+  const departTime = clock(offer.departAt, loc);
+  const arriveTime = clock(offer.arriveAt, loc);
   return (
     <div className="mt-3 min-w-[220px] max-w-md">
       <div className="flex items-center justify-between gap-3 text-navy">
         <div>
-          <p className="text-xl font-black tabular-nums">{clock(offer.departAt, loc)}</p>
-          <p className="text-xs font-bold text-navy/45">{from}</p>
+          <p className="text-xl font-black tabular-nums">
+            {departTime !== "—" ? departTime : departDay ? formatBubble(departDay, loc) : "—"}
+          </p>
+          <p className="text-xs font-bold text-navy/45">
+            {from}
+            {departTime !== "—" && departDay ? ` · ${formatBubble(departDay, loc)}` : ""}
+          </p>
         </div>
         <div className="min-w-[7rem] flex-1 text-center">
           <p className="text-[11px] font-bold text-navy/50">{prettyDuration(offer.durationMin, offer.stops)}</p>
@@ -729,13 +749,16 @@ function FlightLine({
           <p className="text-[11px] font-bold text-navy/55">{stopsLabel(offer.stops)}</p>
         </div>
         <div className="text-right">
-          <p className="text-xl font-black tabular-nums">{clock(offer.arriveAt, loc)}</p>
+          <p className="text-xl font-black tabular-nums">
+            {arriveTime !== "—" ? arriveTime : returnDay ? formatBubble(returnDay, loc) : "—"}
+          </p>
           <p className="text-xs font-bold text-navy/45">{to}</p>
         </div>
       </div>
-      {offer.returnAt && offer.returnAt.length > 10 && (
+      {returnDay && (
         <p className="mt-2 text-[11px] font-semibold text-navy/40">
-          {m.search.return}: {clock(offer.returnAt, loc) || offer.returnAt.slice(0, 10)}
+          {m.search.return}: {clock(offer.returnAt, loc) !== "—" ? `${clock(offer.returnAt, loc)} · ` : ""}
+          {formatBubble(returnDay, loc)}
           {offer.durationBack ? ` · ${prettyDuration(offer.durationBack)}` : ""}
         </p>
       )}
