@@ -1,6 +1,7 @@
 import type { SearchQuery } from "@/lib/deeplinks";
 import { searchCodes } from "@/lib/iata-cities";
 import { PARTNER_META, type PartnerKey, airlineLogo, aviasalesUrl, bookingHotelsUrl } from "@/lib/partners";
+import { searchEsim } from "@/lib/esim";
 
 export type LiveOffer = {
   id: string;
@@ -24,7 +25,12 @@ export type LiveOffer = {
   priceCad?: number;
   priceFromCad?: number;
   priceToCad?: number;
-  priceUnit?: "trip" | "night" | "day" | "person";
+  priceUnit?: "trip" | "night" | "day" | "person" | "plan";
+  dataGb?: number;
+  unlimited?: boolean;
+  validityDays?: number;
+  operator?: string;
+  network?: string;
   adults?: number;
   stops?: number;
   returnStops?: number;
@@ -91,6 +97,10 @@ export function pricedOnly(offers: LiveOffer[]) {
 }
 
 function speedValue(o: LiveOffer) {
+  if (o.kind === "esim") {
+    if (o.unlimited) return 1;
+    return 80 / Math.max(0.5, o.dataGb || 1);
+  }
   if (o.durationMin && o.durationMin > 0) return o.durationMin;
   if (o.stops == null) return 9999;
   return 180 + o.stops * 140;
@@ -134,6 +144,7 @@ async function tp(path: string) {
 }
 
 export async function searchLive(q: SearchQuery): Promise<LiveOffer[]> {
+  if (q.kind === "esim") return searchEsim(q);
   if (q.kind === "stays") return fetchHotelPrices(q);
   if (q.kind === "cars") return [];
   if (q.kind !== "flights") return [];

@@ -5,6 +5,7 @@ const paths = [
   "/flights",
   "/stays",
   "/cars",
+  "/esim",
   "/packages",
   "/deals",
   "/about",

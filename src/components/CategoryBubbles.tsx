@@ -10,7 +10,7 @@ const items = [
   { id: "flights" as const, href: "/flights", key: "flights" as const, sub: "flightsSub" as const },
   { id: "stays" as const, href: "/stays", key: "stays" as const, sub: "staysSub" as const },
   { id: "cars" as const, href: "/cars", key: "cars" as const, sub: "carsSub" as const },
-  { id: "packages" as const, href: "/packages", key: "packages" as const, sub: "packagesSub" as const },
+  { id: "esim" as const, href: "/esim", key: "esim" as const, sub: "esimSub" as const },
 ];
 
 export function CategoryBubbles({

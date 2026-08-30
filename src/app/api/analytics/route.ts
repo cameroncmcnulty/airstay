@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const type = body?.type === "outbound" ? "outbound" : "search";
     const kind = String(body?.kind || "");
-    if (!["flights", "stays", "cars", "packages"].includes(kind)) {
+    if (!["flights", "stays", "cars", "packages", "esim"].includes(kind)) {
       return NextResponse.json({ ok: false, error: "bad_kind" }, { status: 400 });
     }
     const dest = typeof body.destination === "string" ? getDestination(body.destination) : undefined;

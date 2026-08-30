@@ -12,7 +12,8 @@ export type PartnerKey =
   | "hotels"
   | "agoda"
   | "discover"
-  | "rentalcars";
+  | "rentalcars"
+  | "airalo";
 
 export type PartnerMeta = {
   key: PartnerKey;
@@ -125,6 +126,16 @@ export const PARTNER_META: Record<PartnerKey, PartnerMeta> = {
     taglineFr: "Grandes enseignes à l’aéroport",
     highlights: ["Airport IATA", "Driver age 30"],
     highlightsFr: ["IATA aéroport", "Âge 30"],
+  },
+  airalo: {
+    key: "airalo",
+    name: "Airalo",
+    domain: "airalo.com",
+    color: "#1A73E8",
+    tagline: "eSIM plans with local networks",
+    taglineFr: "Forfaits eSIM sur réseaux locaux",
+    highlights: ["Install before you fly", "CAD on Airalo"],
+    highlightsFr: ["Installer avant le vol", "$ CA sur Airalo"],
   },
 };
 

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plane, Building2, Car, TreePalm, Search, Minus, Plus } from "lucide-react";
+import { Plane, Building2, Car, Smartphone, Search, Minus, Plus } from "lucide-react";
 import { DateBubble, DateRangePicker } from "@/components/DateRangePicker";
 import { useApp } from "@/context/AppContext";
 import {
@@ -22,11 +22,11 @@ import {
 } from "@/lib/deeplinks";
 import { addDays } from "@/lib/dates";
 
-const TABS: { id: SearchKind; icon: typeof Plane; labelKey: "flights" | "stays" | "cars" | "packages" }[] = [
+const TABS: { id: SearchKind; icon: typeof Plane; labelKey: "flights" | "stays" | "cars" | "esim" }[] = [
   { id: "flights", icon: Plane, labelKey: "flights" },
   { id: "stays", icon: Building2, labelKey: "stays" },
   { id: "cars", icon: Car, labelKey: "cars" },
-  { id: "packages", icon: TreePalm, labelKey: "packages" },
+  { id: "esim", icon: Smartphone, labelKey: "esim" },
 ];
 
 export function SearchWidget({
@@ -72,6 +72,7 @@ export function SearchWidget({
   });
   const [rooms, setRooms] = useState(initial?.rooms || 1);
   const [cabin, setCabin] = useState<SearchQuery["cabin"]>(initial?.cabin || "economy");
+  const [dataPlan, setDataPlan] = useState(initial?.dataPlan || "any");
   const [fromOpen, setFromOpen] = useState(false);
   const [toOpen, setToOpen] = useState(false);
   const [calOpen, setCalOpen] = useState(false);
@@ -95,7 +96,7 @@ export function SearchWidget({
   const fromOpts = useMemo(() => searchCanadianAirports(from), [from]);
   const toOpts = useMemo(() => searchDestinations(to), [to]);
 
-  const rangeTrip = kind !== "flights" || trip === "roundtrip";
+  const rangeTrip = kind === "esim" || kind !== "flights" || trip === "roundtrip";
 
   useEffect(() => {
     if (!fromOpen && !toOpen && !calOpen) return;
@@ -139,16 +140,16 @@ export function SearchWidget({
       setError(m.results.noOrigin);
       return;
     }
-    if ((kind === "flights" || kind === "cars") && !toCode) {
+    if ((kind === "flights" || kind === "cars" || kind === "esim") && !toCode && !to) {
       setError(m.results.noTo);
       return;
     }
-    if (!toCode && !to) {
+    if (kind !== "esim" && !toCode && !to) {
       setError(m.results.noTo);
       return;
     }
     const ages = childAges.slice(0, children);
-    if (kind !== "cars" && children > 0 && ages.some((age) => age === "")) {
+    if (kind !== "cars" && kind !== "esim" && children > 0 && ages.some((age) => age === "")) {
       setError(m.search.errorChildAges);
       return;
     }
@@ -166,6 +167,7 @@ export function SearchWidget({
       rooms,
       cabin,
       trip: kind === "flights" ? trip : "roundtrip",
+      dataPlan: kind === "esim" ? dataPlan : undefined,
     };
     router.push(`/results?${queryToParams(q)}`);
   }
@@ -274,7 +276,7 @@ export function SearchWidget({
             </Field>
           )}
 
-          <Field label={kind === "cars" ? m.search.pickup : kind === "stays" ? m.search.dest : m.search.to} fieldRef={toRef}>
+          <Field label={kind === "cars" ? m.search.pickup : kind === "stays" || kind === "esim" ? m.search.dest : m.search.to} fieldRef={toRef}>
             <input
               value={to}
               onChange={(e) => {
@@ -287,7 +289,7 @@ export function SearchWidget({
                 setToOpen(true);
                 setFromOpen(false);
               }}
-              placeholder={kind === "stays" ? m.search.destPh : m.search.toPh}
+              placeholder={kind === "stays" || kind === "esim" ? m.search.destPh : m.search.toPh}
               className="field"
               autoComplete="off"
               aria-expanded={toOpen}
@@ -314,11 +316,11 @@ export function SearchWidget({
             <div className={`grid gap-3 ${rangeTrip ? "md:grid-cols-2" : ""}`}>
               <div>
                 <p className="text-xs font-bold uppercase tracking-wide text-navy/50">
-                  {kind === "stays" ? m.search.checkin : m.search.depart}
+                  {kind === "stays" ? m.search.checkin : kind === "esim" ? m.search.coverageStart : m.search.depart}
                 </p>
                 <div className="mt-1">
                   <DateBubble
-                    label={kind === "stays" ? m.search.checkin : m.search.depart}
+                    label={kind === "stays" ? m.search.checkin : kind === "esim" ? m.search.coverageStart : m.search.depart}
                     value={depart}
                     locale={locale}
                     active={calOpen && calOn === "start"}
@@ -334,11 +336,11 @@ export function SearchWidget({
               {rangeTrip && (
                 <div>
                   <p className="text-xs font-bold uppercase tracking-wide text-navy/50">
-                    {kind === "stays" ? m.search.checkout : kind === "cars" ? m.search.dropoff : m.search.return}
+                    {kind === "stays" ? m.search.checkout : kind === "cars" ? m.search.dropoff : kind === "esim" ? m.search.coverageEnd : m.search.return}
                   </p>
                   <div className="mt-1">
                     <DateBubble
-                      label={kind === "stays" ? m.search.checkout : m.search.return}
+                      label={kind === "stays" ? m.search.checkout : kind === "esim" ? m.search.coverageEnd : m.search.return}
                       value={ret}
                       locale={locale}
                       active={calOpen && calOn === "end"}
@@ -365,7 +367,7 @@ export function SearchWidget({
                 labels={{
                   start: kind === "stays" ? m.search.checkin : m.search.depart,
                   end: kind === "stays" ? m.search.checkout : m.search.return,
-                  nights: kind === "cars" ? m.search.days : m.search.nights,
+                  nights: kind === "cars" || kind === "esim" ? m.search.days : m.search.nights,
                   confirm: m.search.confirmDates,
                   pickStart: m.search.pickStart,
                   pickEnd: m.search.pickEnd,
@@ -384,11 +386,25 @@ export function SearchWidget({
         </div>
 
         <div className="flex flex-wrap items-end gap-3">
-          <Stepper label={kind === "stays" ? m.search.guests : m.search.adults} value={adults} min={1} onChange={setAdults} />
-          {kind !== "cars" && (
+          <Stepper label={kind === "stays" ? m.search.guests : kind === "esim" ? m.search.esims : m.search.adults} value={adults} min={1} onChange={setAdults} />
+          {kind !== "cars" && kind !== "esim" && (
             <Stepper label={m.search.children} value={children} min={0} onChange={setChildrenCount} />
           )}
           {kind === "stays" && <Stepper label={m.search.rooms} value={rooms} min={1} onChange={setRooms} />}
+          {kind === "esim" && (
+            <label className="min-w-[160px] flex-1 text-xs font-bold uppercase tracking-wide text-navy/50">
+              {m.search.dataPlan}
+              <select value={dataPlan} onChange={(e) => setDataPlan(e.target.value)} className="field mt-1">
+                <option value="any">{m.search.dataAny}</option>
+                <option value="1">1 GB</option>
+                <option value="3">3 GB</option>
+                <option value="5">5 GB</option>
+                <option value="10">10 GB</option>
+                <option value="20">20 GB</option>
+                <option value="unlimited">{m.search.dataUnlimited}</option>
+              </select>
+            </label>
+          )}
           {kind === "flights" && (
             <label className="min-w-[160px] flex-1 text-xs font-bold uppercase tracking-wide text-navy/50">
               {m.search.cabin}
@@ -412,7 +428,7 @@ export function SearchWidget({
             {m.search.search}
           </button>
         </div>
-        {kind !== "cars" && children > 0 && (
+        {kind !== "cars" && kind !== "esim" && children > 0 && (
           <div>
             <p className="text-xs font-bold uppercase tracking-wide text-navy/50">{m.search.childAgesHint}</p>
             <div className="mt-2 grid gap-2 sm:grid-cols-2 md:grid-cols-4">

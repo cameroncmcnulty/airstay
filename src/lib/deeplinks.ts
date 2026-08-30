@@ -1,6 +1,6 @@
 import { toIso } from "@/lib/dates";
 
-export type SearchKind = "flights" | "stays" | "cars" | "packages";
+export type SearchKind = "flights" | "stays" | "cars" | "packages" | "esim";
 
 export type SearchQuery = {
   kind: SearchKind;
@@ -15,6 +15,7 @@ export type SearchQuery = {
   rooms?: number;
   cabin?: "economy" | "premium" | "business" | "first";
   trip?: "roundtrip" | "oneway";
+  dataPlan?: string;
 };
 
 export type PartnerOffer = {
@@ -110,6 +111,7 @@ export function queryToParams(q: SearchQuery) {
   if (q.rooms) p.set("rooms", String(q.rooms));
   if (q.cabin) p.set("cabin", q.cabin);
   if (q.trip) p.set("trip", q.trip);
+  if (q.dataPlan) p.set("data", q.dataPlan);
   return p.toString();
 }
 
@@ -136,5 +138,6 @@ export function paramsToQuery(sp: URLSearchParams): SearchQuery {
     rooms: Number(sp.get("rooms") || 1),
     cabin: (sp.get("cabin") as SearchQuery["cabin"]) || "economy",
     trip,
+    dataPlan: sp.get("data") || undefined,
   };
 }

@@ -13,12 +13,13 @@ export const SITE_MAP = `AIRSTAY PAGES (use these exact relative paths)
 - /stays — hotels worldwide
 - /cars — cars at the destination
 - /packages — vacation packages (Expedia flight + hotel)
+- /esim — eSIM data plans for the destination
 - /deals — featured CAD finds
 - /about — who we are
 - /contact — say hello
 - /account — saved searches (if they have an account)
 - /login · /signup
-Search results: /results?kind=flights|stays|cars&from=YYZ&to=CUN&toCity=Cancún&depart=YYYY-MM-DD&return=YYYY-MM-DD&adults=1
+Search results: /results?kind=flights|stays|cars|esim&from=YYZ&to=CUN&toCity=Cancún&depart=YYYY-MM-DD&return=YYYY-MM-DD&adults=1
 Always include from (Canadian IATA) for flights. Dates default to ~3 weeks out if the traveller did not name any.`;
 
 function fold(s: string) {
@@ -52,6 +53,7 @@ function kindFrom(q: string): SearchKind {
   const s = fold(q);
   if (/(car|auto|drive|road.?trip|rental)/.test(s)) return "cars";
   if (/(hotel|stay|resort|all.?inclusive|tout.?inclus|airbnb|room)/.test(s)) return "stays";
+  if (/(esim|e-sim|data.?plan|airalo|holafly)/.test(s)) return "esim";
   if (/(package|forfait|vacation)/.test(s)) return "packages";
   return "flights";
 }

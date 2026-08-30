@@ -21,6 +21,7 @@ export function Footer() {
             <li><Link className="hover:text-sky-200" href="/flights">{m.nav.flights}</Link></li>
             <li><Link className="hover:text-sky-200" href="/stays">{m.nav.stays}</Link></li>
             <li><Link className="hover:text-sky-200" href="/cars">{m.nav.cars}</Link></li>
+            <li><Link className="hover:text-sky-200" href="/esim">{m.nav.esim}</Link></li>
             <li><Link className="hover:text-sky-200" href="/packages">{m.nav.packages}</Link></li>
             <li><Link className="hover:text-sky-200" href="/deals">{m.nav.deals}</Link></li>
           </ul>

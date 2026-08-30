@@ -15,6 +15,7 @@ import {
   Car,
   Building2,
   Trophy,
+  Smartphone,
   Banknote,
   Zap,
 } from "lucide-react";
@@ -159,10 +160,14 @@ function ResultsInner() {
     return m.results.stopsPlural.replace("{n}", String(n));
   }
 
-  const kindIcon = q.kind === "cars" ? Car : q.kind === "stays" ? Building2 : Plane;
+  const kindIcon = q.kind === "cars" ? Car : q.kind === "stays" ? Building2 : q.kind === "esim" ? Smartphone : Plane;
   const KindIcon = kindIcon;
   const headline =
-    q.kind === "stays" || q.kind === "cars" ? destName || m.results.title : `${originName || "—"} → ${destName || "—"}`;
+    q.kind === "esim"
+      ? `${m.nav.esim} · ${dest ? (locale === "fr" ? dest.countryFr : dest.country) : destName || m.nav.esim}`
+      : q.kind === "stays" || q.kind === "cars"
+        ? destName || m.results.title
+        : `${originName || "—"} → ${destName || "—"}`;
 
   return (
     <div className="pb-20">
@@ -172,7 +177,7 @@ function ResultsInner() {
         <div className="relative mx-auto max-w-6xl px-4 py-8 text-white sm:py-10">
           <p className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-sky-200">
             <KindIcon className="h-3.5 w-3.5" />
-            {q.kind === "stays" ? m.nav.stays : q.kind === "cars" ? m.nav.cars : m.nav.flights}
+            {q.kind === "stays" ? m.nav.stays : q.kind === "cars" ? m.nav.cars : q.kind === "esim" ? m.nav.esim : m.nav.flights}
           </p>
           <h1 className="mt-2 text-3xl font-black tracking-tight md:text-5xl">{headline}</h1>
           {dest && (
@@ -185,14 +190,17 @@ function ResultsInner() {
                 {q.returnDate ? ` – ${q.returnDate}` : ""}
               </MetaChip>
             )}
-            {q.kind === "cars" ? (
+            {q.kind === "esim" ? (
+              <MetaChip icon={Smartphone}>{m.results.validDays.replace("{n}", String(Math.max(1, nights)))}</MetaChip>
+            ) : q.kind === "cars" ? (
               <MetaChip icon={Car}>{m.results.days.replace("{n}", String(nights))}</MetaChip>
             ) : (
               <MetaChip icon={Moon}>{m.results.nights.replace("{n}", String(nights))}</MetaChip>
             )}
             <MetaChip icon={Users}>
-              {q.adults} {m.search.adults}
-              {q.children ? ` · ${q.children} ${m.search.children}` : ""}
+              {q.kind === "esim"
+                ? `${q.adults} ${m.search.esims}`
+                : `${q.adults} ${m.search.adults}${q.children ? ` · ${q.children} ${m.search.children}` : ""}`}
             </MetaChip>
             {q.from && q.kind === "flights" && <MetaChip icon={Plane}>{origin?.code || q.from}</MetaChip>}
             {destName && <MetaChip icon={MapPin}>{destName}</MetaChip>}
@@ -243,7 +251,13 @@ function ResultsInner() {
                     className={`rounded-full px-3 py-1.5 ${sort === key ? "bg-white text-navy shadow-sm" : "text-navy/55"}`}
                     onClick={() => setSort(key)}
                   >
-                    {key === "best" ? m.results.sortBest : key === "price" ? m.results.sortPrice : m.results.sortFast}
+                    {key === "best"
+                      ? m.results.sortBest
+                      : key === "price"
+                        ? m.results.sortPrice
+                        : q.kind === "esim"
+                          ? m.results.badgeData
+                          : m.results.sortFast}
                   </button>
                 ))}
               </div>
@@ -266,8 +280,14 @@ function ResultsInner() {
               />
               <StatTile
                 icon={Zap}
-                label={m.results.badgeFast}
-                value={prettyDuration(list.find((o) => o.id === ranked.fastestId)?.durationMin, list.find((o) => o.id === ranked.fastestId)?.stops)}
+                label={q.kind === "esim" ? m.results.badgeData : m.results.badgeFast}
+                value={
+                  q.kind === "esim"
+                    ? list.find((o) => o.id === ranked.fastestId)?.unlimited
+                      ? m.results.unlimited
+                      : m.results.dataLabel.replace("{n}", String(list.find((o) => o.id === ranked.fastestId)?.dataGb || 0))
+                    : prettyDuration(list.find((o) => o.id === ranked.fastestId)?.durationMin, list.find((o) => o.id === ranked.fastestId)?.stops)
+                }
                 hint={list.find((o) => o.id === ranked.fastestId)?.airlineName}
               />
             </div>
@@ -403,7 +423,7 @@ function RankedCard({
             <img src={offer.airlineLogo} alt="" className="h-12 w-12 rounded-2xl bg-white object-contain ring-1 ring-navy/10" />
           ) : (
             <span className="grid h-12 w-12 place-items-center rounded-2xl bg-navy text-white">
-              <Plane className="h-5 w-5" />
+              {offer.kind === "esim" ? <Smartphone className="h-5 w-5" /> : <Plane className="h-5 w-5" />}
             </span>
           )}
           <div className="min-w-0 flex-1">
@@ -425,14 +445,18 @@ function RankedCard({
               {badges.fast && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-emerald-600 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wide text-white">
                   <Zap className="h-3 w-3" />
-                  {m.results.badgeFast}
+                  {offer.kind === "esim" ? m.results.badgeData : m.results.badgeFast}
                 </span>
               )}
               {!badges.best && !badges.cheap && !badges.fast && (
                 <span className="text-[10px] font-bold uppercase tracking-wide text-sky-700">{m.results.liveFare}</span>
               )}
             </div>
-            <FlightLine offer={offer} loc={loc} stopsLabel={stopsLabel} m={m} />
+            {offer.kind === "esim" ? (
+              <EsimLine offer={offer} m={m} locale={locale} />
+            ) : (
+              <FlightLine offer={offer} loc={loc} stopsLabel={stopsLabel} m={m} />
+            )}
           </div>
         </div>
         <div className="flex items-center justify-between gap-4 lg:flex-col lg:items-end">
@@ -440,19 +464,47 @@ function RankedCard({
             <p className="text-3xl font-black tracking-tight text-navy">{money(offer.priceCad || 0)}</p>
             <p className="text-[11px] font-semibold text-navy/45">
               {m.results.cadNote}
-              {offer.priceUnit === "person" ? m.results.perAdult : ""}
+              {offer.priceUnit === "person" ? m.results.perAdult : offer.priceUnit === "plan" ? m.results.perPlan : ""}
             </p>
             {extra > 0 && (
               <p className="mt-0.5 text-[11px] font-semibold text-navy/40">{m.results.vsCheap.replace("{n}", money(extra))}</p>
             )}
           </div>
           <button type="button" onClick={onOpen} className="btn-primary shrink-0">
-            {m.results.bookLive}
+            {offer.kind === "esim" ? m.results.bookEsim : m.results.bookLive}
             <ExternalLink className="h-4 w-4" />
           </button>
         </div>
       </div>
     </article>
+  );
+}
+
+function EsimLine({
+  offer,
+  m,
+  locale,
+}: {
+  offer: LiveOffer;
+  m: ReturnType<typeof useApp>["m"];
+  locale: "en" | "fr";
+}) {
+  const data = offer.unlimited ? m.results.unlimited : m.results.dataLabel.replace("{n}", String(offer.dataGb || 0));
+  const bits = (locale === "fr" ? offer.highlightsFr : offer.highlights) || [];
+  return (
+    <div className="mt-3">
+      <p className="text-lg font-black text-navy">{data}</p>
+      <p className="text-xs font-bold text-navy/50">
+        {m.results.validDays.replace("{n}", String(offer.validityDays || 0))}
+        {offer.operator ? ` · ${offer.operator}` : ""}
+      </p>
+      {offer.network && (
+        <p className="mt-1 text-[11px] font-semibold text-navy/45">
+          {m.results.network}: {offer.network}
+        </p>
+      )}
+      {bits.length > 0 && <p className="mt-1 text-[11px] font-semibold text-navy/40">{bits.join(" · ")}</p>}
+    </div>
   );
 }
 
