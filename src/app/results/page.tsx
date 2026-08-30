@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   ExternalLink,
   BookmarkPlus,
@@ -19,12 +19,13 @@ import {
   Banknote,
   Zap,
 } from "lucide-react";
-import { paramsToQuery, cad, cadFr } from "@/lib/deeplinks";
+import { paramsToQuery, queryToParams, cad, cadFr } from "@/lib/deeplinks";
 import { getAirport, getDestination } from "@/lib/airports";
 import { DEST_PHOTOS } from "@/lib/deals";
 import { useApp } from "@/context/AppContext";
 import { currentUser, updateUser } from "@/lib/auth";
-import { rankOffers, type LiveOffer } from "@/lib/live-search";
+import { rankOffers, type FlightDateOption, type FlightDateSuggestions, type LiveOffer } from "@/lib/live-search";
+import { formatBubble, nightsBetweenIso } from "@/lib/dates";
 import { nightsBetween, partnerFavicon } from "@/lib/partners";
 import { SearchWidget } from "@/components/SearchWidget";
 
@@ -40,11 +41,13 @@ export default function ResultsPage() {
 
 function ResultsInner() {
   const sp = useSearchParams();
+  const router = useRouter();
   const q = useMemo(() => paramsToQuery(sp), [sp]);
   const { m, locale, refreshUser } = useApp();
   const [leaving, setLeaving] = useState<Leaving | null>(null);
   const [saved, setSaved] = useState(false);
   const [live, setLive] = useState<LiveOffer[]>([]);
+  const [alts, setAlts] = useState<FlightDateSuggestions | null>(null);
   const [loading, setLoading] = useState(true);
   const [sort, setSort] = useState<"best" | "price" | "fast">("best");
 
@@ -75,14 +78,19 @@ function ResultsInner() {
     setSaved(false);
     let cancelled = false;
     setLoading(true);
+    setAlts(null);
     fetch(`/api/search?${sp.toString()}`)
       .then((r) => r.json())
       .then((data) => {
         if (cancelled) return;
         setLive(Array.isArray(data.live) ? data.live : []);
+        setAlts(data.dateSuggestions || null);
       })
       .catch(() => {
-        if (!cancelled) setLive([]);
+        if (!cancelled) {
+          setLive([]);
+          setAlts(null);
+        }
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -100,6 +108,16 @@ function ResultsInner() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [leaving]);
+
+  function applyAlt(opt: FlightDateOption) {
+    const next = {
+      ...q,
+      depart: opt.depart,
+      returnDate: q.trip === "oneway" ? undefined : opt.returnDate || q.returnDate,
+    };
+    router.push(`/results?${queryToParams(next)}`);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
 
   function save() {
     const u = currentUser();
@@ -295,7 +313,14 @@ function ResultsInner() {
           )}
           {loading && <SkeletonList />}
           {!loading && list.length === 0 && (
-            <p className="mt-4 rounded-2xl bg-mist px-4 py-3 text-sm text-navy/70">{m.results.noPrice}</p>
+            <DateAltPanel
+              q={q}
+              alts={alts}
+              locale={locale}
+              money={money}
+              m={m}
+              onPick={applyAlt}
+            />
           )}
           <ul className="mt-5 space-y-4">
             {list.map((o, i) => (
@@ -397,6 +422,149 @@ function ResultsInner() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function DateAltPanel({
+  q,
+  alts,
+  locale,
+  money,
+  m,
+  onPick,
+}: {
+  q: ReturnType<typeof paramsToQuery>;
+  alts: FlightDateSuggestions | null;
+  locale: "en" | "fr";
+  money: (n: number) => string;
+  m: ReturnType<typeof useApp>["m"];
+  onPick: (opt: FlightDateOption) => void;
+}) {
+  const loc = locale === "fr" ? "fr-CA" : "en-CA";
+  const departOpts = alts?.options.filter((o) => o.change === "depart") || [];
+  const returnOpts = alts?.options.filter((o) => o.change === "return") || [];
+  const bothOpts = alts?.options.filter((o) => o.change === "both") || [];
+  const hasAlts = Boolean(departOpts.length || returnOpts.length || bothOpts.length);
+  const groupCount = [departOpts, returnOpts, bothOpts].filter((g) => g.length).length;
+  const title =
+    groupCount > 1
+      ? m.results.altDatesTitle
+      : departOpts.length
+        ? m.results.altDepartTitle
+        : returnOpts.length
+          ? m.results.altReturnTitle
+          : m.results.altBothTitle;
+
+  return (
+    <div className="mt-4 overflow-hidden rounded-[1.4rem] bg-mist ring-1 ring-navy/8">
+      <div className="px-5 py-4 sm:px-6">
+        <p className="text-sm font-semibold text-navy/70">{m.results.noPrice}</p>
+        {hasAlts ? (
+          <>
+            <h3 className="mt-2 text-lg font-black text-navy">{title}</h3>
+            <p className="mt-1 text-sm text-navy/55">{m.results.altDatesSub}</p>
+          </>
+        ) : q.kind === "flights" ? (
+          <p className="mt-2 text-sm font-semibold text-navy/70">{m.results.altNoRoute}</p>
+        ) : null}
+      </div>
+      {hasAlts && (
+        <div className="space-y-5 border-t border-navy/8 bg-white px-5 py-5 sm:px-6">
+          {departOpts.length > 0 && (
+            <AltGroup
+              label={m.results.altChangeDepart}
+              hint={q.returnDate ? m.results.altKeepReturn.replace("{date}", formatBubble(q.returnDate, loc)) : undefined}
+              options={departOpts}
+              locale={loc}
+              money={money}
+              m={m}
+              onPick={onPick}
+            />
+          )}
+          {returnOpts.length > 0 && (
+            <AltGroup
+              label={m.results.altChangeReturn}
+              hint={q.depart ? m.results.altKeepDepart.replace("{date}", formatBubble(q.depart, loc)) : undefined}
+              options={returnOpts}
+              locale={loc}
+              money={money}
+              m={m}
+              onPick={onPick}
+            />
+          )}
+          {bothOpts.length > 0 && (
+            <AltGroup
+              label={m.results.altChangeBoth}
+              options={bothOpts}
+              locale={loc}
+              money={money}
+              m={m}
+              onPick={onPick}
+            />
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AltGroup({
+  label,
+  hint,
+  options,
+  locale,
+  money,
+  m,
+  onPick,
+}: {
+  label: string;
+  hint?: string;
+  options: FlightDateOption[];
+  locale: string;
+  money: (n: number) => string;
+  m: ReturnType<typeof useApp>["m"];
+  onPick: (opt: FlightDateOption) => void;
+}) {
+  return (
+    <div>
+      <div className="flex flex-wrap items-end justify-between gap-2">
+        <p className="text-xs font-black uppercase tracking-[0.16em] text-navy/45">{label}</p>
+        {hint && <p className="text-xs font-semibold text-navy/45">{hint}</p>}
+      </div>
+      <ul className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+        {options.map((opt) => {
+          const nights = opt.returnDate ? nightsBetweenIso(opt.depart, opt.returnDate) : 0;
+          const labelText =
+            opt.change === "return" && opt.returnDate
+              ? formatBubble(opt.returnDate, locale)
+              : opt.change === "both" && opt.returnDate
+                ? `${formatBubble(opt.depart, locale)} – ${formatBubble(opt.returnDate, locale)}`
+                : formatBubble(opt.depart, locale);
+          return (
+            <li key={`${opt.change}-${opt.depart}-${opt.returnDate || ""}`}>
+              <button
+                type="button"
+                onClick={() => onPick(opt)}
+                className="flex w-full flex-col items-start rounded-2xl bg-mist px-4 py-3 text-left ring-1 ring-navy/8 transition hover:-translate-y-0.5 hover:bg-white hover:ring-sky hover:shadow-lift"
+              >
+                <span className="inline-flex items-center gap-1.5 text-sm font-extrabold text-navy">
+                  <CalendarDays className="h-3.5 w-3.5 text-sky" />
+                  {labelText}
+                </span>
+                {opt.change === "both" && nights > 0 && (
+                  <span className="mt-0.5 text-[11px] font-semibold text-navy/45">
+                    {m.results.altNights.replace("{n}", String(nights))}
+                  </span>
+                )}
+                <span className="mt-1 text-xs font-bold text-sky">
+                  {m.results.altFromPrice.replace("{price}", money(opt.priceCad))}
+                </span>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }

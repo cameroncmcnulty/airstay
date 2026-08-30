@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { paramsToQuery } from "@/lib/deeplinks";
-import { searchLive } from "@/lib/live-search";
+import { searchLive, suggestFlightDates } from "@/lib/live-search";
 import { logSearch } from "@/lib/travel-api/store";
 import { recordEvent } from "@/lib/analytics";
 import { getDestination } from "@/lib/airports";
@@ -12,6 +12,8 @@ export async function GET(req: NextRequest) {
   const q = paramsToQuery(req.nextUrl.searchParams);
   try {
     const live = q.kind === "packages" ? [] : await searchLive(q);
+    const dateSuggestions =
+      q.kind === "flights" && live.length === 0 ? await suggestFlightDates(q) : null;
     const dest = q.to ? getDestination(q.to) : undefined;
     logSearch({
       kind: q.kind,
@@ -39,6 +41,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       ok: true,
       live,
+      dateSuggestions,
       packages: [],
       source: "travelpayouts",
       generatedAt: new Date().toISOString(),
@@ -48,6 +51,7 @@ export async function GET(req: NextRequest) {
       {
         ok: false,
         live: [],
+        dateSuggestions: null,
         packages: [],
         error: err instanceof Error ? err.message : "search_failed",
         generatedAt: new Date().toISOString(),
