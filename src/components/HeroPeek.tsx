@@ -120,11 +120,12 @@ function picksFor(from: string, season: Season): Peek[] {
 }
 
 export function HeroPeek({ from }: { from: string }) {
-  const { m, locale } = useApp();
+  const { m, locale, origin: geo } = useApp();
   const season = seasonOf(new Date().getMonth());
   const picks = picksFor(from, season);
   const origin = getAirport(from);
   const city = origin ? (locale === "fr" ? origin.cityFr : origin.city) : from;
+  const terminal = origin ? (locale === "fr" ? origin.nameFr : origin.name) : from;
   const seasonLabel =
     season === "winter"
       ? m.hero.seasonWinter
@@ -150,10 +151,15 @@ export function HeroPeek({ from }: { from: string }) {
     <div className="w-full max-w-md">
       <div className="mb-2 flex items-baseline justify-between gap-3 text-white">
         <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/70">
-          {m.hero.ideas.replace("{city}", city)}
+          {geo?.source === "ip"
+            ? m.hero.nearYou.replace("{airport}", `${city} (${from})`)
+            : m.hero.ideas.replace("{city}", city)}
         </p>
         <p className="text-[11px] font-semibold text-sky-100/90">{seasonLabel}</p>
       </div>
+      {geo?.source === "ip" && (
+        <p className="mb-2 text-[11px] font-semibold text-white/65">{m.hero.fromArea} · {terminal}</p>
+      )}
       <div className="grid grid-cols-4 gap-2 sm:grid-cols-2">
         {picks.map((p) => {
           const d = getDestination(p.code);

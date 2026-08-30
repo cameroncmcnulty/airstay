@@ -9,6 +9,7 @@ import { HeroMedia } from "@/components/HeroMedia";
 import { HeroPeek } from "@/components/HeroPeek";
 import { HowItWorks, TrustStrip } from "@/components/HowItWorks";
 import { PopularDestGrid } from "@/components/PopularDestGrid";
+import { VacationPackages } from "@/components/VacationPackages";
 import { useApp } from "@/context/AppContext";
 import { type SearchKind } from "@/lib/deeplinks";
 
@@ -25,7 +26,7 @@ const PARTNERS = [
 ];
 
 export default function HomePage() {
-  const { m, settings } = useApp();
+  const { m, settings, origin } = useApp();
   const [kind, setKind] = useState<SearchKind>("flights");
   const why = [
     { icon: MapPin, t: m.why.c1t, d: m.why.c1d },
@@ -33,7 +34,7 @@ export default function HomePage() {
     { icon: BadgeDollarSign, t: m.why.c3t, d: m.why.c3d },
     { icon: ShieldCheck, t: m.why.c4t, d: m.why.c4d },
   ];
-  const from = settings?.defaultFrom || "YYZ";
+  const from = origin?.code || settings?.defaultFrom || "YYZ";
 
   return (
     <>
@@ -70,6 +71,7 @@ export default function HomePage() {
 
       <div className="space-y-16 py-14 sm:space-y-24 sm:py-20">
         <TrustStrip />
+        <VacationPackages />
         <HowItWorks />
         <DealGrid limit={4} />
 

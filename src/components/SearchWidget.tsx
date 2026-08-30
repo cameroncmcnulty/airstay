@@ -42,7 +42,7 @@ export function SearchWidget({
   embedded?: boolean;
   initial?: SearchQuery;
 }) {
-  const { m, locale, settings } = useApp();
+  const { m, locale, settings, origin } = useApp();
   const router = useRouter();
   const [kindState, setKindState] = useState<SearchKind>(initial?.kind || initialKind);
   const kind = kindProp ?? kindState;
@@ -80,18 +80,17 @@ export function SearchWidget({
   const fromRef = useRef<HTMLLabelElement>(null);
   const toRef = useRef<HTMLLabelElement>(null);
   const calRef = useRef<HTMLDivElement>(null);
-  const seededFrom = useRef(Boolean(initial?.from));
+  const fromTouched = useRef(Boolean(initial?.from));
 
   useEffect(() => {
-    if (seededFrom.current || initial?.from) return;
-    const code = settings?.defaultFrom;
+    if (fromTouched.current || initial?.from) return;
+    const code = origin?.code || settings?.defaultFrom;
     if (!code) return;
     const ap = getAirport(code);
     if (!ap) return;
-    seededFrom.current = true;
     setFrom(`${locale === "fr" ? ap.cityFr : ap.city} (${ap.code})`);
     setFromCode(ap.code);
-  }, [settings?.defaultFrom, initial?.from, locale]);
+  }, [origin?.code, settings?.defaultFrom, initial?.from, locale]);
 
   const fromOpts = useMemo(() => searchCanadianAirports(from), [from]);
   const toOpts = useMemo(() => searchDestinations(to), [to]);
@@ -209,8 +208,12 @@ export function SearchWidget({
 
       {kind === "packages" ? (
         <div className={`${hideTabs ? "" : "mt-5"} rounded-2xl bg-mist px-4 py-5 text-center`}>
-          <p className="text-lg font-black text-navy">{m.comingSoon.title}</p>
-          <p className="mt-2 text-sm text-navy/65">{m.comingSoon.body}</p>
+          <p className="text-[11px] font-black uppercase tracking-[0.18em] text-sky-700">{m.packages.kicker}</p>
+          <p className="mt-2 text-lg font-black text-navy">{m.packages.title}</p>
+          <p className="mt-2 text-sm text-navy/65">{m.packages.subtitle}</p>
+          <a href="/packages" className="btn-primary mt-4 inline-flex">
+            {m.packages.see}
+          </a>
         </div>
       ) : (
       <form onSubmit={submit} className={`${hideTabs ? "space-y-4" : "mt-5 space-y-4"}`}>
@@ -241,6 +244,7 @@ export function SearchWidget({
               <input
                 value={from}
                 onChange={(e) => {
+                  fromTouched.current = true;
                   setFrom(e.target.value);
                   setFromCode("");
                   setFromOpen(true);
@@ -457,6 +461,7 @@ export function SearchWidget({
   }
 
   function pickFrom(a: Airport) {
+    fromTouched.current = true;
     setFrom(`${locale === "fr" ? a.cityFr : a.city} (${a.code})`);
     setFromCode(a.code);
     setFromOpen(false);

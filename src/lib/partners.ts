@@ -548,6 +548,12 @@ export function skyscannerCarsUrl(q: SearchQuery) {
   return `https://www.skyscanner.ca/g/referrals/v1/cars/day-view?${params.toString()}`;
 }
 
+export const EXPEDIA_CAMREF = "1110lLNKz";
+
+export function expediaPackagesUrl() {
+  return `https://www.expedia.ca/Vacation-Packages?camref=${EXPEDIA_CAMREF}`;
+}
+
 export function expediaCarsUrl(q: SearchQuery) {
   const code = iataOf(q, "to");
   if (!code || !q.depart) return undefined;

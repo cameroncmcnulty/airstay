@@ -15,8 +15,8 @@ export function PopularDestGrid({
   from?: string;
   featured?: boolean;
 }) {
-  const { m, locale, settings } = useApp();
-  const origin = settings?.defaultFrom || from;
+  const { m, locale, settings, origin: geo } = useApp();
+  const origin = geo?.code || settings?.defaultFrom || from;
   const codes = featured ? FEATURED_DESTINATIONS.slice(0, 8) : FEATURED_DESTINATIONS;
   return (
     <section className="mx-auto max-w-6xl px-4">

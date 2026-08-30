@@ -68,6 +68,19 @@ header {
   @apply inline-flex items-center justify-center gap-2 rounded-full border border-navy/15 px-4 py-2.5 text-sm font-bold text-navy transition hover:bg-mist;
 }
 
+.eg-affiliate-banners {
+  display: flex;
+  min-height: 250px;
+  width: 300px;
+  max-width: 100%;
+  align-items: center;
+  justify-content: center;
+}
+
+.eg-affiliate-banners iframe {
+  max-width: 100%;
+}
+
 @keyframes aria-glow {
   0%,
   100% {

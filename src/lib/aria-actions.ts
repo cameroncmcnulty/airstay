@@ -12,7 +12,7 @@ export const SITE_MAP = `AIRSTAY PAGES (use these exact relative paths)
 - /flights — flight search from Canada
 - /stays — hotels worldwide
 - /cars — cars at the destination
-- /packages — vacation packages (coming soon)
+- /packages — vacation packages (Expedia flight + hotel)
 - /deals — featured CAD finds
 - /about — who we are
 - /contact — say hello
@@ -116,7 +116,7 @@ export function inferActions(message: string, locale: "en" | "fr"): AriaAction[]
   const kind = kindFrom(message);
 
   if (dest && kind === "packages") {
-    actions.push({ type: "page", href: "/packages", label: fr ? "Forfaits — bientôt" : "Packages — coming soon" });
+    actions.push({ type: "page", href: "/packages", label: fr ? "Forfaits vacances" : "Vacation packages" });
     actions.push({
       type: "search",
       href: buildSearchHref({ kind: "stays", to: dest.code, toCity: fr ? dest.cityFr : dest.city, locale }),

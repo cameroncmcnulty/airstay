@@ -5,6 +5,7 @@ import { t, type Locale, type Messages } from "@/lib/i18n";
 import { currentUser, signOut as authSignOut, type PublicUser } from "@/lib/auth";
 import { readConsent, writeConsent, type ConsentState } from "@/lib/consent";
 import type { PublicSettings } from "@/lib/site-public";
+import type { GeoOrigin } from "@/lib/hubs";
 
 type AppContextValue = {
   locale: Locale;
@@ -17,6 +18,7 @@ type AppContextValue = {
   consent: ConsentState | null;
   setConsent: (c: { analytics: boolean; marketing: boolean }) => void;
   settings: PublicSettings | null;
+  origin: GeoOrigin | null;
 };
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -27,6 +29,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
   const [consent, setConsentState] = useState<ConsentState | null>(null);
   const [settings, setSettings] = useState<PublicSettings | null>(null);
+  const [origin, setOrigin] = useState<GeoOrigin | null>(null);
 
   useEffect(() => {
     const stored = localStorage.getItem("airstay.locale") as Locale | null;
@@ -41,6 +44,25 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       .then((r) => r.json())
       .then((d) => {
         if (d?.settings) setSettings(d.settings as PublicSettings);
+      })
+      .catch(() => undefined);
+    try {
+      const cached = sessionStorage.getItem("airstay.origin.v1");
+      if (cached) setOrigin(JSON.parse(cached) as GeoOrigin);
+    } catch {
+      /* ignore */
+    }
+    fetch("/api/geo")
+      .then((r) => r.json())
+      .then((d) => {
+        if (!d?.origin?.code) return;
+        const next = d.origin as GeoOrigin;
+        setOrigin(next);
+        try {
+          sessionStorage.setItem("airstay.origin.v1", JSON.stringify(next));
+        } catch {
+          /* ignore */
+        }
       })
       .catch(() => undefined);
   }, []);
@@ -61,8 +83,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   const value = useMemo(
-    () => ({ locale, setLocale, m: t[locale] as Messages, user, ready, refreshUser, signOut, consent, setConsent, settings }),
-    [locale, user, ready, consent, settings]
+    () => ({ locale, setLocale, m: t[locale] as Messages, user, ready, refreshUser, signOut, consent, setConsent, settings, origin }),
+    [locale, user, ready, consent, settings, origin]
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

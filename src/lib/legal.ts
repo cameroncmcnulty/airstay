@@ -29,6 +29,7 @@ export const privacyEn: LegalSection[] = [
       "Travel search data: Canadian origin airport, destination, dates, traveller counts, cabin class, trip type and saved-search labels. We do not need your passport, frequent-flyer number or payment card to run a search.",
       "Communications: messages you send through the contact form, and whether you gave express CASL consent to receive commercial electronic messages about deals.",
       "Technical and consent data: language preference, cookie choices, approximate device type, and pages viewed. If you refuse analytics and marketing cookies, we do not set those cookies.",
+      "Approximate location: we read the city or region associated with your IP address (or the equivalent header from our host) only to guess the nearest major Canadian airport for search suggestions. We do not store the IP address and we do not use GPS or precise geolocation.",
       "We do not intentionally collect social insurance numbers, health information, precise geolocation, biometric identifiers, or payment card data. Do not submit that information to us.",
     ],
   },
@@ -37,6 +38,7 @@ export const privacyEn: LegalSection[] = [
     title: "4. Why we collect it (identified purposes)",
     paragraphs: [
       "To operate the Site and show Canada-outbound search results and partner deeplinks.",
+      "To guess the nearest major Canadian airport from your approximate IP-based location so suggestions start from home. We do not store the IP.",
       "To create and secure your account, remember saved searches, and honour your privacy and marketing choices.",
       "To respond to questions and privacy requests.",
       "With your express consent only, to send commercial electronic messages about travel deals (CASL).",
@@ -161,6 +163,7 @@ export const privacyFr: LegalSection[] = [
       "Recherche de voyage : aéroport d’origine canadien, destination, dates, nombre de voyageurs, cabine, type de trajet et libellés de recherches enregistrées. Nous n’avons pas besoin de votre passeport, de votre numéro de fidélisation ni de votre carte de paiement pour lancer une recherche.",
       "Communications : messages du formulaire de contact et consentement exprès LCAP, le cas échéant.",
       "Données techniques et de consentement : langue, choix de témoins, type d’appareil approximatif et pages consultées.",
+      "Localisation approximative : nous lisons la ville ou la région liée à votre adresse IP (ou l’en-tête équivalent de notre hébergeur) uniquement pour estimer l’aéroport canadien majeur le plus proche pour les suggestions. Nous ne conservons pas l’IP et n’utilisons pas le GPS.",
       "Nous ne recueillons pas volontairement de NAS, de renseignements de santé, de géolocalisation précise, de données biométriques ni de données de carte de paiement.",
     ],
   },
@@ -169,6 +172,7 @@ export const privacyFr: LegalSection[] = [
     title: "4. Fins déterminées",
     paragraphs: [
       "Exploiter le Site et afficher des résultats et des liens profonds vers des partenaires.",
+      "Estimer l’aéroport canadien majeur le plus proche à partir de votre localisation IP approximative, pour que les suggestions partent de chez vous. Nous ne conservons pas l’IP.",
       "Créer et sécuriser votre compte, mémoriser vos recherches et respecter vos choix.",
       "Répondre à vos questions et à vos demandes relatives à la vie privée.",
       "Avec votre consentement exprès seulement, vous envoyer des messages électroniques commerciaux sur les aubaines (LCAP).",

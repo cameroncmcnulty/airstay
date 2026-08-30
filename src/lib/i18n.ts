@@ -32,6 +32,8 @@ export const t = {
       vibeIsland: "Island",
       vibeLonghaul: "Long-haul",
       vibeWeekend: "Weekend",
+      nearYou: "Closest terminal · {airport}",
+      fromArea: "Picked from your area",
     },
     pages: {
       flightsTitle: "Flights from home",
@@ -40,6 +42,8 @@ export const t = {
       staysSub: "Hotels worldwide, priced in CAD — no extra AIRSTAY fee.",
       carsTitle: "Keys at the other end",
       carsSub: "Pick-up at the destination. Compare, then hit the road.",
+      packagesTitle: "Vacation packages",
+      packagesSub: "Flight + hotel getaways on Expedia.ca — no AIRSTAY booking fee.",
     },
     search: {
       from: "Leaving from",
@@ -93,7 +97,7 @@ export const t = {
       cars: "Car rentals",
       carsSub: "Hit the road",
       packages: "Packages",
-      packagesSub: "Coming soon",
+      packagesSub: "Flight + hotel",
     },
     deals: {
       title: "Fresh finds from Canada",
@@ -279,6 +283,18 @@ export const t = {
       saved: "Saved",
       noOrigin: "Choose a Canadian departure airport to search flights.",
     },
+    packages: {
+      kicker: "Vacation packages",
+      title: "The getaway, already bundled",
+      subtitle: "Flight + hotel packages on Expedia.ca — resorts, sun and city breaks. You finish there. AIRSTAY never adds a booking fee.",
+      cta: "Browse packages on Expedia",
+      see: "See vacation packages",
+      note: "Opens Expedia.ca. AIRSTAY is not the travel agent — you book with Expedia.",
+      perk1: "Flight + hotel together",
+      perk2: "Priced in CAD",
+      perk3: "No AIRSTAY fee",
+      bannerHint: "Find the perfect getaway",
+    },
     comingSoon: {
       title: "Packages are almost here",
       body: "Sun-and-done trips are on the way. Meanwhile, find flights, hotels or cars — your dates come with you.",
@@ -384,6 +400,8 @@ export const t = {
       vibeIsland: "Île",
       vibeLonghaul: "Long-courrier",
       vibeWeekend: "Week-end",
+      nearYou: "Terminal le plus proche · {airport}",
+      fromArea: "Selon votre région",
     },
     pages: {
       flightsTitle: "Vols de chez nous",
@@ -392,6 +410,8 @@ export const t = {
       staysSub: "Hôtels partout, en $ CA — sans frais extra AIRSTAY.",
       carsTitle: "Les clés à l’arrivée",
       carsSub: "Prise en charge à destination. Comparez, puis prenez la route.",
+      packagesTitle: "Forfaits vacances",
+      packagesSub: "Vol + hôtel sur Expedia.ca — sans frais de réservation AIRSTAY.",
     },
     search: {
       from: "Départ",
@@ -445,7 +465,7 @@ export const t = {
       cars: "Locations d'auto",
       carsSub: "La route",
       packages: "Forfaits",
-      packagesSub: "Bientôt",
+      packagesSub: "Vol + hôtel",
     },
     deals: {
       title: "Trouvailles du moment",
@@ -630,6 +650,18 @@ export const t = {
       save: "Enregistrer",
       saved: "Enregistrée",
       noOrigin: "Choisissez un aéroport de départ canadien pour les vols.",
+    },
+    packages: {
+      kicker: "Forfaits vacances",
+      title: "L’escapade, déjà assemblée",
+      subtitle: "Forfaits vol + hôtel sur Expedia.ca — complexes, soleil et city breaks. Vous terminez là-bas. AIRSTAY n’ajoute jamais de frais.",
+      cta: "Voir les forfaits sur Expedia",
+      see: "Voir les forfaits vacances",
+      note: "Ouvre Expedia.ca. AIRSTAY n’est pas l’agence — vous réservez chez Expedia.",
+      perk1: "Vol + hôtel ensemble",
+      perk2: "Prix en $ CA",
+      perk3: "Aucun frais AIRSTAY",
+      bannerHint: "Trouvez l’escapade parfaite",
     },
     comingSoon: {
       title: "Les forfaits arrivent",
