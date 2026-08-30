@@ -166,6 +166,204 @@ header {
   animation-delay: 0.3s;
 }
 
+.cat-scene {
+  position: relative;
+  display: grid;
+  height: 100%;
+  width: 100%;
+  place-items: center;
+}
+
+.cat-icon {
+  color: #fff;
+  stroke: #fff;
+}
+
+.cat-wake,
+.cat-window {
+  position: absolute;
+  border-radius: 9999px;
+  background: #fff;
+  pointer-events: none;
+}
+
+.cat-wake {
+  width: 42%;
+  height: 42%;
+  opacity: 0;
+  filter: blur(1px);
+}
+
+.cat-window {
+  width: 9%;
+  height: 9%;
+  opacity: 0.35;
+}
+
+.cat-window-a {
+  top: 32%;
+  left: 38%;
+}
+
+.cat-window-b {
+  top: 32%;
+  left: 54%;
+}
+
+.cat-hotel-bg {
+  position: absolute;
+  right: 12%;
+  bottom: 18%;
+  width: 48% !important;
+  height: 48% !important;
+  opacity: 0.55;
+}
+
+.cat-car {
+  position: absolute;
+  left: 10%;
+  bottom: 16%;
+  width: 58% !important;
+  height: 58% !important;
+}
+
+.cat-bag {
+  position: absolute;
+  right: 14%;
+  bottom: 16%;
+  width: 36% !important;
+  height: 36% !important;
+  opacity: 0;
+}
+
+.cat-scene.is-play .cat-plane {
+  animation: cat-plane-takeoff 0.95s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.cat-scene.is-play .cat-wake {
+  animation: cat-wake 0.95s ease-out both;
+}
+
+.cat-scene.is-play .cat-hotel {
+  animation: cat-hotel-rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.cat-scene.is-play .cat-window {
+  animation: cat-window-on 0.7s ease-out 0.15s both;
+}
+
+.cat-scene.is-play .cat-car {
+  animation: cat-car-park 0.85s cubic-bezier(0.22, 0.9, 0.3, 1) both;
+}
+
+.cat-scene.is-play .cat-hotel-bg {
+  animation: cat-hotel-rise 0.55s ease-out both;
+}
+
+.cat-scene.is-play .cat-palm {
+  transform-origin: 50% 100%;
+  animation: cat-palm-sway 0.9s ease-in-out both;
+}
+
+.cat-scene.is-play .cat-bag {
+  animation: cat-bag-drop 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.08s both;
+}
+
+@keyframes cat-plane-takeoff {
+  0% {
+    transform: rotate(-8deg) translate(-18%, 22%) scale(0.85);
+  }
+  28% {
+    transform: rotate(-28deg) translate(-6%, 8%) scale(0.95);
+  }
+  62% {
+    transform: rotate(18deg) translate(22%, -34%) scale(1.08);
+  }
+  100% {
+    transform: rotate(12deg) translate(8%, -12%) scale(1);
+  }
+}
+
+@keyframes cat-wake {
+  0% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  35% {
+    opacity: 0.35;
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.6);
+  }
+}
+
+@keyframes cat-hotel-rise {
+  0% {
+    transform: translateY(28%) scale(0.75);
+    opacity: 0.4;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes cat-window-on {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 0.95;
+  }
+}
+
+@keyframes cat-car-park {
+  0% {
+    transform: translateX(-140%);
+    opacity: 0;
+  }
+  70% {
+    transform: translateX(8%);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes cat-palm-sway {
+  0% {
+    transform: rotate(0deg);
+  }
+  30% {
+    transform: rotate(-14deg);
+  }
+  65% {
+    transform: rotate(10deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes cat-bag-drop {
+  0% {
+    transform: translateY(-90%) rotate(-18deg);
+    opacity: 0;
+  }
+  75% {
+    transform: translateY(8%) rotate(6deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 1;
+  }
+}
+
 :focus-visible {
   outline: 2px solid #4381C7;
   outline-offset: 2px;
@@ -180,7 +378,15 @@ header {
   .aria-launcher,
   .aria-ring,
   .aria-pulse,
-  .aria-dots i {
+  .aria-dots i,
+  .cat-scene.is-play .cat-plane,
+  .cat-scene.is-play .cat-wake,
+  .cat-scene.is-play .cat-hotel,
+  .cat-scene.is-play .cat-window,
+  .cat-scene.is-play .cat-car,
+  .cat-scene.is-play .cat-hotel-bg,
+  .cat-scene.is-play .cat-palm,
+  .cat-scene.is-play .cat-bag {
     animation: none !important;
   }
   * {

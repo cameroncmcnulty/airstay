@@ -1,15 +1,16 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Plane, Building2, Car, TreePalm } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import type { SearchKind } from "@/lib/deeplinks";
+import { CategoryMotion } from "./CategoryMotion";
 
 const items = [
-  { id: "flights" as const, href: "/flights", icon: Plane, key: "flights" as const, sub: "flightsSub" as const, tint: "from-sky-50 to-white" },
-  { id: "stays" as const, href: "/stays", icon: Building2, key: "stays" as const, sub: "staysSub" as const, tint: "from-navy-50 to-white" },
-  { id: "cars" as const, href: "/cars", icon: Car, key: "cars" as const, sub: "carsSub" as const, tint: "from-sky-50 to-white" },
-  { id: "packages" as const, href: "/packages", icon: TreePalm, key: "packages" as const, sub: "packagesSub" as const, tint: "from-navy-50 to-white" },
+  { id: "flights" as const, href: "/flights", key: "flights" as const, sub: "flightsSub" as const, tint: "from-sky-50 to-white" },
+  { id: "stays" as const, href: "/stays", key: "stays" as const, sub: "staysSub" as const, tint: "from-navy-50 to-white" },
+  { id: "cars" as const, href: "/cars", key: "cars" as const, sub: "carsSub" as const, tint: "from-sky-50 to-white" },
+  { id: "packages" as const, href: "/packages", key: "packages" as const, sub: "packagesSub" as const, tint: "from-navy-50 to-white" },
 ];
 
 export function CategoryBubbles({
@@ -24,6 +25,23 @@ export function CategoryBubbles({
   compact?: boolean;
 }) {
   const { m } = useApp();
+  const [play, setPlay] = useState<SearchKind | null>(null);
+  const [tick, setTick] = useState(0);
+
+  useEffect(() => {
+    const id = selected ?? "flights";
+    setPlay(id);
+    setTick(1);
+    // intro once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function fire(id: SearchKind) {
+    setPlay(id);
+    setTick((n) => n + 1);
+    onSelect?.(id);
+  }
+
   return (
     <section className={compact ? "" : "mx-auto max-w-6xl px-4"}>
       {!compact && (
@@ -31,7 +49,6 @@ export function CategoryBubbles({
       )}
       <div className={`grid grid-cols-4 ${compact ? "gap-1 sm:gap-3" : "mt-8 gap-4"}`}>
         {items.map((it) => {
-          const Icon = it.icon;
           const active = selected === it.id;
           const inner = (
             <>
@@ -41,11 +58,16 @@ export function CategoryBubbles({
                 } ${active ? "ring-4 ring-sky shadow-lift" : "ring-navy/5"}`}
               >
                 <span
-                  className={`grid place-items-center rounded-full text-white ${
+                  className={`relative overflow-hidden rounded-full text-white ${
                     compact ? "h-9 w-9 sm:h-10 sm:w-10 md:h-12 md:w-12" : "h-14 w-14 md:h-20 md:w-20"
                   } ${active ? "bg-sky" : "bg-navy"}`}
                 >
-                  <Icon className={compact ? "h-4 w-4 md:h-5 md:w-5" : "h-6 w-6 md:h-8 md:w-8"} />
+                  <CategoryMotion
+                    kind={it.id}
+                    play={play === it.id}
+                    playKey={play === it.id ? tick : 0}
+                    className={compact ? "h-4 w-4 md:h-5 md:w-5" : "h-6 w-6 md:h-8 md:w-8"}
+                  />
                 </span>
               </span>
               <span className={`mt-2 max-w-full truncate font-extrabold ${compact ? "text-[11px] sm:text-sm" : "mt-4 text-lg"} ${light && !compact ? "text-white" : "text-navy"}`}>
@@ -62,7 +84,7 @@ export function CategoryBubbles({
               <button
                 key={it.id}
                 type="button"
-                onClick={() => onSelect(it.id)}
+                onClick={() => fire(it.id)}
                 className={className}
                 aria-pressed={active}
               >
@@ -71,7 +93,7 @@ export function CategoryBubbles({
             );
           }
           return (
-            <Link key={it.id} href={it.href} className={className}>
+            <Link key={it.id} href={it.href} className={className} onClick={() => fire(it.id)}>
               {inner}
             </Link>
           );
