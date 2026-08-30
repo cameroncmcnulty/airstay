@@ -441,6 +441,7 @@ export function expediaFlightsUrl(q: SearchQuery) {
   if (q.returnDate && q.trip !== "oneway") {
     params.set("leg2", `from:${dest},to:${origin},departure:${q.returnDate}TANYT`);
   }
+  params.set("camref", EXPEDIA_CAMREF);
   return `https://www.expedia.ca/Flights-Search?${params.toString()}`;
 }
 

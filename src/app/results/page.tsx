@@ -313,16 +313,34 @@ function ResultsInner() {
             </div>
           )}
           {loading && <SkeletonList />}
-          {!loading && list.length === 0 && (
-            <DateAltPanel
-              q={q}
-              alts={alts}
-              locale={locale}
-              money={money}
-              m={m}
-              onPick={applyAlt}
-            />
+          {!loading && list.length === 0 && extras.length > 0 && q.kind === "flights" && (
+            <div className="mt-5">
+              <h3 className="text-lg font-black text-navy">{m.results.liveBoardsTitle}</h3>
+              <p className="mt-1 text-sm text-navy/60">{m.results.liveBoardsSub}</p>
+              <ul className="mt-4 space-y-4">
+                {extras.map((o, i) => (
+                  <li key={o.id}>
+                    <PartnerBoardCard
+                      offer={o}
+                      rank={i + 1}
+                      locale={locale}
+                      m={m}
+                      q={q}
+                      onOpen={() => setLeaving(o)}
+                    />
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
+          {!loading && list.length === 0 && extras.length === 0 && (
+            <DateAltPanel q={q} alts={alts} locale={locale} money={money} m={m} onPick={applyAlt} />
+          )}
+          {!loading && list.length === 0 && extras.length > 0 && alts?.options?.length ? (
+            <div className="mt-8">
+              <DateAltPanel q={q} alts={alts} locale={locale} money={money} m={m} onPick={applyAlt} />
+            </div>
+          ) : null}
           <ul className="mt-5 space-y-4">
             {list.map((o, i) => (
               <li key={o.id}>
@@ -350,7 +368,7 @@ function ResultsInner() {
               </li>
             ))}
           </ul>
-          {extras.length > 0 && (
+          {extras.length > 0 && list.length > 0 && (
             <div className="mt-8">
               <p className="text-xs font-bold uppercase tracking-[0.16em] text-navy/40">{m.results.alsoCompare}</p>
               <ul className="mt-3 grid gap-3 sm:grid-cols-3">
@@ -428,6 +446,73 @@ function ResultsInner() {
   );
 }
 
+function PartnerBoardCard({
+  offer,
+  rank,
+  locale,
+  m,
+  q,
+  onOpen,
+}: {
+  offer: LiveOffer;
+  rank: number;
+  locale: "en" | "fr";
+  m: ReturnType<typeof useApp>["m"];
+  q: ReturnType<typeof paramsToQuery>;
+  onOpen: () => void;
+}) {
+  const loc = locale === "fr" ? "fr-CA" : "en-CA";
+  const when = [q.depart && formatBubble(q.depart, loc), q.returnDate && formatBubble(q.returnDate, loc)]
+    .filter(Boolean)
+    .join(" – ");
+  return (
+    <article
+      className={`overflow-hidden rounded-[1.4rem] bg-white shadow-card ring-1 transition hover:-translate-y-0.5 hover:shadow-lift ${
+        rank === 1 ? "ring-2 ring-sky" : "ring-navy/8"
+      }`}
+    >
+      {rank === 1 && (
+        <div className="bg-sky px-5 py-1.5 text-[11px] font-black uppercase tracking-[0.16em] text-white">
+          {m.results.seeLiveFares}
+        </div>
+      )}
+      <div className="flex flex-col gap-4 p-5 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex min-w-0 flex-1 items-start gap-4">
+          <span
+            className={`grid h-11 w-11 shrink-0 place-items-center rounded-full text-sm font-black ${
+              rank === 1 ? "bg-sky text-white" : "bg-mist text-navy"
+            }`}
+          >
+            {rank}
+          </span>
+          {offer.domain ? (
+            <img src={partnerFavicon(offer.domain)} alt="" className="h-12 w-12 rounded-2xl bg-white object-contain ring-1 ring-navy/10" />
+          ) : (
+            <span className="grid h-12 w-12 place-items-center rounded-2xl bg-navy text-white">
+              <Plane className="h-5 w-5" />
+            </span>
+          )}
+          <div className="min-w-0 flex-1">
+            <h3 className="truncate text-lg font-black text-navy">{offer.partner || offer.title}</h3>
+            <p className="mt-0.5 text-sm font-semibold text-navy/55">{locale === "fr" ? offer.taglineFr : offer.tagline}</p>
+            <p className="mt-2 text-sm font-bold text-navy">
+              {q.from} → {q.to}
+              {when ? ` · ${when}` : ""}
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center justify-between gap-4 lg:flex-col lg:items-end">
+          <p className="text-sm font-bold text-navy/50">{m.results.onSite}</p>
+          <button type="button" onClick={onOpen} className="btn-primary shrink-0">
+            {m.results.seeLiveFares}
+            <ExternalLink className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+    </article>
+  );
+}
+
 function DateAltPanel({
   q,
   alts,
@@ -461,7 +546,7 @@ function DateAltPanel({
   return (
     <div className="mt-4 overflow-hidden rounded-[1.4rem] bg-mist ring-1 ring-navy/8">
       <div className="px-5 py-4 sm:px-6">
-        <p className="text-sm font-semibold text-navy/70">{m.results.noPrice}</p>
+        <p className="text-sm font-semibold text-navy/70">{m.results.altDatesTitle}</p>
         {hasAlts ? (
           <>
             <h3 className="mt-2 text-lg font-black text-navy">{title}</h3>

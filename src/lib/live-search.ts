@@ -1,6 +1,16 @@
 import type { SearchQuery } from "@/lib/deeplinks";
 import { searchCodes } from "@/lib/iata-cities";
-import { PARTNER_META, type PartnerKey, airlineLogo, aviasalesUrl, bookingHotelsUrl } from "@/lib/partners";
+import {
+  PARTNER_META,
+  type PartnerKey,
+  airlineLogo,
+  aviasalesUrl,
+  bookingHotelsUrl,
+  expediaFlightsUrl,
+  googleFlightsUrl,
+  kayakFlightsUrl,
+  skyscannerFlightsUrl,
+} from "@/lib/partners";
 import { tpTrack, tpWrap } from "@/lib/affiliate";
 import { searchEsim } from "@/lib/esim";
 import { fromIso, nightsBetweenIso, pad2, todayIso } from "@/lib/dates";
@@ -133,8 +143,17 @@ export function rankOffers(offers: LiveOffer[]) {
 
 export function travelpayoutsCheckouts(q: SearchQuery): LiveOffer[] {
   if (q.kind !== "flights") return [];
-  const offer = offerFromPartner("aviasales", q, aviasalesUrl(q), { id: "tp-aviasales-open" });
-  return offer ? [offer] : [];
+  const boards: Array<[PartnerKey, string | undefined]> = [
+    ["aviasales", aviasalesUrl(q)],
+    ["expedia", expediaFlightsUrl(q)],
+    ["kayak", kayakFlightsUrl(q)],
+    ["skyscanner", skyscannerFlightsUrl(q)],
+    ["google", googleFlightsUrl(q)],
+  ];
+  return boards.flatMap(([key, url], i) => {
+    const offer = offerFromPartner(key, q, url, { id: `board-${key}`, featured: i === 0 });
+    return offer ? [offer] : [];
+  });
 }
 
 async function tp(path: string) {
