@@ -10,7 +10,7 @@ import { HeroPeek } from "@/components/HeroPeek";
 import { HowItWorks, TrustStrip } from "@/components/HowItWorks";
 import { PopularDestGrid } from "@/components/PopularDestGrid";
 import { ExpediaOffer } from "@/components/ExpediaOffer";
-import { TravelpayoutsEmbed } from "@/components/TravelpayoutsEmbed";
+import { AirHelpOffer } from "@/components/AirHelpOffer";
 import { useApp } from "@/context/AppContext";
 import { type SearchKind } from "@/lib/deeplinks";
 
@@ -24,6 +24,7 @@ const PARTNERS = [
   "Agoda",
   "Discover Cars",
   "Rentalcars.com",
+  "AirHelp",
 ];
 
 export default function HomePage() {
@@ -73,7 +74,7 @@ export default function HomePage() {
       <div className="space-y-16 bg-gradient-to-b from-mist via-mist to-transparent py-10 sm:space-y-24 sm:py-16">
         <TrustStrip />
         <ExpediaOffer />
-        <TravelpayoutsEmbed />
+        <AirHelpOffer />
         <HowItWorks />
         <DealGrid limit={4} />
 
