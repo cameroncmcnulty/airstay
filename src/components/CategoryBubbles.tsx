@@ -47,19 +47,19 @@ export function CategoryBubbles({
             <>
               <span
                 className={`grid place-items-center rounded-full bg-white shadow-bubble ring-1 transition group-hover:-translate-y-0.5 group-hover:shadow-lift ${
-                  compact ? "h-14 w-14 sm:h-16 sm:w-16 md:h-20 md:w-20" : "h-24 w-24 md:h-32 md:w-32"
-                } ${active ? "ring-4 ring-sky" : "ring-navy/5"}`}
+                  compact ? "h-16 w-16 sm:h-[4.5rem] sm:w-[4.5rem] md:h-24 md:w-24" : "h-24 w-24 md:h-32 md:w-32"
+                } ${active ? "ring-4 ring-sky" : "ring-navy/10"}`}
               >
                 <span
                   className={`relative overflow-hidden rounded-full text-white ${
-                    compact ? "h-9 w-9 sm:h-10 sm:w-10 md:h-12 md:w-12" : "h-14 w-14 md:h-20 md:w-20"
+                    compact ? "h-11 w-11 sm:h-12 sm:w-12 md:h-16 md:w-16" : "h-16 w-16 md:h-20 md:w-20"
                   } ${active ? "bg-sky" : "bg-navy"}`}
                 >
                   <CategoryMotion
                     kind={it.id}
                     play={play === it.id}
                     playKey={play === it.id ? tick : 0}
-                    className={compact ? "h-4 w-4 md:h-5 md:w-5" : "h-6 w-6 md:h-8 md:w-8"}
+                    className={compact ? "h-6 w-6 md:h-8 md:w-8" : "h-8 w-8 md:h-10 md:w-10"}
                     onDone={stop}
                   />
                 </span>

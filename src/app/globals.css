@@ -209,6 +209,7 @@ header {
 .cat-fx {
   color: #fff;
   stroke: #fff;
+  stroke-width: 2.4;
 }
 
 .cat-main {

@@ -22,10 +22,11 @@ export function HeroMedia({ compact = false }: { compact?: boolean }) {
       <div
         className={`absolute inset-0 ${
           compact
-            ? "bg-gradient-to-b from-navy/70 via-navy/45 to-mist"
-            : "bg-gradient-to-b from-navy/55 via-navy/25 to-navy/80"
+            ? "bg-gradient-to-b from-navy/70 via-navy/40 to-transparent"
+            : "bg-gradient-to-b from-navy/70 via-navy/30 to-transparent"
         }`}
       />
+      <div className="absolute inset-x-0 bottom-0 h-[48%] bg-gradient-to-b from-transparent via-mist/75 to-mist" />
     </div>
   );
 }

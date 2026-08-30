@@ -42,7 +42,7 @@ export default function HomePage() {
       <section className="relative">
         <div className="relative min-h-[70vh] overflow-hidden sm:min-h-[78vh]">
           <HeroMedia />
-          <div className="relative z-10 mx-auto flex min-h-[70vh] max-w-6xl flex-col justify-end gap-8 px-4 pb-28 pt-10 sm:min-h-[78vh] sm:pb-32 md:flex-row md:items-end md:justify-between">
+          <div className="relative z-10 mx-auto flex min-h-[70vh] max-w-6xl flex-col justify-end gap-8 px-4 pb-32 pt-10 sm:min-h-[78vh] sm:pb-36 md:flex-row md:items-end md:justify-between">
             <div className="max-w-xl pb-2">
               <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-sky-100">{m.hero.kicker}</p>
               <h1 className="mt-3 text-4xl font-black leading-[0.95] tracking-tight text-white sm:text-5xl md:text-7xl">
@@ -70,7 +70,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <div className="space-y-16 py-14 sm:space-y-24 sm:py-20">
+      <div className="space-y-16 bg-gradient-to-b from-mist via-mist to-transparent py-10 sm:space-y-24 sm:py-16">
         <TrustStrip />
         <ExpediaOffer />
         <TravelpayoutsEmbed />

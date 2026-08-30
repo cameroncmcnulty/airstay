@@ -42,9 +42,9 @@ export function CategoryMotion({
           <span className="cat-z cat-z3">z</span>
         </>
       )}
-      {play && kind === "cars" && <Building2 className={`${className} cat-fx cat-hotel-bg`} />}
-      {play && kind === "packages" && <Briefcase className={`${className} cat-fx cat-bag`} />}
-      <Icon className={`${className} cat-icon cat-main cat-${kind}`} />
+      {play && kind === "cars" && <Building2 className={`${className} cat-fx cat-hotel-bg`} strokeWidth={2.4} />}
+      {play && kind === "packages" && <Briefcase className={`${className} cat-fx cat-bag`} strokeWidth={2.4} />}
+      <Icon className={`${className} cat-icon cat-main cat-${kind}`} strokeWidth={2.4} />
     </span>
   );
 }
