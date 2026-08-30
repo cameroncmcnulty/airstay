@@ -13,12 +13,12 @@ export function HowItWorks() {
   return (
     <section className="mx-auto max-w-6xl px-4">
       <h2 className="text-2xl font-extrabold text-navy md:text-3xl">{m.how.title}</h2>
-      <div className="mt-6 grid gap-4 md:grid-cols-3">
+      <div className="mt-8 grid gap-4 md:grid-cols-3">
         {steps.map((s, i) => (
-          <div key={s.t} className="relative overflow-hidden rounded-card bg-white p-6 shadow-card ring-1 ring-navy/5">
+          <div key={s.t} className="rounded-[1.6rem] bg-white p-6 text-center shadow-card ring-1 ring-navy/5">
             <p className="text-[11px] font-black tracking-[0.22em] text-sky-700">{String(i + 1).padStart(2, "0")}</p>
-            <span className="mt-3 grid h-11 w-11 place-items-center rounded-2xl bg-sky-50 text-sky">
-              <s.icon className="h-5 w-5" />
+            <span className="mx-auto mt-3 grid h-14 w-14 place-items-center rounded-full bg-sky-50 text-sky">
+              <s.icon className="h-6 w-6" />
             </span>
             <h3 className="mt-4 text-lg font-extrabold text-navy">{s.t}</h3>
             <p className="mt-1 text-sm leading-relaxed text-navy/60">{s.d}</p>

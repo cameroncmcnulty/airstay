@@ -1,16 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import Link from "next/link";
 import { useApp } from "@/context/AppContext";
 import type { SearchKind } from "@/lib/deeplinks";
 import { CategoryMotion } from "./CategoryMotion";
 
 const items = [
-  { id: "flights" as const, href: "/flights", key: "flights" as const, sub: "flightsSub" as const, tint: "from-sky-50 to-white" },
-  { id: "stays" as const, href: "/stays", key: "stays" as const, sub: "staysSub" as const, tint: "from-navy-50 to-white" },
-  { id: "cars" as const, href: "/cars", key: "cars" as const, sub: "carsSub" as const, tint: "from-sky-50 to-white" },
-  { id: "packages" as const, href: "/packages", key: "packages" as const, sub: "packagesSub" as const, tint: "from-navy-50 to-white" },
+  { id: "flights" as const, href: "/flights", key: "flights" as const, sub: "flightsSub" as const },
+  { id: "stays" as const, href: "/stays", key: "stays" as const, sub: "staysSub" as const },
+  { id: "cars" as const, href: "/cars", key: "cars" as const, sub: "carsSub" as const },
+  { id: "packages" as const, href: "/packages", key: "packages" as const, sub: "packagesSub" as const },
 ];
 
 export function CategoryBubbles({
@@ -27,14 +27,7 @@ export function CategoryBubbles({
   const { m } = useApp();
   const [play, setPlay] = useState<SearchKind | null>(null);
   const [tick, setTick] = useState(0);
-
-  useEffect(() => {
-    const id = selected ?? "flights";
-    setPlay(id);
-    setTick(1);
-    // intro once on mount
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const stop = useCallback(() => setPlay(null), []);
 
   function fire(id: SearchKind) {
     setPlay(id);
@@ -53,9 +46,9 @@ export function CategoryBubbles({
           const inner = (
             <>
               <span
-                className={`grid place-items-center rounded-full bg-gradient-to-b ${it.tint} shadow-bubble ring-1 transition group-hover:-translate-y-0.5 group-hover:shadow-lift ${
+                className={`grid place-items-center rounded-full bg-white shadow-bubble ring-1 transition group-hover:-translate-y-0.5 group-hover:shadow-lift ${
                   compact ? "h-14 w-14 sm:h-16 sm:w-16 md:h-20 md:w-20" : "h-24 w-24 md:h-32 md:w-32"
-                } ${active ? "ring-4 ring-sky shadow-lift" : "ring-navy/5"}`}
+                } ${active ? "ring-4 ring-sky" : "ring-navy/5"}`}
               >
                 <span
                   className={`relative overflow-hidden rounded-full text-white ${
@@ -67,6 +60,7 @@ export function CategoryBubbles({
                     play={play === it.id}
                     playKey={play === it.id ? tick : 0}
                     className={compact ? "h-4 w-4 md:h-5 md:w-5" : "h-6 w-6 md:h-8 md:w-8"}
+                    onDone={stop}
                   />
                 </span>
               </span>
@@ -81,13 +75,7 @@ export function CategoryBubbles({
           const className = `group flex flex-col items-center text-center ${compact ? "rounded-2xl p-1 sm:p-2" : "rounded-[2rem] p-4"}`;
           if (onSelect) {
             return (
-              <button
-                key={it.id}
-                type="button"
-                onClick={() => fire(it.id)}
-                className={className}
-                aria-pressed={active}
-              >
+              <button key={it.id} type="button" onClick={() => fire(it.id)} className={className} aria-pressed={active}>
                 {inner}
               </button>
             );

@@ -12,7 +12,7 @@ export default function FlightsPage() {
   return (
     <div className="pb-16">
       <CategoryHero kicker={m.nav.flights} title={m.pages.flightsTitle} subtitle={m.pages.flightsSub}>
-        <SearchWidget initialKind="flights" />
+        <SearchWidget initialKind="flights" embedded />
       </CategoryHero>
       <div className="mt-12 space-y-14 sm:mt-16 sm:space-y-20">
         <TrustStrip />

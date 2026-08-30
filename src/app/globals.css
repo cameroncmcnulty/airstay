@@ -24,7 +24,7 @@ body::before {
   background-image: url("/wallpaper.svg");
   background-repeat: repeat;
   background-size: 560px 560px;
-  opacity: 0.175;
+  opacity: 0.1;
 }
 
 #main,
@@ -174,193 +174,218 @@ header {
   place-items: center;
 }
 
-.cat-icon {
+.cat-icon,
+.cat-fx {
   color: #fff;
   stroke: #fff;
 }
 
-.cat-wake,
-.cat-window {
-  position: absolute;
-  border-radius: 9999px;
-  background: #fff;
-  pointer-events: none;
+.cat-main {
+  position: relative;
+  z-index: 2;
 }
 
 .cat-wake {
-  width: 42%;
-  height: 42%;
+  position: absolute;
+  width: 40%;
+  height: 40%;
+  border-radius: 9999px;
+  background: #fff;
   opacity: 0;
   filter: blur(1px);
+  pointer-events: none;
 }
 
-.cat-window {
-  width: 9%;
-  height: 9%;
-  opacity: 0.35;
+.cat-z {
+  position: absolute;
+  z-index: 3;
+  font-size: 0.55em;
+  font-weight: 800;
+  line-height: 1;
+  color: #fff;
+  opacity: 0;
+  pointer-events: none;
 }
 
-.cat-window-a {
-  top: 32%;
-  left: 38%;
+.cat-z1 {
+  left: 58%;
+  top: 18%;
 }
 
-.cat-window-b {
-  top: 32%;
-  left: 54%;
+.cat-z2 {
+  left: 68%;
+  top: 8%;
+}
+
+.cat-z3 {
+  left: 78%;
+  top: 0%;
 }
 
 .cat-hotel-bg {
   position: absolute;
-  right: 12%;
-  bottom: 18%;
-  width: 48% !important;
-  height: 48% !important;
-  opacity: 0.55;
-}
-
-.cat-car {
-  position: absolute;
-  left: 10%;
-  bottom: 16%;
-  width: 58% !important;
-  height: 58% !important;
+  right: 8%;
+  bottom: 14%;
+  width: 46% !important;
+  height: 46% !important;
+  opacity: 0;
+  z-index: 1;
 }
 
 .cat-bag {
   position: absolute;
-  right: 14%;
-  bottom: 16%;
-  width: 36% !important;
-  height: 36% !important;
+  right: 12%;
+  bottom: 14%;
+  width: 34% !important;
+  height: 34% !important;
   opacity: 0;
+  z-index: 1;
 }
 
-.cat-scene.is-play .cat-plane {
-  animation: cat-plane-takeoff 0.95s cubic-bezier(0.22, 1, 0.36, 1) both;
+.cat-scene.is-play .cat-flights {
+  animation: cat-plane 1.05s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .cat-scene.is-play .cat-wake {
-  animation: cat-wake 0.95s ease-out both;
+  animation: cat-wake 1.05s ease-out;
 }
 
-.cat-scene.is-play .cat-hotel {
-  animation: cat-hotel-rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+.cat-scene.is-play .cat-stays {
+  animation: cat-bounce 1.05s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.cat-scene.is-play .cat-window {
-  animation: cat-window-on 0.7s ease-out 0.15s both;
+.cat-scene.is-play .cat-z1 {
+  animation: cat-zzz 1.05s ease-out;
 }
 
-.cat-scene.is-play .cat-car {
-  animation: cat-car-park 0.85s cubic-bezier(0.22, 0.9, 0.3, 1) both;
+.cat-scene.is-play .cat-z2 {
+  animation: cat-zzz 1.05s ease-out 0.08s;
+}
+
+.cat-scene.is-play .cat-z3 {
+  animation: cat-zzz 1.05s ease-out 0.16s;
+}
+
+.cat-scene.is-play .cat-cars {
+  animation: cat-car 1.05s cubic-bezier(0.22, 0.9, 0.3, 1);
 }
 
 .cat-scene.is-play .cat-hotel-bg {
-  animation: cat-hotel-rise 0.55s ease-out both;
+  animation: cat-guest 1.05s ease-out;
 }
 
-.cat-scene.is-play .cat-palm {
-  transform-origin: 50% 100%;
-  animation: cat-palm-sway 0.9s ease-in-out both;
+.cat-scene.is-play .cat-packages {
+  transform-origin: 50% 90%;
+  animation: cat-sway 1.05s ease-in-out;
 }
 
 .cat-scene.is-play .cat-bag {
-  animation: cat-bag-drop 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.08s both;
+  animation: cat-drop 1.05s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-@keyframes cat-plane-takeoff {
+@keyframes cat-plane {
   0% {
-    transform: rotate(-8deg) translate(-18%, 22%) scale(0.85);
+    transform: rotate(0) translate(0, 0);
   }
-  28% {
-    transform: rotate(-28deg) translate(-6%, 8%) scale(0.95);
+  30% {
+    transform: rotate(-22deg) translate(-12%, 10%);
   }
   62% {
-    transform: rotate(18deg) translate(22%, -34%) scale(1.08);
+    transform: rotate(16deg) translate(20%, -32%);
   }
   100% {
-    transform: rotate(12deg) translate(8%, -12%) scale(1);
+    transform: rotate(0) translate(0, 0);
   }
 }
 
 @keyframes cat-wake {
-  0% {
-    opacity: 0;
-    transform: scale(0.4);
-  }
-  35% {
-    opacity: 0.35;
-    transform: scale(0.9);
-  }
+  0%,
   100% {
     opacity: 0;
-    transform: scale(1.6);
+    transform: scale(0.3);
+  }
+  40% {
+    opacity: 0.28;
+    transform: scale(1);
   }
 }
 
-@keyframes cat-hotel-rise {
-  0% {
-    transform: translateY(28%) scale(0.75);
-    opacity: 0.4;
-  }
+@keyframes cat-bounce {
+  0%,
   100% {
     transform: translateY(0) scale(1);
-    opacity: 1;
+  }
+  40% {
+    transform: translateY(-10%) scale(1.08);
   }
 }
 
-@keyframes cat-window-on {
+@keyframes cat-zzz {
   0% {
     opacity: 0;
+    transform: translateY(8px) scale(0.6);
+  }
+  35% {
+    opacity: 1;
   }
   100% {
-    opacity: 0.95;
+    opacity: 0;
+    transform: translateY(-18px) scale(1.1);
   }
 }
 
-@keyframes cat-car-park {
+@keyframes cat-car {
   0% {
-    transform: translateX(-140%);
-    opacity: 0;
+    transform: translateX(-130%);
   }
   70% {
-    transform: translateX(8%);
-    opacity: 1;
+    transform: translateX(6%);
   }
   100% {
     transform: translateX(0);
-    opacity: 1;
   }
 }
 
-@keyframes cat-palm-sway {
+@keyframes cat-guest {
   0% {
-    transform: rotate(0deg);
+    opacity: 0;
+    transform: translateY(12%);
+  }
+  35% {
+    opacity: 0.7;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+}
+
+@keyframes cat-sway {
+  0%,
+  100% {
+    transform: rotate(0);
   }
   30% {
-    transform: rotate(-14deg);
+    transform: rotate(-12deg);
   }
   65% {
-    transform: rotate(10deg);
-  }
-  100% {
-    transform: rotate(0deg);
+    transform: rotate(8deg);
   }
 }
 
-@keyframes cat-bag-drop {
+@keyframes cat-drop {
   0% {
-    transform: translateY(-90%) rotate(-18deg);
     opacity: 0;
+    transform: translateY(-80%) rotate(-16deg);
   }
-  75% {
-    transform: translateY(8%) rotate(6deg);
+  45% {
     opacity: 1;
+    transform: translateY(6%) rotate(4deg);
   }
   100% {
-    transform: translateY(0) rotate(0deg);
-    opacity: 1;
+    opacity: 0;
+    transform: translateY(0) rotate(0);
   }
 }
 
@@ -379,13 +404,15 @@ header {
   .aria-ring,
   .aria-pulse,
   .aria-dots i,
-  .cat-scene.is-play .cat-plane,
+  .cat-scene.is-play .cat-flights,
   .cat-scene.is-play .cat-wake,
-  .cat-scene.is-play .cat-hotel,
-  .cat-scene.is-play .cat-window,
-  .cat-scene.is-play .cat-car,
+  .cat-scene.is-play .cat-stays,
+  .cat-scene.is-play .cat-z1,
+  .cat-scene.is-play .cat-z2,
+  .cat-scene.is-play .cat-z3,
+  .cat-scene.is-play .cat-cars,
   .cat-scene.is-play .cat-hotel-bg,
-  .cat-scene.is-play .cat-palm,
+  .cat-scene.is-play .cat-packages,
   .cat-scene.is-play .cat-bag {
     animation: none !important;
   }

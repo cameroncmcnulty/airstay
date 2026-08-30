@@ -1,47 +1,50 @@
 "use client";
 
+import { useEffect } from "react";
 import { Plane, Building2, Car, TreePalm, Briefcase } from "lucide-react";
 import type { SearchKind } from "@/lib/deeplinks";
+
+const MAIN = {
+  flights: Plane,
+  stays: Building2,
+  cars: Car,
+  packages: TreePalm,
+} as const;
 
 export function CategoryMotion({
   kind,
   play,
   playKey,
   className,
+  onDone,
 }: {
   kind: SearchKind;
   play: boolean;
   playKey: number;
   className: string;
+  onDone: () => void;
 }) {
-  const cls = `${className} cat-icon`;
+  const Icon = MAIN[kind];
+
+  useEffect(() => {
+    if (!play) return;
+    const t = window.setTimeout(onDone, 1100);
+    return () => window.clearTimeout(t);
+  }, [play, playKey, onDone]);
+
   return (
     <span key={playKey} className={`cat-scene ${play ? "is-play" : ""}`} aria-hidden>
-      {kind === "flights" && (
+      {play && kind === "flights" && <span className="cat-wake" />}
+      {play && kind === "stays" && (
         <>
-          <span className="cat-wake" />
-          <Plane className={`${cls} cat-plane`} />
+          <span className="cat-z cat-z1">z</span>
+          <span className="cat-z cat-z2">z</span>
+          <span className="cat-z cat-z3">z</span>
         </>
       )}
-      {kind === "stays" && (
-        <>
-          <span className="cat-window cat-window-a" />
-          <span className="cat-window cat-window-b" />
-          <Building2 className={`${cls} cat-hotel`} />
-        </>
-      )}
-      {kind === "cars" && (
-        <>
-          <Building2 className={`${cls} cat-hotel-bg`} />
-          <Car className={`${cls} cat-car`} />
-        </>
-      )}
-      {kind === "packages" && (
-        <>
-          <TreePalm className={`${cls} cat-palm`} />
-          <Briefcase className={`${cls} cat-bag`} />
-        </>
-      )}
+      {play && kind === "cars" && <Building2 className={`${className} cat-fx cat-hotel-bg`} />}
+      {play && kind === "packages" && <Briefcase className={`${className} cat-fx cat-bag`} />}
+      <Icon className={`${className} cat-icon cat-main cat-${kind}`} />
     </span>
   );
 }

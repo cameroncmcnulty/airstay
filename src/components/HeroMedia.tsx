@@ -19,7 +19,13 @@ export function HeroMedia({ compact = false }: { compact?: boolean }) {
         alt=""
         className={`absolute inset-0 h-full w-full object-cover ${reduce ? "" : "hero-still"}`}
       />
-      <div className="absolute inset-0 bg-gradient-to-b from-navy/75 via-navy/55 to-mist" />
+      <div
+        className={`absolute inset-0 ${
+          compact
+            ? "bg-gradient-to-b from-navy/70 via-navy/45 to-mist"
+            : "bg-gradient-to-b from-navy/55 via-navy/25 to-navy/80"
+        }`}
+      />
     </div>
   );
 }
