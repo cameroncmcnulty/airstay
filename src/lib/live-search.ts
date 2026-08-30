@@ -1,6 +1,7 @@
 import type { SearchQuery } from "@/lib/deeplinks";
 import { searchCodes } from "@/lib/iata-cities";
 import { PARTNER_META, type PartnerKey, airlineLogo, aviasalesUrl, bookingHotelsUrl } from "@/lib/partners";
+import { tpTrack, tpWrap } from "@/lib/affiliate";
 import { searchEsim } from "@/lib/esim";
 
 export type LiveOffer = {
@@ -464,11 +465,12 @@ function toOffer(input: {
       returnDate: input.returnAt?.slice(0, 10) || input.q.returnDate,
       adults: input.adults,
     }) || "#";
-  const link = input.link
+  const raw = input.link
     ? input.link.startsWith("http")
       ? input.link
       : `https://www.aviasales.com${input.link.startsWith("/") ? "" : "/"}${input.link}`
     : built;
+  const link = tpWrap(raw) || tpTrack("aviasales", raw);
   const durationMin = minutes(input.durationMin);
   return {
     id: input.id,

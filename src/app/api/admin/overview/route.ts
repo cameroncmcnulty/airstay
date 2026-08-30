@@ -18,7 +18,8 @@ export async function GET(req: NextRequest) {
     },
     env: {
       travelpayoutsToken: Boolean(process.env.TRAVELPAYOUTS_TOKEN),
-      travelpayoutsMarker: process.env.TRAVELPAYOUTS_MARKER || "564250",
+      travelpayoutsMarker: process.env.TRAVELPAYOUTS_MARKER || "766682",
+      travelpayoutsTrs: process.env.TRAVELPAYOUTS_TRS || "564250",
       adminPassword: Boolean(process.env.ADMIN_PASSWORD),
       adminUsername: Boolean(process.env.ADMIN_USERNAME),
       adminEmail: process.env.ADMIN_EMAIL || "airstaytravel@gmail.com",

@@ -301,6 +301,7 @@ export const t = {
       network: "Network",
       bookEsim: "Get this eSIM",
       esimSub: "Live Airalo plans in CAD. You finish on their site.",
+      alsoCompare: "Also compare on",
     },
     packages: {
       kicker: "AIRSTAY packages",
@@ -701,6 +702,7 @@ export const t = {
       network: "Réseau",
       bookEsim: "Obtenir cette eSIM",
       esimSub: "Forfaits Airalo en direct, en $ CA. Vous terminez sur leur site.",
+      alsoCompare: "Comparer aussi sur",
     },
     packages: {
       kicker: "Forfaits AIRSTAY",

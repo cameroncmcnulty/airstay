@@ -56,6 +56,7 @@ function ResultsInner() {
   const nights = nightsBetween(q.depart, q.returnDate);
   const money = (n: number) => (locale === "fr" ? cadFr(n) : cad(n));
 
+  const extras = useMemo(() => live.filter((o) => !(o.priceCad && o.priceCad > 0)), [live]);
   const ranked = useMemo(() => rankOffers(live), [live]);
   const list = useMemo(() => {
     const rows = ranked.ranked;
@@ -322,6 +323,30 @@ function ResultsInner() {
               </li>
             ))}
           </ul>
+          {extras.length > 0 && (
+            <div className="mt-8">
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-navy/40">{m.results.alsoCompare}</p>
+              <ul className="mt-3 grid gap-3 sm:grid-cols-3">
+                {extras.map((o) => (
+                  <li key={o.id}>
+                    <button
+                      type="button"
+                      onClick={() => setLeaving(o)}
+                      className="flex w-full items-center justify-between rounded-2xl bg-white px-4 py-3 text-left shadow-sm ring-1 ring-navy/8 hover:shadow-lift"
+                    >
+                      <span>
+                        <span className="block text-sm font-extrabold text-navy">{o.partner || o.title}</span>
+                        <span className="text-[11px] font-semibold text-navy/50">
+                          {locale === "fr" ? o.taglineFr : o.tagline}
+                        </span>
+                      </span>
+                      <ExternalLink className="h-4 w-4 text-sky" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </section>
 
         <section className="mt-14 grid gap-4 md:grid-cols-3">

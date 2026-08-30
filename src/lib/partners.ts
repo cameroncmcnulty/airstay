@@ -1,6 +1,7 @@
 import type { SearchQuery } from "@/lib/deeplinks";
 import { cityCode } from "@/lib/iata-cities";
 import { getAirport, getDestination } from "@/lib/airports";
+import { TP_MARKER, tpTrack, tpWrap } from "@/lib/affiliate";
 
 export type PartnerKey =
   | "aviasales"
@@ -139,7 +140,7 @@ export const PARTNER_META: Record<PartnerKey, PartnerMeta> = {
   },
 };
 
-const MARKER = process.env.TRAVELPAYOUTS_MARKER || "564250";
+const MARKER = TP_MARKER;
 
 function fold(s: string) {
   return s
@@ -358,7 +359,8 @@ export function aviasalesUrl(q: SearchQuery) {
     trip_class: aviaClass(q.cabin),
     utm_source: "airstay",
   });
-  return `https://www.aviasales.com/search/${path}?${params.toString()}`;
+  const search = `https://www.aviasales.com/search/${path}?${params.toString()}`;
+  return tpTrack("aviasales", search);
 }
 
 export function kayakFlightsUrl(q: SearchQuery) {

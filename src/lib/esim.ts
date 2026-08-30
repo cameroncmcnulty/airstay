@@ -2,10 +2,7 @@ import type { SearchQuery } from "@/lib/deeplinks";
 import { getDestination } from "@/lib/airports";
 import { nightsBetween } from "@/lib/partners";
 import type { LiveOffer } from "@/lib/live-search";
-
-const MARKER = process.env.TRAVELPAYOUTS_MARKER || "564250";
-const TRS = process.env.TRAVELPAYOUTS_TRS || MARKER;
-const AIRALO_P = "8310";
+import { tpTrack } from "@/lib/affiliate";
 
 const SLUG_ALIAS: Record<string, string> = {
   usa: "united-states",
@@ -61,13 +58,7 @@ function slugify(s: string) {
 }
 
 function tpUrl(target: string) {
-  const params = new URLSearchParams({
-    marker: MARKER,
-    trs: TRS,
-    p: AIRALO_P,
-    u: target,
-  });
-  return `https://tp.media/r?${params.toString()}`;
+  return tpTrack("airalo", target);
 }
 
 async function usdToCad() {
@@ -185,5 +176,45 @@ export async function searchEsim(q: SearchQuery): Promise<LiveOffer[]> {
   const covering = rows.filter((o) => (o.validityDays || 0) >= tripDays);
   const pool = covering.length ? covering : rows;
   pool.sort((a, b) => (a.priceCad || 0) - (b.priceCad || 0) || (b.dataGb || 0) - (a.dataGb || 0));
-  return pool.slice(0, 36);
+  const priced = pool.slice(0, 36);
+  const slug = country.slug;
+  const extras: LiveOffer[] = [
+    {
+      id: "esim-yesim",
+      source: "travelpayouts",
+      kind: "esim",
+      title: "Yesim",
+      partner: "Yesim",
+      domain: "yesim.tech",
+      tagline: "More eSIM plans on Yesim",
+      taglineFr: "D’autres forfaits eSIM sur Yesim",
+      url: tpTrack("yesim", `https://yesim.app/country/${slug}/`),
+      live: true,
+    },
+    {
+      id: "esim-saily",
+      source: "travelpayouts",
+      kind: "esim",
+      title: "Saily",
+      partner: "Saily",
+      domain: "saily.com",
+      tagline: "NordVPN’s eSIM brand",
+      taglineFr: "La marque eSIM de NordVPN",
+      url: tpTrack("saily", `https://saily.com/destinations/${slug}`),
+      live: true,
+    },
+    {
+      id: "esim-drimsim",
+      source: "travelpayouts",
+      kind: "esim",
+      title: "Drimsim",
+      partner: "Drimsim",
+      domain: "drimsim.com",
+      tagline: "Compare on Drimsim",
+      taglineFr: "Comparer sur Drimsim",
+      url: tpTrack("drimsim", "https://w1.drimsim.com"),
+      live: true,
+    },
+  ];
+  return [...priced, ...extras];
 }
