@@ -38,9 +38,9 @@ export function ExpediaPackageBanner({
         className="grid min-h-[250px] w-full max-w-[300px] place-items-center rounded-xl bg-gradient-to-br from-sky-50 to-mist px-4 text-center ring-1 ring-navy/10"
       >
         <span>
-          <span className="text-[11px] font-black uppercase tracking-[0.18em] text-sky-700">{m.packages.kicker}</span>
-          <span className="mt-2 block text-lg font-black text-navy">{m.packages.bannerHint}</span>
-          <span className="mt-3 inline-flex rounded-full bg-sky px-3 py-1.5 text-xs font-bold text-white">{m.packages.cta}</span>
+          <span className="text-[11px] font-black uppercase tracking-[0.18em] text-sky-700">{m.ad.kicker}</span>
+          <span className="mt-2 block text-lg font-black text-navy">{m.ad.title}</span>
+          <span className="mt-3 inline-flex rounded-full bg-sky px-3 py-1.5 text-xs font-bold text-white">{m.ad.cta}</span>
         </span>
       </a>
     );

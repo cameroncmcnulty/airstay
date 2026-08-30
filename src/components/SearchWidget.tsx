@@ -208,10 +208,9 @@ export function SearchWidget({
 
       {kind === "packages" ? (
         <div className={`${hideTabs ? "" : "mt-5"} rounded-2xl bg-mist px-4 py-5 text-center`}>
-          <p className="text-[11px] font-black uppercase tracking-[0.18em] text-sky-700">{m.packages.kicker}</p>
-          <p className="mt-2 text-lg font-black text-navy">{m.packages.title}</p>
-          <p className="mt-2 text-sm text-navy/65">{m.packages.subtitle}</p>
-          <a href="/packages" className="btn-primary mt-4 inline-flex">
+          <p className="text-lg font-black text-navy">{m.comingSoon.title}</p>
+          <p className="mt-2 text-sm text-navy/65">{m.comingSoon.body}</p>
+          <a href="/packages" className="btn-ghost mt-4 inline-flex">
             {m.packages.see}
           </a>
         </div>

@@ -10,6 +10,7 @@ import { HeroPeek } from "@/components/HeroPeek";
 import { HowItWorks, TrustStrip } from "@/components/HowItWorks";
 import { PopularDestGrid } from "@/components/PopularDestGrid";
 import { VacationPackages } from "@/components/VacationPackages";
+import { ExpediaOffer } from "@/components/ExpediaOffer";
 import { useApp } from "@/context/AppContext";
 import { type SearchKind } from "@/lib/deeplinks";
 
@@ -91,6 +92,8 @@ export default function HomePage() {
         </section>
 
         <PopularDestGrid featured />
+
+        <ExpediaOffer />
 
         <section className="mx-auto max-w-6xl px-4">
           <h2 className="text-center text-2xl font-extrabold text-navy">{m.partners.title}</h2>
