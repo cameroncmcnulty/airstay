@@ -146,7 +146,8 @@ export async function searchLive(q: SearchQuery): Promise<LiveOffer[]> {
   for (const origin of origins.slice(0, 2)) {
     for (const dest of dests.slice(0, 2)) {
       const batch = await Promise.allSettled([
-        fetchDates(origin, dest, q, names, adults),
+        fetchDates(origin, dest, q, names, adults, "price", 50),
+        fetchDates(origin, dest, q, names, adults, "duration_to", 30),
         fetchDirect(origin, dest, q, names, adults),
         fetchWeek(origin, dest, q, names, adults),
         fetchCheap(origin, dest, q, names, adults),
@@ -163,12 +164,21 @@ export async function searchLive(q: SearchQuery): Promise<LiveOffer[]> {
     .filter((o) => (o.priceCad || 0) > 0)
     .sort((a, b) => (a.priceCad || 0) - (b.priceCad || 0))
     .filter((o) => {
-      const key = `${o.airline || o.title}-${o.priceCad}-${o.departAt?.slice(0, 10)}-${o.stops}-${o.durationMin || 0}`;
+      const key = [
+        o.airline || o.title,
+        o.flightNumber || "",
+        o.priceCad,
+        o.departAt?.slice(0, 16),
+        o.originAirport,
+        o.destAirport,
+        o.stops,
+        o.durationMin || 0,
+      ].join("-");
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
     })
-    .slice(0, 20);
+    .slice(0, 48);
 }
 
 async function fetchDates(
@@ -176,15 +186,17 @@ async function fetchDates(
   dest: string,
   q: SearchQuery,
   names: Map<string, string>,
-  adults: number
+  adults: number,
+  sorting = "price",
+  limit = 50
 ) {
   const params = new URLSearchParams({
     origin,
     destination: dest,
     currency: "cad",
-    sorting: "price",
+    sorting,
     direct: "false",
-    limit: "30",
+    limit: String(limit),
     unique: "false",
   });
   if (q.depart) params.set("departure_at", q.depart);
@@ -193,7 +205,7 @@ async function fetchDates(
   const rows = Array.isArray(json?.data) ? json.data : [];
   return rows.map((row: Record<string, unknown>, i: number) =>
     toOffer({
-      id: `dates-${origin}-${dest}-${i}`,
+      id: `dates-${sorting}-${origin}-${dest}-${i}`,
       origin: String(row.origin || origin),
       dest: String(row.destination || dest),
       originAirport: String(row.origin_airport || row.origin || origin),
@@ -265,7 +277,7 @@ async function fetchHotelPrices(q: SearchQuery): Promise<LiveOffer[]> {
     checkIn: q.depart,
     checkOut: q.returnDate,
     currency: "cad",
-    limit: "12",
+    limit: "24",
     token: TOKEN,
   });
   const json = await tp(`https://engine.hotellook.com/api/v2/cache.json?${params.toString()}`);

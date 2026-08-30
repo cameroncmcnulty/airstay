@@ -1,18 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { ShieldCheck, MapPin, BadgeDollarSign, Link2 } from "lucide-react";
 import { SearchWidget } from "@/components/SearchWidget";
 import { CategoryBubbles } from "@/components/CategoryBubbles";
 import { DealGrid } from "@/components/DealCard";
 import { HeroMedia } from "@/components/HeroMedia";
+import { HeroPeek } from "@/components/HeroPeek";
 import { HowItWorks, TrustStrip } from "@/components/HowItWorks";
 import { PopularDestGrid } from "@/components/PopularDestGrid";
 import { useApp } from "@/context/AppContext";
-import { type SearchKind, defaultDepart, defaultReturn, queryToParams } from "@/lib/deeplinks";
-import { DEST_PHOTOS } from "@/lib/deals";
-import { getDestination } from "@/lib/airports";
+import { type SearchKind } from "@/lib/deeplinks";
 
 const PARTNERS = [
   "Aviasales",
@@ -26,13 +24,8 @@ const PARTNERS = [
   "Rentalcars.com",
 ];
 
-const PEEK = [
-  { code: "CUN", photo: "PVR" },
-  { code: "CDG", photo: "CDG" },
-];
-
 export default function HomePage() {
-  const { m, locale, settings } = useApp();
+  const { m, settings } = useApp();
   const [kind, setKind] = useState<SearchKind>("flights");
   const why = [
     { icon: MapPin, t: m.why.c1t, d: m.why.c1d },
@@ -62,43 +55,7 @@ export default function HomePage() {
                 <span aria-hidden>→</span>
               </a>
             </div>
-            <div className="hidden w-full max-w-sm gap-3 md:flex md:flex-col">
-              {PEEK.map((p) => {
-                const d = getDestination(p.code);
-                if (!d) return null;
-                const href = `/results?${queryToParams({
-                  kind: "flights",
-                  from,
-                  to: d.code,
-                  toCity: locale === "fr" ? d.cityFr : d.city,
-                  depart: defaultDepart(),
-                  returnDate: defaultReturn(),
-                  adults: 1,
-                })}`;
-                return (
-                  <Link
-                    key={d.code}
-                    href={href}
-                    className="group overflow-hidden rounded-2xl bg-white/10 ring-1 ring-white/20 backdrop-blur-sm"
-                  >
-                    <div className="relative h-28 overflow-hidden">
-                      <img
-                        src={DEST_PHOTOS[p.photo] || DEST_PHOTOS[d.code] || DEST_PHOTOS.CUN}
-                        alt=""
-                        className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-navy/70 to-transparent" />
-                      <div className="absolute bottom-2.5 left-3 text-white">
-                        <p className="text-[11px] font-semibold uppercase tracking-wider text-white/70">
-                          {locale === "fr" ? d.countryFr : d.country}
-                        </p>
-                        <p className="text-lg font-black leading-tight">{locale === "fr" ? d.cityFr : d.city}</p>
-                      </div>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
+            <HeroPeek from={from} />
           </div>
         </div>
         <div id="search" className="relative z-20 mx-auto -mt-16 max-w-6xl px-3 sm:-mt-20 sm:px-4">

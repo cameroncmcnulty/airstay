@@ -303,7 +303,11 @@ export function SearchWidget({
             )}
           </Field>
 
-          <div className="md:col-span-2" ref={calRef}>
+          <div
+            className="md:col-span-2"
+            ref={calRef}
+            onPointerDown={(e) => e.stopPropagation()}
+          >
             <div className={`grid gap-3 ${rangeTrip ? "md:grid-cols-2" : ""}`}>
               <div>
                 <p className="text-xs font-bold uppercase tracking-wide text-navy/50">
@@ -348,7 +352,7 @@ export function SearchWidget({
             </div>
             {calOpen && (
               <DateRangePicker
-                key={`${rangeTrip ? "range" : "single"}-${calOn}`}
+                key={rangeTrip ? "range" : "single"}
                 mode={rangeTrip ? "range" : "single"}
                 start={depart}
                 end={rangeTrip ? ret : undefined}

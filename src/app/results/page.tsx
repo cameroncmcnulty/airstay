@@ -228,6 +228,11 @@ function ResultsInner() {
             <div>
               <h2 className="text-2xl font-extrabold text-navy">{m.results.rankedTitle}</h2>
               <p className="mt-1 text-sm text-navy/60">{m.results.rankedSub}</p>
+              {!loading && list.length > 0 && (
+                <p className="mt-1 text-xs font-bold uppercase tracking-wide text-navy/40">
+                  {m.results.showingN.replace("{n}", String(list.length))}
+                </p>
+              )}
             </div>
             {list.length > 1 && (
               <div className="flex rounded-full bg-mist p-1 text-xs font-bold">
@@ -274,6 +279,11 @@ function ResultsInner() {
           <ul className="mt-5 space-y-4">
             {list.map((o, i) => (
               <li key={o.id}>
+                {i === 3 && (
+                  <p className="mb-3 pt-2 text-xs font-bold uppercase tracking-[0.16em] text-navy/40">
+                    {m.results.otherOptions}
+                  </p>
+                )}
                 <RankedCard
                   offer={o}
                   rank={i + 1}
@@ -373,7 +383,7 @@ function RankedCard({
     <article
       className={`overflow-hidden rounded-[1.4rem] bg-white shadow-card transition hover:-translate-y-0.5 hover:shadow-lift ${
         badges.best ? "ring-2 ring-sky" : "ring-1 ring-navy/8"
-      }`}
+      } ${rank > 3 ? "bg-white/90" : ""}`}
     >
       {badges.best && (
         <div className="bg-sky px-5 py-1.5 text-[11px] font-black uppercase tracking-[0.16em] text-white">

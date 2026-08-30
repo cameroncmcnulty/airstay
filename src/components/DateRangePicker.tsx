@@ -55,7 +55,14 @@ export function DateRangePicker({
   const [step, setStep] = useState<Step>(mode === "single" ? "start" : openOn);
   const [draftStart, setDraftStart] = useState(start || "");
   const [draftEnd, setDraftEnd] = useState(mode === "single" ? "" : end || "");
-  const [hover, setHover] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (mode === "single") {
+      setStep("start");
+      return;
+    }
+    setStep(openOn);
+  }, [openOn, mode]);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -74,38 +81,35 @@ export function DateRangePicker({
     return [first, second];
   }, [view]);
 
-  const previewEnd =
-    mode === "range" && step === "end" && draftStart
-      ? hover && cmpIso(hover, draftStart) > 0
-        ? hover
-        : draftEnd || addDays(draftStart, 1)
-      : draftEnd;
-
   const canConfirm =
     mode === "single"
       ? Boolean(draftStart)
-      : Boolean(draftStart && previewEnd && cmpIso(previewEnd, draftStart) > 0);
+      : Boolean(draftStart && draftEnd && cmpIso(draftEnd, draftStart) > 0);
 
-  const nights = nightsBetweenIso(draftStart, previewEnd);
+  const nights = nightsBetweenIso(draftStart, draftEnd);
+  const waitingForEnd = mode === "range" && Boolean(draftStart) && !draftEnd;
 
   function pick(iso: string) {
     if (cmpIso(iso, min) < 0) return;
     if (mode === "single") {
       setDraftStart(iso);
-      setStep("start");
+      onConfirm(iso);
       return;
     }
-    if (step === "start") {
+    if (step === "start" || !draftStart) {
       setDraftStart(iso);
-      const next = addDays(iso, 1);
-      setDraftEnd(next);
+      setDraftEnd("");
       setStep("end");
-      setHover(null);
       return;
     }
-    if (cmpIso(iso, draftStart) <= 0) return;
+    if (cmpIso(iso, draftStart) <= 0) {
+      setDraftStart(iso);
+      setDraftEnd("");
+      setStep("end");
+      return;
+    }
     setDraftEnd(iso);
-    setHover(null);
+    onConfirm(draftStart, iso);
   }
 
   function shift(delta: number) {
@@ -118,14 +122,17 @@ export function DateRangePicker({
   function confirm() {
     if (!canConfirm || !draftStart) return;
     if (mode === "single") onConfirm(draftStart);
-    else onConfirm(draftStart, previewEnd);
+    else onConfirm(draftStart, draftEnd);
   }
 
   return (
-    <div className="mt-2 overflow-hidden rounded-[1.4rem] border border-navy/10 bg-white shadow-card">
+    <div
+      className="mt-2 overflow-hidden rounded-[1.4rem] border border-navy/10 bg-white shadow-card"
+      onPointerDown={(e) => e.stopPropagation()}
+    >
       <div className="flex items-center justify-between gap-3 border-b border-navy/5 px-4 py-3">
         <p className="text-sm font-bold text-navy">
-          {mode === "single" || step === "start" ? labels.pickStart : labels.pickEnd}
+          {mode === "single" || step === "start" || !draftStart ? labels.pickStart : labels.pickEnd}
         </p>
         <div className="flex items-center gap-1">
           <button type="button" className="grid h-8 w-8 place-items-center rounded-full hover:bg-mist" onClick={() => shift(-1)} aria-label="Previous month">
@@ -137,7 +144,7 @@ export function DateRangePicker({
         </div>
       </div>
 
-      <div className="grid gap-6 p-3 sm:grid-cols-2 sm:p-4">
+      <div className="grid select-none gap-6 p-3 sm:grid-cols-2 sm:p-4">
         {months.map((mo) => (
           <MonthGrid
             key={`${mo.y}-${mo.m}`}
@@ -147,12 +154,10 @@ export function DateRangePicker({
             weekStartsOn={weekStartsOn}
             heads={heads}
             min={min}
-            step={step}
-            mode={mode}
             start={draftStart}
-            end={previewEnd}
+            end={draftEnd}
+            waitingForEnd={waitingForEnd}
             onPick={pick}
-            onHover={setHover}
           />
         ))}
       </div>
@@ -163,11 +168,11 @@ export function DateRangePicker({
             <>
               <p className="font-extrabold text-navy">
                 {formatBubble(draftStart, loc)}
-                {mode === "range" && previewEnd ? ` – ${formatBubble(previewEnd, loc)}` : ""}
+                {mode === "range" && draftEnd ? ` – ${formatBubble(draftEnd, loc)}` : mode === "range" ? " – …" : ""}
               </p>
               <p className="text-xs font-semibold text-navy/50">
-                {mode === "range" && draftStart && !end && step === "end" && previewEnd === addDays(draftStart, 1)
-                  ? labels.nextDay
+                {waitingForEnd
+                  ? labels.pickEnd
                   : mode === "range"
                     ? labels.nights.replace("{n}", String(nights))
                     : labels.start}
@@ -200,12 +205,10 @@ function MonthGrid({
   weekStartsOn,
   heads,
   min,
-  step,
-  mode,
   start,
   end,
+  waitingForEnd,
   onPick,
-  onHover,
 }: {
   year: number;
   month: number;
@@ -213,12 +216,10 @@ function MonthGrid({
   weekStartsOn: 0 | 1;
   heads: string[];
   min: string;
-  step: Step;
-  mode: Mode;
   start: string;
   end?: string;
+  waitingForEnd: boolean;
   onPick: (iso: string) => void;
-  onHover: (iso: string | null) => void;
 }) {
   const first = new Date(year, month, 1);
   const firstWeekday = first.getDay();
@@ -238,31 +239,42 @@ function MonthGrid({
       <div className="mt-1 grid grid-cols-7">
         {cells.map((iso, i) => {
           if (!iso) return <span key={`e-${i}`} />;
-          const disabled =
-            cmpIso(iso, min) < 0 || (mode === "range" && step === "end" && Boolean(start) && cmpIso(iso, start) <= 0);
+          const disabled = cmpIso(iso, min) < 0;
           const isStart = iso === start;
           const isEnd = Boolean(end && iso === end);
           const inRange = Boolean(start && end && cmpIso(iso, start) > 0 && cmpIso(iso, end) < 0);
-          const tentativeNext = mode === "range" && start && !end && iso === addDays(start, 1);
+          const hintNext = waitingForEnd && start && iso === addDays(start, 1);
           return (
             <button
               key={iso}
               type="button"
               disabled={disabled}
-              onClick={() => onPick(iso)}
-              onMouseEnter={() => !disabled && onHover(iso)}
-              onMouseLeave={() => onHover(null)}
-              className={`relative h-10 text-sm font-bold ${disabled ? "cursor-not-allowed text-navy/25" : "text-navy"}`}
+              aria-pressed={isStart || isEnd}
+              onPointerDown={(e) => {
+                if (disabled) return;
+                if (e.pointerType === "mouse" && e.button !== 0) return;
+                e.preventDefault();
+                e.stopPropagation();
+                onPick(iso);
+              }}
+              onKeyDown={(e) => {
+                if (disabled) return;
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  onPick(iso);
+                }
+              }}
+              className={`relative h-10 touch-manipulation text-sm font-bold ${disabled ? "cursor-not-allowed text-navy/25" : "text-navy"}`}
             >
-              {inRange && <span className="absolute inset-y-1 left-0 right-0 bg-sky-100" />}
-              {isStart && end && <span className="absolute inset-y-1 left-1/2 right-0 bg-sky-100" />}
-              {isEnd && start && <span className="absolute inset-y-1 left-0 right-1/2 bg-sky-100" />}
+              {inRange && <span className="pointer-events-none absolute inset-y-1 left-0 right-0 bg-sky-100" />}
+              {isStart && end && <span className="pointer-events-none absolute inset-y-1 left-1/2 right-0 bg-sky-100" />}
+              {isEnd && start && <span className="pointer-events-none absolute inset-y-1 left-0 right-1/2 bg-sky-100" />}
               <span
                 className={`relative z-[1] mx-auto grid h-9 w-9 place-items-center rounded-full ${
                   isStart || isEnd
                     ? "bg-navy text-white shadow-sm"
-                    : tentativeNext
-                      ? "ring-2 ring-sky text-navy"
+                    : hintNext
+                      ? "ring-2 ring-sky/70 text-navy"
                       : inRange
                         ? "text-sky-900"
                         : disabled
