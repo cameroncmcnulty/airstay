@@ -56,6 +56,67 @@ header {
   backface-visibility: hidden;
 }
 
+.hero-waves {
+  position: absolute;
+  inset-inline: 0;
+  bottom: -1px;
+  height: 34%;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.hero-waves-compact {
+  height: 50%;
+}
+
+.hero-wave {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  display: block;
+  width: 200%;
+  min-width: 200%;
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+.hero-wave-a {
+  height: 100%;
+  animation: hero-wave-drift 18s linear infinite;
+}
+
+.hero-wave-b {
+  height: 74%;
+  animation: hero-wave-drift 12s linear infinite reverse;
+}
+
+.hero-wave-c {
+  height: 50%;
+  animation: hero-wave-drift 8s linear infinite;
+}
+
+.hero-wave-shore {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 24%;
+  background: #f3f6fb;
+}
+
+.hero-waves.is-still .hero-wave {
+  animation: none;
+  transform: translate3d(0, 0, 0);
+}
+
+@keyframes hero-wave-drift {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
 .field {
   @apply w-full rounded-2xl border border-navy/10 bg-mist px-3 py-3 text-base font-semibold text-navy outline-none transition placeholder:font-medium placeholder:text-navy/35 focus:border-sky focus:bg-white focus:ring-4 focus:ring-sky/20;
 }
@@ -482,6 +543,7 @@ header {
     scroll-behavior: auto;
   }
   .hero-still,
+  .hero-waves .hero-wave,
   .aria-orb,
   .aria-launcher,
   .aria-ring,
