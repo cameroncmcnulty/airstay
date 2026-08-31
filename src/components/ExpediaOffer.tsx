@@ -1,12 +1,14 @@
 "use client";
 
-import { BadgeDollarSign, Plane, Building2 } from "lucide-react";
+import { BadgeDollarSign, Plane, Building2, ExternalLink } from "lucide-react";
 import { ExpediaPackageBanner } from "@/components/ExpediaPackageBanner";
 import { DEST_PHOTOS } from "@/lib/deals";
+import { expediaPackagesUrl } from "@/lib/partners";
 import { useApp } from "@/context/AppContext";
 
 export function ExpediaOffer() {
   const { m } = useApp();
+  const href = expediaPackagesUrl();
   const points = [
     { icon: Plane, t: m.ad.point1 },
     { icon: Building2, t: m.ad.point2 },
@@ -16,7 +18,12 @@ export function ExpediaOffer() {
   return (
     <section className="mx-auto max-w-6xl px-4">
       <article className="overflow-hidden rounded-[1.7rem] bg-white shadow-card ring-1 ring-navy/8">
-        <div className="relative min-h-[15.5rem] overflow-hidden px-6 py-8 text-white sm:min-h-[17rem] sm:px-10 sm:py-10">
+        <a
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer sponsored"
+          className="group relative block min-h-[15.5rem] overflow-hidden px-5 py-7 text-white transition hover:brightness-[1.04] sm:min-h-[17rem] sm:px-10 sm:py-10"
+        >
           <img src={DEST_PHOTOS.CUN} alt="" className="absolute inset-0 h-full w-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-r from-navy via-navy/82 to-sky/40" />
           <div className="absolute inset-y-0 right-0 hidden w-1/3 bg-gradient-to-l from-sky/30 to-transparent lg:block" />
@@ -35,15 +42,28 @@ export function ExpediaOffer() {
                 </li>
               ))}
             </ul>
+            <span className="btn-primary mt-6 min-h-12 w-full sm:w-auto">
+              {m.ad.cta}
+              <ExternalLink className="h-4 w-4" />
+            </span>
           </div>
-        </div>
-        <div className="grid items-center gap-5 bg-mist/70 px-5 py-5 sm:px-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,45rem)]">
+        </a>
+        <div className="grid items-center gap-4 bg-mist/70 px-4 py-5 sm:px-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,45rem)]">
           <div>
             <p className="text-[10px] font-black uppercase tracking-[0.18em] text-navy/40">{m.ad.kicker}</p>
             <h3 className="mt-1 text-lg font-extrabold text-navy">{m.ad.title}</h3>
             <p className="mt-1 max-w-sm text-[12px] font-medium leading-relaxed text-navy/55">{m.ad.note}</p>
+            <a
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer sponsored"
+              className="btn-primary mt-4 min-h-12 w-full sm:w-auto"
+            >
+              {m.packages.partnerCta}
+              <ExternalLink className="h-4 w-4" />
+            </a>
           </div>
-          <div className="overflow-x-auto overflow-hidden rounded-xl bg-white p-2 shadow-sm ring-1 ring-navy/8">
+          <div className="overflow-hidden rounded-2xl bg-white p-2 shadow-lift ring-2 ring-sky">
             <div className="eg-leaderboard-fit">
               <div className="eg-leaderboard-inner">
                 <ExpediaPackageBanner layout="leaderboard" />
