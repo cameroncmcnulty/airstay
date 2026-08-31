@@ -21,6 +21,8 @@ import {
   type SearchQuery,
 } from "@/lib/deeplinks";
 import { addDays } from "@/lib/dates";
+import { consumePrefill, type TravelerParty } from "@/lib/travelers";
+import Link from "next/link";
 
 const TABS: { id: SearchKind; icon: typeof Plane; labelKey: "flights" | "stays" | "cars" | "esim" }[] = [
   { id: "flights", icon: Plane, labelKey: "flights" },
@@ -42,7 +44,7 @@ export function SearchWidget({
   embedded?: boolean;
   initial?: SearchQuery;
 }) {
-  const { m, locale, settings, origin } = useApp();
+  const { m, locale, settings, origin, user } = useApp();
   const router = useRouter();
   const [kindState, setKindState] = useState<SearchKind>(initial?.kind || initialKind);
   const kind = kindProp ?? kindState;
@@ -82,16 +84,45 @@ export function SearchWidget({
   const toRef = useRef<HTMLLabelElement>(null);
   const calRef = useRef<HTMLDivElement>(null);
   const fromTouched = useRef(Boolean(initial?.from));
+  const partyApplied = useRef(false);
+  const [activeParty, setActiveParty] = useState<string | null>(null);
+  const parties = user?.travelerParties || [];
+
+  function applyParty(p: TravelerParty) {
+    setAdults(p.adults);
+    setChildren(p.children);
+    setChildAges(p.childAges.length ? [...p.childAges] : Array.from({ length: p.children }, (): number | "" => ""));
+    if (p.cabin) setCabin(p.cabin);
+    if (p.rooms) setRooms(p.rooms);
+    setActiveParty(p.id);
+  }
+
+  useEffect(() => {
+    if (partyApplied.current) return;
+    const queued = consumePrefill();
+    if (queued) {
+      applyParty(queued);
+      partyApplied.current = true;
+      return;
+    }
+    if (initial?.adults) return;
+    if (user?.searchPrefs?.autoPrefill === false) return;
+    const id = user?.searchPrefs?.defaultPartyId;
+    const def = parties.find((p) => p.id === id) || parties[0];
+    if (!def) return;
+    applyParty(def);
+    partyApplied.current = true;
+  }, [user, initial?.adults, parties]);
 
   useEffect(() => {
     if (fromTouched.current || initial?.from) return;
-    const code = origin?.code || settings?.defaultFrom;
+    const code = origin?.code || user?.searchPrefs?.homeAirport || settings?.defaultFrom;
     if (!code) return;
     const ap = getAirport(code);
     if (!ap) return;
     setFrom(`${locale === "fr" ? ap.cityFr : ap.city} (${ap.code})`);
     setFromCode(ap.code);
-  }, [origin?.code, settings?.defaultFrom, initial?.from, locale]);
+  }, [origin?.code, settings?.defaultFrom, initial?.from, locale, user?.searchPrefs?.homeAirport]);
 
   const fromOpts = useMemo(() => searchCanadianAirports(from), [from]);
   const toOpts = useMemo(() => searchDestinations(to), [to]);
@@ -384,6 +415,29 @@ export function SearchWidget({
             )}
           </div>
         </div>
+
+        {user && (
+          <div className="-mx-1 flex items-center gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {parties.length > 0 && (
+              <p className="shrink-0 text-[11px] font-bold uppercase tracking-wide text-navy/40">{m.account.choosePrefill}</p>
+            )}
+            {parties.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => applyParty(p)}
+                className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-bold ${
+                  activeParty === p.id ? "bg-navy text-white" : "bg-mist text-navy ring-1 ring-navy/10"
+                }`}
+              >
+                {p.name}
+              </button>
+            ))}
+            <Link href="/account#travelers" className="shrink-0 text-xs font-bold text-sky-700">
+              {m.account.manageGroups}
+            </Link>
+          </div>
+        )}
 
         <div className="flex flex-wrap items-end gap-3">
           <Stepper label={kind === "stays" ? m.search.guests : kind === "esim" ? m.search.esims : m.search.adults} value={adults} min={1} onChange={setAdults} />

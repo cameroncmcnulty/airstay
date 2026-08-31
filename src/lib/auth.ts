@@ -1,3 +1,6 @@
+import type { SearchKind } from "@/lib/deeplinks";
+import type { SearchPrefs, TravelerParty } from "@/lib/travelers";
+
 export type User = {
   id: string;
   name: string;
@@ -10,6 +13,8 @@ export type User = {
   savedSearches: SavedSearch[];
   clicks: ClickRecord[];
   emailVerified?: boolean;
+  travelerParties?: TravelerParty[];
+  searchPrefs?: SearchPrefs;
 };
 
 export type PublicUser = Omit<User, "passwordHash">;
@@ -19,6 +24,12 @@ export type SavedSearch = {
   label: string;
   href: string;
   createdAt: string;
+  kind?: SearchKind;
+  from?: string;
+  to?: string;
+  toCity?: string;
+  adults?: number;
+  children?: number;
 };
 
 export type ClickRecord = {
@@ -72,6 +83,8 @@ function persistSession(user: User) {
       passwordHash: user.passwordHash,
       savedSearches: user.savedSearches?.length ? user.savedSearches : users[i].savedSearches,
       clicks: user.clicks?.length ? user.clicks : users[i].clicks,
+      travelerParties: user.travelerParties ?? users[i].travelerParties,
+      searchPrefs: user.searchPrefs ?? users[i].searchPrefs,
     };
   } else users.push(user);
   writeUsers(users);
@@ -123,6 +136,8 @@ export async function completeSignup(input: {
     savedSearches: [],
     clicks: [],
     emailVerified: true,
+    travelerParties: [],
+    searchPrefs: { autoPrefill: true },
   };
   return { ok: true, user: persistSession(user) };
 }
@@ -148,6 +163,8 @@ export async function completeReset(email: string, code: string, password: strin
     savedSearches: existing?.savedSearches || [],
     clicks: existing?.clicks || [],
     emailVerified: true,
+    travelerParties: existing?.travelerParties || [],
+    searchPrefs: existing?.searchPrefs || { autoPrefill: true },
   };
   return { ok: true as const, user: persistSession(user) };
 }
@@ -191,6 +208,8 @@ export async function signIn(email: string, password: string): Promise<PublicUse
       savedSearches: local?.savedSearches || [],
       clicks: local?.clicks || [],
       emailVerified: true,
+      travelerParties: local?.travelerParties || [],
+      searchPrefs: local?.searchPrefs || { autoPrefill: true },
     });
   } catch {
     return null;
@@ -240,6 +259,46 @@ export async function changePassword(id: string, current: string, next: string) 
   user.passwordHash = await hashPassword(next, user.id);
   writeUsers(users);
   return { ok: true as const };
+}
+
+export function upsertTravelerParty(userId: string, party: TravelerParty) {
+  const users = readUsers();
+  const user = users.find((u) => u.id === userId);
+  if (!user) return null;
+  const list = [...(user.travelerParties || [])];
+  const i = list.findIndex((p) => p.id === party.id);
+  if (i >= 0) list[i] = party;
+  else {
+    if (list.length >= 6) return { ok: false as const, error: "max" as const, user: toPublic(user) };
+    list.unshift(party);
+  }
+  user.travelerParties = list;
+  if (!user.searchPrefs?.defaultPartyId) {
+    user.searchPrefs = { autoPrefill: true, ...user.searchPrefs, defaultPartyId: party.id };
+  }
+  writeUsers(users);
+  return { ok: true as const, user: toPublic(user) };
+}
+
+export function removeTravelerParty(userId: string, partyId: string) {
+  const users = readUsers();
+  const user = users.find((u) => u.id === userId);
+  if (!user) return null;
+  user.travelerParties = (user.travelerParties || []).filter((p) => p.id !== partyId);
+  if (user.searchPrefs?.defaultPartyId === partyId) {
+    user.searchPrefs = { ...user.searchPrefs, defaultPartyId: user.travelerParties[0]?.id };
+  }
+  writeUsers(users);
+  return toPublic(user);
+}
+
+export function updateSearchPrefs(userId: string, patch: Partial<SearchPrefs>) {
+  const users = readUsers();
+  const user = users.find((u) => u.id === userId);
+  if (!user) return null;
+  user.searchPrefs = { autoPrefill: true, ...user.searchPrefs, ...patch };
+  writeUsers(users);
+  return toPublic(user);
 }
 
 export function removeSavedSearch(userId: string, searchId: string) {
