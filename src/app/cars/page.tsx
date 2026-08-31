@@ -3,7 +3,6 @@
 import { SearchWidget } from "@/components/SearchWidget";
 import { CategoryHero } from "@/components/CategoryHero";
 import { HowItWorks, TrustStrip } from "@/components/HowItWorks";
-import { PopularDestGrid } from "@/components/PopularDestGrid";
 import { useApp } from "@/context/AppContext";
 
 export default function CarsPage() {
@@ -15,7 +14,6 @@ export default function CarsPage() {
       </CategoryHero>
       <div className="mt-12 space-y-14 sm:mt-16 sm:space-y-20">
         <TrustStrip />
-        <PopularDestGrid kind="cars" />
         <HowItWorks />
       </div>
     </div>

@@ -314,7 +314,7 @@ export function DateBubble({
       aria-label={label}
       className={`field flex w-full items-center text-left ${active ? "border-sky bg-white ring-4 ring-sky/20" : ""}`}
     >
-      <span className="text-base font-bold text-navy">{value ? formatBubble(value, loc) : "—"}</span>
+      <span className="whitespace-nowrap text-base font-bold text-navy">{value ? formatBubble(value, loc) : "—"}</span>
     </button>
   );
 }

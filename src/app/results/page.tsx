@@ -25,7 +25,7 @@ import { DEST_PHOTOS } from "@/lib/deals";
 import { useApp } from "@/context/AppContext";
 import { currentUser, updateUser } from "@/lib/auth";
 import { rankOffers, type FlightDateOption, type FlightDateSuggestions, type LiveOffer } from "@/lib/live-search";
-import { formatBubble, nightsBetweenIso } from "@/lib/dates";
+import { formatBubble, formatCompactDay, nightsBetweenIso } from "@/lib/dates";
 import { compareLinksFor, nightsBetween, partnerFavicon, PARTNER_META, type CompareLink } from "@/lib/partners";
 import { SearchWidget } from "@/components/SearchWidget";
 import { ConfettiHandoff } from "@/components/ConfettiHandoff";
@@ -737,25 +737,29 @@ function RankedCard({
           {m.results.badgeBest}
         </div>
       )}
-      <div className="flex flex-col gap-4 p-4 sm:p-5 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex min-w-0 flex-1 items-start gap-3 sm:gap-4">
+      <div className="flex flex-col gap-4 p-3 sm:p-5 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex min-w-0 flex-1 items-start gap-2.5 sm:gap-4">
           <span
-            className={`grid h-11 w-11 shrink-0 place-items-center rounded-full text-sm font-black ${
+            className={`grid h-9 w-9 shrink-0 place-items-center rounded-full text-sm font-black sm:h-11 sm:w-11 ${
               rank === 1 ? "bg-sky text-white" : "bg-mist text-navy"
             }`}
           >
             {rank}
           </span>
           {offer.airlineLogo ? (
-            <img src={offer.airlineLogo} alt="" className="h-12 w-12 rounded-2xl bg-white object-contain ring-1 ring-navy/10" />
+            <img
+              src={offer.airlineLogo}
+              alt=""
+              className="hidden h-12 w-12 rounded-2xl bg-white object-contain ring-1 ring-navy/10 sm:block"
+            />
           ) : (
-            <span className="grid h-12 w-12 place-items-center rounded-2xl bg-navy text-white">
+            <span className="hidden h-12 w-12 place-items-center rounded-2xl bg-navy text-white sm:grid">
               {offer.kind === "esim" ? <Smartphone className="h-5 w-5" /> : <Plane className="h-5 w-5" />}
             </span>
           )}
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <h3 className="truncate text-lg font-black text-navy">{offer.airlineName || offer.title}</h3>
+              <h3 className="truncate text-base font-black text-navy sm:text-lg">{offer.airlineName || offer.title}</h3>
               {offer.flightNumber && (
                 <span className="text-xs font-semibold text-navy/45">
                   {m.results.flightNo.replace("{n}", `${offer.airline || ""}${offer.flightNumber}`)}
@@ -955,29 +959,37 @@ function FlightLeg({
 }) {
   const departTime = clock(at, loc);
   const arriveTime = clock(arrive, loc);
+  const hasTimes = departTime !== "—" || arriveTime !== "—";
+  const dayLabel = day ? formatCompactDay(day, loc) : "";
   return (
-    <div>
-      <p className="text-[10px] font-black uppercase tracking-[0.16em] text-navy/40">{label}</p>
-      <div className="mt-1 flex items-center justify-between gap-3 text-navy">
-        <div>
-          <p className="text-lg font-black tabular-nums sm:text-xl">
-            {departTime !== "—" ? departTime : day ? formatBubble(day, loc) : "—"}
+    <div className="min-w-0">
+      <div className="flex items-baseline justify-between gap-2">
+        <p className="text-[10px] font-black uppercase tracking-[0.16em] text-navy/40">{label}</p>
+        {dayLabel && <p className="shrink-0 whitespace-nowrap text-[11px] font-bold text-navy/45">{dayLabel}</p>}
+      </div>
+      <div className="mt-1 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 text-navy">
+        <div className="min-w-0">
+          <p className="whitespace-nowrap text-base font-black tabular-nums sm:text-xl">
+            {hasTimes ? departTime : from || "—"}
           </p>
-          <p className="text-xs font-bold text-navy/45">
-            {from}
-            {departTime !== "—" && day ? ` · ${formatBubble(day, loc)}` : ""}
-          </p>
+          {hasTimes && (
+            <p className="whitespace-nowrap text-[11px] font-black tracking-wide text-navy/50">{from || "—"}</p>
+          )}
         </div>
-        <div className="min-w-0 flex-1 text-center">
-          <p className="text-[11px] font-bold text-navy/50">{prettyDuration(duration, stops)}</p>
+        <div className="min-w-0 px-0.5 text-center">
+          <p className="truncate text-[11px] font-bold text-navy/50">{prettyDuration(duration, stops)}</p>
           <div className="relative my-1 h-px bg-navy/15">
             <span className="absolute left-1/2 top-1/2 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-sky" />
           </div>
-          <p className="text-[11px] font-bold text-navy/55">{stopsLabel(stops)}</p>
+          <p className="truncate text-[11px] font-bold text-navy/55">{stopsLabel(stops)}</p>
         </div>
-        <div className="text-right">
-          <p className="text-lg font-black tabular-nums sm:text-xl">{arriveTime !== "—" ? arriveTime : "—"}</p>
-          <p className="text-xs font-bold text-navy/45">{to}</p>
+        <div className="min-w-0 text-right">
+          <p className="whitespace-nowrap text-base font-black tabular-nums sm:text-xl">
+            {hasTimes ? arriveTime : to || "—"}
+          </p>
+          {hasTimes && (
+            <p className="whitespace-nowrap text-[11px] font-black tracking-wide text-navy/50">{to || "—"}</p>
+          )}
         </div>
       </div>
     </div>

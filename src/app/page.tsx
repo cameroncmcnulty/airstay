@@ -7,7 +7,6 @@ import { CategoryBubbles } from "@/components/CategoryBubbles";
 import { HeroMedia } from "@/components/HeroMedia";
 import { HeroPeek } from "@/components/HeroPeek";
 import { HowItWorks, TrustStrip } from "@/components/HowItWorks";
-import { PopularDestGrid } from "@/components/PopularDestGrid";
 import { ExpediaOffer } from "@/components/ExpediaOffer";
 import { AirHelpOffer } from "@/components/AirHelpOffer";
 import { useApp } from "@/context/AppContext";
@@ -40,9 +39,9 @@ export default function HomePage() {
   return (
     <>
       <section className="relative">
-        <div className="relative min-h-[32rem] overflow-hidden sm:min-h-[70vh] lg:min-h-[78vh]">
+        <div className="relative min-h-[22rem] overflow-hidden sm:min-h-[58vh] lg:min-h-[68vh]">
           <HeroMedia />
-          <div className="relative z-10 mx-auto flex min-h-[32rem] max-w-6xl flex-col justify-end gap-6 px-4 pb-28 pt-8 sm:min-h-[70vh] sm:gap-8 sm:pb-36 sm:pt-10 lg:min-h-[78vh] md:flex-row md:items-end md:justify-between">
+          <div className="relative z-10 mx-auto flex min-h-[22rem] max-w-6xl flex-col justify-end px-4 pb-24 pt-8 sm:min-h-[58vh] sm:pb-32 sm:pt-10 lg:min-h-[68vh]">
             <div className="max-w-xl pb-2">
               <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-sky-100">{m.hero.kicker}</p>
               <h1 className="mt-3 text-[2.15rem] font-black leading-[0.95] tracking-tight text-white sm:text-5xl md:text-7xl">
@@ -51,13 +50,12 @@ export default function HomePage() {
               <p className="mt-4 max-w-md text-base text-white/85 sm:text-lg">{m.hero.subtitle}</p>
               <a
                 href="#search"
-                className="mt-6 inline-flex items-center gap-2 rounded-full bg-sky px-5 py-2.5 text-sm font-bold text-white shadow-lift hover:bg-sky-600"
+                className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-full bg-sky px-5 py-2.5 text-sm font-bold text-white shadow-lift hover:bg-sky-600"
               >
                 {m.search.search}
                 <span aria-hidden>→</span>
               </a>
             </div>
-            <HeroPeek from={from} />
           </div>
         </div>
         <div id="search" className="relative z-20 mx-auto -mt-16 max-w-6xl px-3 sm:-mt-20 sm:px-4">
@@ -70,7 +68,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      <div className="space-y-16 bg-gradient-to-b from-mist via-mist to-transparent py-10 sm:space-y-24 sm:py-16">
+      <div className="space-y-14 bg-gradient-to-b from-mist via-mist to-transparent py-10 sm:space-y-24 sm:py-16">
+        <HeroPeek from={from} />
         <TrustStrip />
         <ExpediaOffer />
         <AirHelpOffer />
@@ -90,8 +89,6 @@ export default function HomePage() {
             ))}
           </div>
         </section>
-
-        <PopularDestGrid featured />
 
         <section className="mx-auto max-w-6xl px-4">
           <h2 className="text-center text-2xl font-extrabold text-navy">{m.partners.title}</h2>

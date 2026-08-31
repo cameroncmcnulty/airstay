@@ -44,6 +44,15 @@ export function formatBubble(iso: string, locale: string) {
   });
 }
 
+/** Compact one-line date for tight mobile itinerary rows, e.g. "Sat 19". */
+export function formatCompactDay(iso: string, locale: string) {
+  if (!iso) return "";
+  return fromIso(iso).toLocaleDateString(locale, {
+    weekday: "short",
+    day: "numeric",
+  });
+}
+
 export function weekdayLabels(locale: string, weekStartsOn: 0 | 1) {
   const base = weekStartsOn === 1 ? 1 : 0;
   return Array.from({ length: 7 }, (_, i) => {

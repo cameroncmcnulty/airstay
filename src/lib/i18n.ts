@@ -21,7 +21,7 @@ export const t = {
     hero: {
       kicker: "Made by Canadians, for Canadians",
       title: "See the world. Keep more of your money.",
-      subtitle: "Flights, hotels and cars from home — in CAD, with zero AIRSTAY booking fees.",
+      subtitle: "Instantly compare flights, hotels, cars and eSIMs from home - in CAD.",
       ideas: "From {city}",
       seasonWinter: "Winter sun",
       seasonSpring: "Shoulder season",
@@ -454,7 +454,7 @@ export const t = {
     hero: {
       kicker: "Par des Canadiens, pour des Canadiens",
       title: "Voyez le monde. Gardez plus d’argent.",
-      subtitle: "Vols, hôtels et autos de chez nous — en $ CA, sans frais de réservation AIRSTAY.",
+      subtitle: "Comparez instantanément vols, hôtels, autos et eSIMs de chez vous — en $ CA.",
       ideas: "Au départ de {city}",
       seasonWinter: "Soleil d’hiver",
       seasonSpring: "Mi-saison",

@@ -148,19 +148,23 @@ export function HeroPeek({ from }: { from: string }) {
               : m.hero.vibeWeekend;
 
   return (
-    <div className="w-full max-w-md">
-      <div className="mb-2 flex items-baseline justify-between gap-3 text-white">
-        <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/70">
-          {geo?.source === "ip"
-            ? m.hero.nearYou.replace("{airport}", `${city} (${from})`)
-            : m.hero.ideas.replace("{city}", city)}
-        </p>
-        <p className="text-[11px] font-semibold text-sky-100/90">{seasonLabel}</p>
+    <section className="mx-auto max-w-6xl px-4">
+      <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
+        <div className="min-w-0">
+          <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-navy/45">
+            {geo?.source === "ip"
+              ? m.hero.nearYou.replace("{airport}", `${city} (${from})`)
+              : m.hero.ideas.replace("{city}", city)}
+          </p>
+          {geo?.source === "ip" && (
+            <p className="mt-1 text-[11px] font-semibold text-navy/50">
+              {m.hero.fromArea} · {terminal}
+            </p>
+          )}
+        </div>
+        <p className="text-[11px] font-semibold text-sky">{seasonLabel}</p>
       </div>
-      {geo?.source === "ip" && (
-        <p className="mb-2 text-[11px] font-semibold text-white/65">{m.hero.fromArea} · {terminal}</p>
-      )}
-      <div className="grid grid-cols-2 gap-2">
+      <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-1 snap-x snap-mandatory sm:mx-0 sm:grid sm:grid-cols-4 sm:gap-3 sm:overflow-visible sm:px-0 sm:pb-0">
         {picks.map((p) => {
           const d = getDestination(p.code);
           if (!d) return null;
@@ -177,20 +181,20 @@ export function HeroPeek({ from }: { from: string }) {
             <Link
               key={d.code}
               href={href}
-              className="group relative col-span-1 min-w-0 overflow-hidden rounded-2xl bg-white/10 ring-1 ring-white/20"
+              className="group relative w-[72%] shrink-0 snap-start overflow-hidden rounded-2xl bg-white shadow-card ring-1 ring-navy/8 sm:w-auto"
             >
-              <div className="relative h-[5.25rem] overflow-hidden sm:h-28">
+              <div className="relative h-32 overflow-hidden sm:h-36">
                 <img
                   src={DEST_PHOTOS[p.photo || d.code] || DEST_PHOTOS.LHR}
                   alt=""
                   className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-navy/80 via-navy/20 to-transparent" />
-                <div className="absolute inset-x-2 bottom-1.5 text-white sm:inset-x-3 sm:bottom-2.5">
-                  <p className="text-[9px] font-semibold uppercase tracking-wider text-sky-100/90 sm:text-[11px]">
+                <div className="absolute inset-x-3 bottom-2.5 text-white">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-sky-100/90 sm:text-[11px]">
                     {vibeLabel(p.vibe)}
                   </p>
-                  <p className="truncate text-xs font-black leading-tight sm:text-base">
+                  <p className="truncate text-sm font-black leading-tight sm:text-base">
                     {locale === "fr" ? d.cityFr : d.city}
                   </p>
                 </div>
@@ -199,6 +203,6 @@ export function HeroPeek({ from }: { from: string }) {
           );
         })}
       </div>
-    </div>
+    </section>
   );
 }
