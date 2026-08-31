@@ -129,6 +129,7 @@ export default function AdminPage() {
       lastSeen: string;
       disabled: boolean;
       notes: string;
+      emailVerified?: boolean;
     }>
   >([]);
   const [userQuery, setUserQuery] = useState("");
@@ -610,6 +611,7 @@ export default function AdminPage() {
                       <th className="px-2 py-2">Joined</th>
                       <th className="px-2 py-2">Last seen</th>
                       <th className="px-2 py-2">Deals</th>
+                      <th className="px-2 py-2">Email</th>
                       <th className="px-2 py-2">Status</th>
                       <th className="px-5 py-2"> </th>
                     </tr>
@@ -640,6 +642,7 @@ export default function AdminPage() {
                         <td className="px-2 py-3 text-white/70">{new Date(u.createdAt).toLocaleDateString("en-CA")}</td>
                         <td className="px-2 py-3 text-white/70">{new Date(u.lastSeen).toLocaleDateString("en-CA")}</td>
                         <td className="px-2 py-3">{u.marketingConsent ? "On" : "Off"}</td>
+                        <td className="px-2 py-3">{u.emailVerified ? "Verified" : "Unverified"}</td>
                         <td className="px-2 py-3">{u.disabled ? "Disabled" : "Active"}</td>
                         <td className="px-5 py-3 text-right">
                           <div className="flex flex-col items-end gap-1">

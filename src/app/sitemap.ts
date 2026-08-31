@@ -16,6 +16,7 @@ const paths = [
   "/disclosure",
   "/signup",
   "/login",
+  "/forgot",
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {

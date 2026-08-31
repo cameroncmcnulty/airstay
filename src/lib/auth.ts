@@ -9,6 +9,7 @@ export type User = {
   createdAt: string;
   savedSearches: SavedSearch[];
   clicks: ClickRecord[];
+  emailVerified?: boolean;
 };
 
 export type PublicUser = Omit<User, "passwordHash">;
@@ -61,80 +62,139 @@ export function validPassword(password: string) {
   return password.length >= 8 && /[A-Za-z]/.test(password) && /\d/.test(password);
 }
 
-export async function createUser(input: {
+function persistSession(user: User) {
+  const users = readUsers();
+  const i = users.findIndex((u) => u.id === user.id || u.email === user.email);
+  if (i >= 0) {
+    users[i] = {
+      ...users[i],
+      ...user,
+      passwordHash: user.passwordHash,
+      savedSearches: user.savedSearches?.length ? user.savedSearches : users[i].savedSearches,
+      clicks: user.clicks?.length ? user.clicks : users[i].clicks,
+    };
+  } else users.push(user);
+  writeUsers(users);
+  localStorage.setItem(SESSION_KEY, user.id);
+  return toPublic(users[i >= 0 ? i : users.length - 1]);
+}
+
+export async function requestAccountOtp(email: string, purpose: "signup" | "reset") {
+  const res = await fetch("/api/account/otp", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email: email.trim().toLowerCase(), purpose }),
+  });
+  const json = await res.json().catch(() => ({}));
+  return { status: res.status, ...json } as {
+    ok?: boolean;
+    error?: string;
+    emailHint?: string;
+    mailError?: string;
+    status: number;
+  };
+}
+
+export async function completeSignup(input: {
   name: string;
   email: string;
   password: string;
   province: string;
   marketingConsent: boolean;
-}): Promise<{ ok: true; user: PublicUser } | { ok: false; error: "exists" }> {
-  const users = readUsers();
-  const email = input.email.trim().toLowerCase();
-  if (users.some((u) => u.email === email)) return { ok: false, error: "exists" };
-  try {
-    const status = await fetch(`/api/account/status?email=${encodeURIComponent(email)}`);
-    const json = await status.json();
-    if (json?.disabled) return { ok: false, error: "exists" };
-  } catch {
-    /* offline */
-  }
-  const id = crypto.randomUUID();
-  const passwordHash = await hashPassword(input.password, id);
-  const user: User = {
-    id,
-    name: input.name.trim(),
-    email,
-    passwordHash,
-    province: input.province,
-    marketingConsent: input.marketingConsent,
-    marketingConsentAt: input.marketingConsent ? new Date().toISOString() : undefined,
-    createdAt: new Date().toISOString(),
-    savedSearches: [],
-    clicks: [],
-  };
-  users.push(user);
-  writeUsers(users);
-  localStorage.setItem(SESSION_KEY, id);
-  fetch("/api/account/register", {
+  code: string;
+}): Promise<{ ok: true; user: PublicUser } | { ok: false; error: string }> {
+  const res = await fetch("/api/account/confirm", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      id,
-      name: user.name,
-      email: user.email,
-      province: user.province,
-      marketingConsent: user.marketingConsent,
-    }),
-  }).catch(() => undefined);
-  return { ok: true, user: toPublic(user) };
+    body: JSON.stringify(input),
+  });
+  const json = await res.json().catch(() => ({}));
+  if (!json?.ok || !json.user?.id) return { ok: false, error: String(json.error || "otp") };
+  const passwordHash = await hashPassword(input.password, json.user.id);
+  const user: User = {
+    id: json.user.id,
+    name: json.user.name,
+    email: json.user.email,
+    passwordHash,
+    province: json.user.province || input.province,
+    marketingConsent: Boolean(json.user.marketingConsent),
+    marketingConsentAt: json.user.marketingConsent ? new Date().toISOString() : undefined,
+    createdAt: json.user.createdAt || new Date().toISOString(),
+    savedSearches: [],
+    clicks: [],
+    emailVerified: true,
+  };
+  return { ok: true, user: persistSession(user) };
+}
+
+export async function completeReset(email: string, code: string, password: string) {
+  const res = await fetch("/api/account/reset", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email: email.trim().toLowerCase(), code, password }),
+  });
+  const json = await res.json().catch(() => ({}));
+  if (!json?.ok || !json.user?.id) return { ok: false as const, error: String(json.error || "otp") };
+  const existing = readUsers().find((u) => u.email === json.user.email);
+  const passwordHash = await hashPassword(password, json.user.id);
+  const user: User = {
+    id: json.user.id,
+    name: json.user.name || existing?.name || "Traveller",
+    email: json.user.email,
+    passwordHash,
+    province: json.user.province || existing?.province || "",
+    marketingConsent: json.user.marketingConsent ?? existing?.marketingConsent ?? false,
+    createdAt: json.user.createdAt || existing?.createdAt || new Date().toISOString(),
+    savedSearches: existing?.savedSearches || [],
+    clicks: existing?.clicks || [],
+    emailVerified: true,
+  };
+  return { ok: true as const, user: persistSession(user) };
 }
 
 export async function signIn(email: string, password: string): Promise<PublicUser | null> {
+  const normalized = email.trim().toLowerCase();
   const users = readUsers();
-  const user = users.find((u) => u.email === email.trim().toLowerCase());
-  if (!user) return null;
-  const hash = await hashPassword(password, user.id);
-  if (hash !== user.passwordHash) return null;
-  try {
-    const status = await fetch(`/api/account/status?email=${encodeURIComponent(user.email)}`);
-    const json = await status.json();
-    if (json?.disabled) return null;
-  } catch {
-    /* offline */
+  const local = users.find((u) => u.email === normalized);
+  if (local) {
+    const hash = await hashPassword(password, local.id);
+    if (hash === local.passwordHash) {
+      try {
+        const status = await fetch(`/api/account/status?email=${encodeURIComponent(local.email)}`);
+        const json = await status.json();
+        if (json?.disabled) return null;
+      } catch {
+        /* offline */
+      }
+      localStorage.setItem(SESSION_KEY, local.id);
+      pingLastSeen(toPublic(local));
+      return toPublic(local);
+    }
   }
-  localStorage.setItem(SESSION_KEY, user.id);
-  fetch("/api/account/register", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      province: user.province,
-      marketingConsent: user.marketingConsent,
-    }),
-  }).catch(() => undefined);
-  return toPublic(user);
+  try {
+    const res = await fetch("/api/account/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: normalized, password }),
+    });
+    const json = await res.json();
+    if (!json?.ok || !json.user?.id) return null;
+    const passwordHash = await hashPassword(password, json.user.id);
+    return persistSession({
+      id: json.user.id,
+      name: json.user.name,
+      email: json.user.email,
+      passwordHash,
+      province: json.user.province || "",
+      marketingConsent: Boolean(json.user.marketingConsent),
+      createdAt: json.user.createdAt || new Date().toISOString(),
+      savedSearches: local?.savedSearches || [],
+      clicks: local?.clicks || [],
+      emailVerified: true,
+    });
+  } catch {
+    return null;
+  }
 }
 
 export function signOut() {

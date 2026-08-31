@@ -57,9 +57,14 @@ export default function LoginPage() {
             autoComplete="current-password"
           />
         </label>
-        <button type="button" className="text-xs font-bold text-sky-700" onClick={() => setShow((v) => !v)}>
-          {show ? m.auth.hidePassword : m.auth.showPassword}
-        </button>
+        <div className="flex items-center justify-between gap-3">
+          <button type="button" className="text-xs font-bold text-sky-700" onClick={() => setShow((v) => !v)}>
+            {show ? m.auth.hidePassword : m.auth.showPassword}
+          </button>
+          <Link href="/forgot" className="text-xs font-bold text-sky-700">
+            {m.auth.forgot}
+          </Link>
+        </div>
         {error && <p className="text-sm font-semibold text-red-600">{error}</p>}
         <button disabled={busy} className="w-full rounded-full bg-navy py-3 text-sm font-bold text-white disabled:opacity-60">
           {m.auth.submitSignIn}

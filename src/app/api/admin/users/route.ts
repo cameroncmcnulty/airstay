@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookieName, readAdminToken } from "@/lib/admin";
-import { listUsers, patchUser, removeUser } from "@/lib/users-store";
+import { listUsersPublic, patchUser, removeUser } from "@/lib/users-store";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -11,7 +11,7 @@ function authed(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   if (!authed(req)) return NextResponse.json({ ok: false }, { status: 401 });
-  return NextResponse.json({ ok: true, users: listUsers() });
+  return NextResponse.json({ ok: true, users: listUsersPublic() });
 }
 
 export async function PATCH(req: NextRequest) {
