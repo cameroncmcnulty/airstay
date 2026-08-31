@@ -28,7 +28,6 @@ import { rankOffers, type FlightDateOption, type FlightDateSuggestions, type Liv
 import { formatBubble, formatCompactDay, nightsBetweenIso } from "@/lib/dates";
 import { compareLinksFor, nightsBetween, partnerFavicon, PARTNER_META, type CompareLink } from "@/lib/partners";
 import { SearchWidget } from "@/components/SearchWidget";
-import { ConfettiHandoff } from "@/components/ConfettiHandoff";
 
 type Leaving = LiveOffer;
 
@@ -51,7 +50,6 @@ function ResultsInner() {
   const [alts, setAlts] = useState<FlightDateSuggestions | null>(null);
   const [loading, setLoading] = useState(true);
   const [sort, setSort] = useState<"best" | "price" | "fast">("best");
-  const [burst, setBurst] = useState<{ origin: { x: number; y: number; w: number; h: number } } | null>(null);
 
   const origin = q.from ? getAirport(q.from) : undefined;
   const dest = q.to ? getDestination(q.to) : undefined;
@@ -168,16 +166,6 @@ function ResultsInner() {
       }),
     }).catch(() => undefined);
     setLeaving(null);
-  }
-
-  function startHandoff(e: React.MouseEvent<HTMLAnchorElement>, offer: Leaving) {
-    e.preventDefault();
-    const href = offer.url;
-    window.open(href, "_blank", "noopener");
-    trackOutbound(offer);
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const r = e.currentTarget.getBoundingClientRect();
-    setBurst({ origin: { x: r.left, y: r.top, w: r.width, h: r.height } });
   }
 
   function leavingName(offer: Leaving) {
@@ -337,7 +325,7 @@ function ResultsInner() {
                       locale={locale}
                       m={m}
                       q={q}
-                      onHandoff={startHandoff}
+                      onTrack={trackOutbound}
                     />
                   </li>
                 ))}
@@ -433,9 +421,6 @@ function ResultsInner() {
         </section>
       </div>
 
-      {burst && (
-        <ConfettiHandoff origin={burst.origin} onDone={() => setBurst(null)} />
-      )}
       {leaving && (
         <div
           className="fixed inset-0 z-50 grid place-items-center bg-navy/55 p-3 backdrop-blur-sm sm:p-4"
@@ -463,8 +448,8 @@ function ResultsInner() {
                 className="btn-primary"
                 href={leaving.url}
                 target="_blank"
-                rel="noopener"
-                onClick={(e) => startHandoff(e, leaving)}
+                rel="noopener noreferrer"
+                onClick={() => trackOutbound(leaving)}
               >
                 {m.results.continue.replace("{partner}", leavingName(leaving))}
               </a>
@@ -485,14 +470,14 @@ function PartnerBoardCard({
   locale,
   m,
   q,
-  onHandoff,
+  onTrack,
 }: {
   offer: LiveOffer;
   rank: number;
   locale: "en" | "fr";
   m: ReturnType<typeof useApp>["m"];
   q: ReturnType<typeof paramsToQuery>;
-  onHandoff: (e: React.MouseEvent<HTMLAnchorElement>, offer: LiveOffer) => void;
+  onTrack: (offer: LiveOffer) => void;
 }) {
   const loc = locale === "fr" ? "fr-CA" : "en-CA";
   const when = [q.depart && formatBubble(q.depart, loc), q.returnDate && formatBubble(q.returnDate, loc)]
@@ -539,8 +524,8 @@ function PartnerBoardCard({
           <a
             href={offer.url}
             target="_blank"
-            rel="noopener"
-            onClick={(e) => onHandoff(e, offer)}
+            rel="noopener noreferrer"
+            onClick={() => onTrack(offer)}
             className="btn-primary shrink-0"
           >
             {m.results.seeLiveFares}

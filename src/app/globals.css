@@ -118,58 +118,6 @@ header {
   transform: translate3d(0, 0, 0);
 }
 
-.confetti-handoff {
-  position: fixed;
-  inset: 0;
-  z-index: 80;
-  overflow: hidden;
-  pointer-events: none;
-}
-
-.confetti-still {
-  position: absolute;
-  left: var(--ox);
-  top: var(--oy);
-  width: 72px;
-  height: 72px;
-  object-fit: cover;
-  transform: translate(-50%, -50%) scale(0.2);
-  transform-origin: center;
-  animation: confetti-boom 0.7s cubic-bezier(0.16, 0.84, 0.32, 1) forwards;
-}
-
-.confetti-canvas {
-  position: absolute;
-  inset: 0;
-}
-
-@keyframes confetti-boom {
-  0% {
-    transform: translate(-50%, -50%) scale(0.15);
-    opacity: 0.55;
-  }
-  35% {
-    opacity: 1;
-  }
-  100% {
-    transform: translate(-50%, -50%) scale(42);
-    opacity: 0.92;
-  }
-}
-
-@media (max-width: 639px) {
-  @keyframes confetti-boom {
-    0% {
-      transform: translate(-50%, -50%) scale(0.12);
-      opacity: 0.55;
-    }
-    100% {
-      transform: translate(-50%, -50%) scale(22);
-      opacity: 0.92;
-    }
-  }
-}
-
 @keyframes hero-wave-drift {
   from {
     transform: translate3d(0, 0, 0);
@@ -606,7 +554,6 @@ header {
   }
   .hero-still,
   .hero-waves .hero-wave,
-  .confetti-still,
   .aria-orb,
   .aria-launcher,
   .aria-ring,
