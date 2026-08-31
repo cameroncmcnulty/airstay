@@ -6,10 +6,12 @@ import {
   airlineLogo,
   aviasalesUrl,
   bookingHotelsUrl,
+  compareLinksFor,
   expediaFlightsUrl,
   googleFlightsUrl,
   kayakFlightsUrl,
   skyscannerFlightsUrl,
+  type CompareLink,
 } from "@/lib/partners";
 import { tpTrack, tpWrap } from "@/lib/affiliate";
 import { searchEsim } from "@/lib/esim";
@@ -55,6 +57,7 @@ export type LiveOffer = {
   foundAt?: string;
   featured?: boolean;
   live: true;
+  compare?: CompareLink[];
 };
 
 const TOKEN = process.env.TRAVELPAYOUTS_TOKEN || "321d6a221f8926b5ec41ae89a3b2ae7b";
@@ -820,6 +823,17 @@ function toOffer(input: {
     url: link,
     foundAt: input.foundAt,
     live: true,
+    compare: compareLinksFor(
+      {
+        ...input.q,
+        from: input.origin,
+        to: input.dest,
+        depart: input.departAt?.slice(0, 10) || input.q.depart,
+        returnDate: input.returnAt?.slice(0, 10) || input.q.returnDate,
+        adults: input.adults,
+      },
+      { aviasales: Math.round(input.price) }
+    ),
   };
 }
 

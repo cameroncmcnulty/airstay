@@ -26,7 +26,7 @@ import { useApp } from "@/context/AppContext";
 import { currentUser, updateUser } from "@/lib/auth";
 import { rankOffers, type FlightDateOption, type FlightDateSuggestions, type LiveOffer } from "@/lib/live-search";
 import { formatBubble, nightsBetweenIso } from "@/lib/dates";
-import { nightsBetween, partnerFavicon } from "@/lib/partners";
+import { compareLinksFor, nightsBetween, partnerFavicon, PARTNER_META, type CompareLink } from "@/lib/partners";
 import { SearchWidget } from "@/components/SearchWidget";
 
 type Leaving = LiveOffer;
@@ -362,8 +362,21 @@ function ResultsInner() {
                   m={m}
                   stopsLabel={stopsLabel}
                   onOpen={() => setLeaving(o)}
+                  onCompare={(link) =>
+                    setLeaving({
+                      ...o,
+                      id: `${o.id}-${link.key}`,
+                      partner: link.name,
+                      title: link.name,
+                      partnerKey: link.key,
+                      domain: PARTNER_META[link.key].domain,
+                      url: link.url,
+                      priceCad: link.priceCad || o.priceCad,
+                    })
+                  }
                   cheapestPrice={list.find((x) => x.id === ranked.cheapestId)?.priceCad || 0}
                   wantedDepart={q.depart}
+                  query={q}
                 />
               </li>
             ))}
@@ -665,8 +678,10 @@ function RankedCard({
   m,
   stopsLabel,
   onOpen,
+  onCompare,
   cheapestPrice,
   wantedDepart,
+  query,
 }: {
   offer: LiveOffer;
   rank: number;
@@ -676,8 +691,10 @@ function RankedCard({
   m: ReturnType<typeof useApp>["m"];
   stopsLabel: (n?: number) => string;
   onOpen: () => void;
+  onCompare: (link: CompareLink) => void;
   cheapestPrice: number;
   wantedDepart?: string;
+  query: ReturnType<typeof paramsToQuery>;
 }) {
   const loc = locale === "fr" ? "fr-CA" : "en-CA";
   const extra = cheapestPrice && offer.priceCad && offer.priceCad > cheapestPrice ? offer.priceCad - cheapestPrice : 0;
@@ -744,7 +761,26 @@ function RankedCard({
             {offer.kind === "esim" ? (
               <EsimLine offer={offer} m={m} locale={locale} />
             ) : (
-              <FlightLine offer={offer} loc={loc} stopsLabel={stopsLabel} m={m} />
+              <>
+                <FlightLine offer={offer} loc={loc} stopsLabel={stopsLabel} m={m} />
+                <CompareBar
+                  links={
+                    offer.compare?.length
+                      ? offer.compare
+                      : compareLinksFor(
+                          {
+                            ...query,
+                            depart: offerDay || query.depart,
+                            returnDate: (offer.returnAt || "").slice(0, 10) || query.returnDate,
+                          },
+                          { aviasales: offer.priceCad }
+                        )
+                  }
+                  money={money}
+                  m={m}
+                  onCompare={onCompare}
+                />
+              </>
             )}
           </div>
         </div>
@@ -812,41 +848,120 @@ function FlightLine({
   const to = offer.destAirport || "";
   const departDay = (offer.departAt || "").slice(0, 10);
   const returnDay = (offer.returnAt || "").slice(0, 10);
-  const departTime = clock(offer.departAt, loc);
-  const arriveTime = clock(offer.arriveAt, loc);
   return (
-    <div className="mt-3 min-w-[220px] max-w-md">
-      <div className="flex items-center justify-between gap-3 text-navy">
+    <div className="mt-3 min-w-[220px] max-w-lg space-y-3">
+      <FlightLeg
+        label={m.results.outbound}
+        from={from}
+        to={to}
+        at={offer.departAt}
+        arrive={offer.arriveAt}
+        day={departDay}
+        duration={offer.durationMin}
+        stops={offer.stops}
+        loc={loc}
+        stopsLabel={stopsLabel}
+      />
+      {returnDay && (
+        <FlightLeg
+          label={m.results.inbound}
+          from={to}
+          to={from}
+          at={offer.returnAt}
+          day={returnDay}
+          duration={offer.durationBack}
+          stops={offer.returnStops}
+          loc={loc}
+          stopsLabel={stopsLabel}
+        />
+      )}
+    </div>
+  );
+}
+
+function FlightLeg({
+  label,
+  from,
+  to,
+  at,
+  arrive,
+  day,
+  duration,
+  stops,
+  loc,
+  stopsLabel,
+}: {
+  label: string;
+  from: string;
+  to: string;
+  at?: string;
+  arrive?: string;
+  day?: string;
+  duration?: number;
+  stops?: number;
+  loc: string;
+  stopsLabel: (n?: number) => string;
+}) {
+  const departTime = clock(at, loc);
+  const arriveTime = clock(arrive, loc);
+  return (
+    <div>
+      <p className="text-[10px] font-black uppercase tracking-[0.16em] text-navy/40">{label}</p>
+      <div className="mt-1 flex items-center justify-between gap-3 text-navy">
         <div>
           <p className="text-xl font-black tabular-nums">
-            {departTime !== "—" ? departTime : departDay ? formatBubble(departDay, loc) : "—"}
+            {departTime !== "—" ? departTime : day ? formatBubble(day, loc) : "—"}
           </p>
           <p className="text-xs font-bold text-navy/45">
             {from}
-            {departTime !== "—" && departDay ? ` · ${formatBubble(departDay, loc)}` : ""}
+            {departTime !== "—" && day ? ` · ${formatBubble(day, loc)}` : ""}
           </p>
         </div>
         <div className="min-w-[7rem] flex-1 text-center">
-          <p className="text-[11px] font-bold text-navy/50">{prettyDuration(offer.durationMin, offer.stops)}</p>
+          <p className="text-[11px] font-bold text-navy/50">{prettyDuration(duration, stops)}</p>
           <div className="relative my-1 h-px bg-navy/15">
             <span className="absolute left-1/2 top-1/2 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-sky" />
           </div>
-          <p className="text-[11px] font-bold text-navy/55">{stopsLabel(offer.stops)}</p>
+          <p className="text-[11px] font-bold text-navy/55">{stopsLabel(stops)}</p>
         </div>
         <div className="text-right">
-          <p className="text-xl font-black tabular-nums">
-            {arriveTime !== "—" ? arriveTime : returnDay ? formatBubble(returnDay, loc) : "—"}
-          </p>
+          <p className="text-xl font-black tabular-nums">{arriveTime !== "—" ? arriveTime : "—"}</p>
           <p className="text-xs font-bold text-navy/45">{to}</p>
         </div>
       </div>
-      {returnDay && (
-        <p className="mt-2 text-[11px] font-semibold text-navy/40">
-          {m.search.return}: {clock(offer.returnAt, loc) !== "—" ? `${clock(offer.returnAt, loc)} · ` : ""}
-          {formatBubble(returnDay, loc)}
-          {offer.durationBack ? ` · ${prettyDuration(offer.durationBack)}` : ""}
-        </p>
-      )}
+    </div>
+  );
+}
+
+function CompareBar({
+  links,
+  money,
+  m,
+  onCompare,
+}: {
+  links: CompareLink[];
+  money: (n: number) => string;
+  m: ReturnType<typeof useApp>["m"];
+  onCompare: (link: CompareLink) => void;
+}) {
+  if (!links.length) return null;
+  return (
+    <div className="mt-3">
+      <p className="text-[10px] font-black uppercase tracking-[0.16em] text-navy/40">{m.results.compareThis}</p>
+      <div className="mt-1.5 flex flex-wrap gap-1.5">
+        {links.map((link) => (
+          <button
+            key={link.key}
+            type="button"
+            onClick={() => onCompare(link)}
+            className="inline-flex items-center gap-1.5 rounded-full bg-mist px-2.5 py-1 text-[11px] font-bold text-navy ring-1 ring-navy/8 hover:bg-white hover:ring-sky"
+          >
+            <img src={partnerFavicon(PARTNER_META[link.key].domain)} alt="" className="h-3.5 w-3.5 rounded-sm" />
+            {link.name}
+            {link.priceCad ? <span className="text-sky">{money(link.priceCad)}</span> : null}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

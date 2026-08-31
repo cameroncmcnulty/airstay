@@ -445,6 +445,26 @@ export function expediaFlightsUrl(q: SearchQuery) {
   return `https://www.expedia.ca/Flights-Search?${params.toString()}`;
 }
 
+export type CompareLink = {
+  key: PartnerKey;
+  name: string;
+  url: string;
+  priceCad?: number;
+};
+
+export function compareLinksFor(q: SearchQuery, priced?: { aviasales?: number }): CompareLink[] {
+  const rows: Array<[PartnerKey, string | undefined, number | undefined]> = [
+    ["aviasales", aviasalesUrl(q), priced?.aviasales],
+    ["expedia", expediaFlightsUrl(q), undefined],
+    ["kayak", kayakFlightsUrl(q), undefined],
+    ["skyscanner", skyscannerFlightsUrl(q), undefined],
+    ["google", googleFlightsUrl(q), undefined],
+  ];
+  return rows.flatMap(([key, url, priceCad]) =>
+    url ? [{ key, name: PARTNER_META[key].name, url, priceCad }] : []
+  );
+}
+
 export function bookingHotelsUrl(q: SearchQuery) {
   const dest = getDestination(q.to || "");
   const ss = dest ? `${dest.city}, ${dest.country}` : q.toCity || q.to || "";
