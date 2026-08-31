@@ -17,33 +17,49 @@ import {
   Users,
   Settings,
   Inbox,
+  BarChart3,
+  Ticket,
+  Percent,
+  Smartphone,
 } from "lucide-react";
 
-type Mix = { flights: number; stays: number; cars: number };
+type Mix = { flights: number; stays: number; cars: number; packages: number; esim: number };
+type Period = { searches: number; outbounds: number; mix: Mix; booked: Mix; conversion: number };
 type DestRow = {
   code: string;
   city: string;
   country: string;
   total: number;
-  flights: number;
-  stays: number;
-  cars: number;
-};
+} & Mix;
 
 type Analytics = {
   selectedMonth: string;
   months: string[];
-  totals: { searches: number; outbounds: number; uniqueDests: number; topKind: string };
+  totals: { searches: number; outbounds: number; uniqueDests: number; topKind: string; conversion: number };
   mixAll: Mix;
   bookedAll: Mix;
   byMonth: Array<{ month: string; searches: number; outbounds: number; mix: Mix; booked: Mix }>;
-  daily: Array<{ day: string; searches: number; outbounds: number }>;
+  daily: Array<{ day: string; searches: number; outbounds: number; mix: Mix; booked: Mix }>;
+  weekly: Array<{ week: string; searches: number; outbounds: number; mix: Mix; booked: Mix }>;
+  periods: { today: Period; yesterday: Period; week: Period; lastWeek: Period; month: Period; lastMonth: Period };
   topDestinationsMonth: DestRow[];
   topDestinationsAll: DestRow[];
   topBookedMonth: DestRow[];
   topPartners: Array<{ name: string; count: number }>;
+  topOrigins: Array<{ name: string; count: number }>;
   monthSearchCount: number;
   monthOutboundCount: number;
+  recentBookings: Array<{
+    id: string;
+    at: string;
+    kind: string;
+    partner: string;
+    origin?: string;
+    destination?: string;
+    destCity?: string;
+    depart?: string;
+    returnDate?: string;
+  }>;
 };
 
 type Overview = {
@@ -59,6 +75,7 @@ type Overview = {
     aria?: boolean;
   };
   stats: { searches: number; bookings: number; offers: number };
+  members?: { total: number; active: number; disabled: number; marketing: number; joined7d: number; joined30d: number; seen7d: number };
   analytics?: Analytics;
   searches: Array<{
     id: string;
@@ -79,8 +96,9 @@ type Ping = {
   flights?: { count: number; sample: Array<{ name?: string; priceCad?: number }>; error: string | null };
 };
 
-const KIND_COLOR = { flights: "#4381C7", stays: "#7BB3E1", cars: "#071840" };
-const KIND_LABEL = { flights: "Flights", stays: "Hotels", cars: "Cars" };
+const KIND_COLOR: Record<keyof Mix, string> = { flights: "#4381C7", stays: "#7BB3E1", cars: "#071840", packages: "#F6C945", esim: "#34d399" };
+const KIND_LABEL = { flights: "Flights", stays: "Hotels", cars: "Cars", packages: "Packages", esim: "eSIM" };
+const EMPTY_MIX: Mix = { flights: 0, stays: 0, cars: 0, packages: 0, esim: 0 };
 
 export default function AdminPage() {
   const [authed, setAuthed] = useState<boolean | null>(null);
@@ -95,7 +113,8 @@ export default function AdminPage() {
   const [ping, setPing] = useState<Ping | null>(null);
   const [busy, setBusy] = useState(false);
   const [month, setMonth] = useState<string>("");
-  const [tab, setTab] = useState<"overview" | "users" | "inbox" | "settings">("overview");
+  const [tab, setTab] = useState<"overview" | "traffic" | "bookings" | "users" | "inbox" | "settings">("overview");
+  const [trafficRange, setTrafficRange] = useState<"daily" | "weekly" | "monthly">("daily");
   const [inbox, setInbox] = useState<
     Array<{ id: string; name: string; email: string; message: string; createdAt: string; read: boolean }>
   >([]);
@@ -357,7 +376,7 @@ export default function AdminPage() {
             <h1 className="text-xl font-black">Admin dashboard</h1>
           </div>
           <div className="flex items-center gap-2">
-            <label className="hidden text-xs font-bold text-white/50 sm:block">
+            <label className="text-xs font-bold text-white/50">
               Month
               <select
                 className="ml-2 rounded-full bg-white/10 px-3 py-2 text-xs font-bold text-white"
@@ -395,6 +414,8 @@ export default function AdminPage() {
           {(
             [
               { id: "overview" as const, label: "Overview", icon: Activity },
+              { id: "traffic" as const, label: "Traffic", icon: BarChart3 },
+              { id: "bookings" as const, label: "Bookings", icon: Ticket },
               { id: "users" as const, label: "Members", icon: Users },
               { id: "inbox" as const, label: "Inbox", icon: Inbox },
               { id: "settings" as const, label: "Settings", icon: Settings },
@@ -419,13 +440,150 @@ export default function AdminPage() {
           ))}
         </nav>
 
+        {tab === "traffic" && (
+          <>
+            <div className="flex flex-wrap gap-2">
+              {(
+                [
+                  { id: "daily" as const, label: "Daily · 30 days" },
+                  { id: "weekly" as const, label: "Weekly · 12 weeks" },
+                  { id: "monthly" as const, label: "Monthly · 12 months" },
+                ] as const
+              ).map((opt) => (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => setTrafficRange(opt.id)}
+                  className={`rounded-full px-4 py-2 text-sm font-bold ${
+                    trafficRange === opt.id ? "bg-white text-navy" : "bg-white/10 text-white/80"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+            <section className="rounded-3xl bg-white/5 p-5 ring-1 ring-white/10">
+              <h2 className="font-black">
+                {trafficRange === "daily" ? "Daily traffic" : trafficRange === "weekly" ? "Weekly traffic" : "Monthly traffic"}
+              </h2>
+              <p className="text-sm text-white/50">Searches vs partner click-throughs (bookings started off-site).</p>
+              {trafficRange === "daily" && <Sparkline daily={a?.daily || []} />}
+              {trafficRange === "weekly" && (
+                <Sparkline
+                  daily={(a?.weekly || []).map((w) => ({ day: w.week, searches: w.searches, outbounds: w.outbounds }))}
+                />
+              )}
+              {trafficRange === "monthly" && (
+                <Sparkline
+                  daily={(a?.byMonth || []).map((w) => ({ day: w.month, searches: w.searches, outbounds: w.outbounds }))}
+                />
+              )}
+            </section>
+            <section className="rounded-3xl bg-white/5 p-5 ring-1 ring-white/10">
+              <h2 className="font-black">Product mix</h2>
+              <StackedBars
+                rows={
+                  trafficRange === "daily"
+                    ? (a?.daily || []).map((row) => ({ label: row.day.slice(8), ...row.mix }))
+                    : trafficRange === "weekly"
+                      ? (a?.weekly || []).map((row) => ({ label: row.week.slice(5), ...row.mix }))
+                      : (a?.byMonth || []).map((row) => ({ label: row.month.slice(5), ...row.mix }))
+                }
+              />
+              <Legend />
+            </section>
+            <section className="overflow-hidden rounded-3xl bg-white/5 ring-1 ring-white/10">
+              <div className="border-b border-white/10 px-5 py-4">
+                <h2 className="font-black">Period table</h2>
+              </div>
+              <div className="max-h-[420px] overflow-auto">
+                <table className="w-full text-left text-sm">
+                  <thead className="text-[11px] uppercase tracking-wide text-white/45">
+                    <tr>
+                      <th className="px-5 py-2">When</th>
+                      <th className="px-2 py-2">Searches</th>
+                      <th className="px-2 py-2">Click-throughs</th>
+                      <th className="px-5 py-2">Conv.</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(trafficRange === "daily" ? a?.daily || [] : trafficRange === "weekly" ? a?.weekly || [] : a?.byMonth || [])
+                      .slice()
+                      .reverse()
+                      .map((row) => {
+                        const label = "day" in row ? row.day : "week" in row ? `Week of ${row.week}` : row.month;
+                        const conv = row.searches ? Math.round((row.outbounds / row.searches) * 1000) / 10 : 0;
+                        const key = "day" in row ? row.day : "week" in row ? row.week : row.month;
+                        return (
+                          <tr key={key} className="border-t border-white/5">
+                            <td className="px-5 py-2 font-semibold">{label}</td>
+                            <td className="px-2 py-2">{row.searches}</td>
+                            <td className="px-2 py-2">{row.outbounds}</td>
+                            <td className="px-5 py-2">{conv}%</td>
+                          </tr>
+                        );
+                      })}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </>
+        )}
+
+        {tab === "bookings" && (
+          <section className="overflow-hidden rounded-3xl bg-white/5 ring-1 ring-white/10">
+            <div className="border-b border-white/10 px-5 py-4">
+              <h2 className="font-black">Partner bookings started</h2>
+              <p className="text-sm text-white/50">
+                AIRSTAY doesn’t ticket. These are Continue-to-partner click-throughs — the closest thing to a booking on this
+                site. {a?.recentBookings?.length || 0} recent.
+              </p>
+            </div>
+            {(a?.recentBookings || []).length === 0 ? (
+              <p className="px-5 py-8 text-sm text-white/45">No partner click-throughs recorded yet.</p>
+            ) : (
+              <div className="max-h-[640px] overflow-auto">
+                <table className="w-full text-left text-sm">
+                  <thead className="text-[11px] uppercase tracking-wide text-white/45">
+                    <tr>
+                      <th className="px-5 py-2">When</th>
+                      <th className="px-2 py-2">Partner</th>
+                      <th className="px-2 py-2">Kind</th>
+                      <th className="px-2 py-2">Route</th>
+                      <th className="px-5 py-2">Dates</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(a?.recentBookings || []).map((b) => (
+                      <tr key={b.id} className="border-t border-white/5">
+                        <td className="whitespace-nowrap px-5 py-2 text-white/70">{new Date(b.at).toLocaleString("en-CA")}</td>
+                        <td className="px-2 py-2 font-bold">{b.partner}</td>
+                        <td className="px-2 py-2 capitalize">{b.kind}</td>
+                        <td className="px-2 py-2">
+                          {b.origin || "—"} → {b.destCity || b.destination || "—"}
+                        </td>
+                        <td className="px-5 py-2 text-white/70">
+                          {b.depart || "—"}
+                          {b.returnDate ? ` – ${b.returnDate}` : ""}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
+        )}
+
         {tab === "users" && (
           <section className="overflow-hidden rounded-3xl bg-white/5 ring-1 ring-white/10">
             <div className="flex flex-wrap items-end justify-between gap-3 border-b border-white/10 px-5 py-4">
               <div>
                 <h2 className="font-black">Member accounts</h2>
                 <p className="text-sm text-white/50">
-                  {users.length} {users.length === 1 ? "member" : "members"}. Disable blocks sign-in. Notes stay on this server.
+                  {data?.members?.total ?? users.length} members · {data?.members?.joined7d ?? 0} new this week ·{" "}
+                  {data?.members?.seen7d ?? 0} active in 7 days · {data?.members?.marketing ?? 0} opted into emails. Disable
+                  blocks sign-in.
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
@@ -654,15 +812,28 @@ export default function AdminPage() {
         {tab === "overview" && (
           <>
         <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <Stat icon={Activity} label="Searches" value={String(a?.totals.searches ?? 0)} />
-          <Stat icon={MousePointerClick} label="Partner click-throughs" value={String(a?.totals.outbounds ?? 0)} />
+          <Stat icon={Activity} label="Searches (all time)" value={String(a?.totals.searches ?? 0)} hint={`Today ${a?.periods.today.searches ?? 0}`} />
+          <Stat icon={MousePointerClick} label="Partner bookings started" value={String(a?.totals.outbounds ?? 0)} hint={`Today ${a?.periods.today.outbounds ?? 0}`} />
+          <Stat icon={Percent} label="Conversion" value={`${a?.totals.conversion ?? 0}%`} hint="Clicks ÷ searches" />
+          <Stat icon={Users} label="Members" value={String(data?.members?.total ?? 0)} hint={`${data?.members?.joined7d ?? 0} new this week`} />
+        </section>
+
+        <section className="grid gap-3 sm:grid-cols-3">
+          <PeriodCard title="Today" now={a?.periods.today} prev={a?.periods.yesterday} />
+          <PeriodCard title="This week" now={a?.periods.week} prev={a?.periods.lastWeek} />
+          <PeriodCard title="This month" now={a?.periods.month} prev={a?.periods.lastMonth} />
+        </section>
+
+        <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <Stat icon={MapPin} label="Destinations searched" value={String(a?.totals.uniqueDests ?? 0)} />
           <Stat
-            icon={topKind === "stays" ? Hotel : topKind === "cars" ? Car : Plane}
+            icon={topKind === "stays" ? Hotel : topKind === "cars" ? Car : topKind === "esim" ? Smartphone : Plane}
             label="Most searched"
             value={KIND_LABEL[topKind as keyof typeof KIND_LABEL] || "—"}
             ok={tpOn}
           />
+          <Stat icon={Ticket} label="This month’s click-throughs" value={String(a?.monthOutboundCount ?? 0)} />
+          <Stat icon={Activity} label="This month’s searches" value={String(a?.monthSearchCount ?? 0)} />
         </section>
 
         <section className="grid gap-4 lg:grid-cols-3">
@@ -672,9 +843,8 @@ export default function AdminPage() {
             <StackedBars
               rows={(a?.byMonth || []).map((row) => ({
                 label: row.month.slice(5),
-                flights: row.mix.flights,
-                stays: row.mix.stays,
-                cars: row.mix.cars,
+                ...EMPTY_MIX,
+                ...row.mix,
               }))}
             />
             <Legend />
@@ -682,7 +852,7 @@ export default function AdminPage() {
           <div className="rounded-3xl bg-white/5 p-5 ring-1 ring-white/10">
             <h2 className="font-black">Click-through mix</h2>
             <p className="text-sm text-white/50">Users who left for a partner checkout.</p>
-            <Donut mix={a?.bookedAll || { flights: 0, stays: 0, cars: 0 }} />
+            <Donut mix={a?.bookedAll || EMPTY_MIX} />
           </div>
         </section>
 
@@ -719,6 +889,19 @@ export default function AdminPage() {
                   </li>
                 ))}
               </ul>
+            )}
+            {(a?.topOrigins || []).length > 0 && (
+              <>
+                <h3 className="mt-6 text-sm font-black">Top origins</h3>
+                <ul className="mt-2 space-y-1 text-sm">
+                  {(a?.topOrigins || []).map((o) => (
+                    <li key={o.name} className="flex justify-between">
+                      <span className="font-semibold">{o.name}</span>
+                      <span className="text-white/60">{o.count}</span>
+                    </li>
+                  ))}
+                </ul>
+              </>
             )}
           </div>
         </section>
@@ -805,11 +988,13 @@ function Stat({
   label,
   value,
   ok,
+  hint,
 }: {
   icon: typeof Shield;
   label: string;
   value: string;
   ok?: boolean;
+  hint?: string;
 }) {
   return (
     <div className="rounded-3xl bg-white/5 p-4 ring-1 ring-white/10">
@@ -819,6 +1004,25 @@ function Stat({
       </div>
       <p className="mt-3 text-xs font-bold uppercase tracking-wide text-white/45">{label}</p>
       <p className="mt-1 text-lg font-black">{value}</p>
+      {hint && <p className="mt-0.5 text-[11px] font-semibold text-white/45">{hint}</p>}
+    </div>
+  );
+}
+
+function delta(now?: number, prev?: number) {
+  if (now == null || prev == null) return "";
+  const d = now - prev;
+  if (d === 0) return "flat vs prior";
+  return `${d > 0 ? "+" : ""}${d} vs prior`;
+}
+
+function PeriodCard({ title, now, prev }: { title: string; now?: Period; prev?: Period }) {
+  return (
+    <div className="rounded-3xl bg-white/5 p-4 ring-1 ring-white/10">
+      <p className="text-xs font-bold uppercase tracking-wide text-white/45">{title}</p>
+      <p className="mt-2 text-2xl font-black">{now?.searches ?? 0} <span className="text-base font-bold text-white/45">searches</span></p>
+      <p className="text-sm font-semibold text-sky-200">{now?.outbounds ?? 0} click-throughs · {now?.conversion ?? 0}%</p>
+      <p className="mt-1 text-[11px] font-semibold text-white/40">{delta(now?.searches, prev?.searches)}</p>
     </div>
   );
 }
@@ -826,15 +1030,11 @@ function Stat({
 function Legend() {
   return (
     <div className="mt-3 flex flex-wrap gap-3 text-[11px] font-bold uppercase tracking-wide text-white/55">
-      <span className="inline-flex items-center gap-1.5">
-        <i className="h-2 w-2 rounded-full" style={{ background: KIND_COLOR.flights }} /> Flights
-      </span>
-      <span className="inline-flex items-center gap-1.5">
-        <i className="h-2 w-2 rounded-full" style={{ background: KIND_COLOR.stays }} /> Hotels
-      </span>
-      <span className="inline-flex items-center gap-1.5">
-        <i className="h-2 w-2 rounded-full" style={{ background: KIND_COLOR.cars }} /> Cars
-      </span>
+      {(Object.keys(KIND_LABEL) as Array<keyof typeof KIND_LABEL>).map((k) => (
+        <span key={k} className="inline-flex items-center gap-1.5">
+          <i className="h-2 w-2 rounded-full" style={{ background: KIND_COLOR[k] }} /> {KIND_LABEL[k]}
+        </span>
+      ))}
     </div>
   );
 }
@@ -843,29 +1043,31 @@ function Empty({ children }: { children: React.ReactNode }) {
   return <p className="mt-6 text-sm text-white/45">{children}</p>;
 }
 
+function mixTotal(m: Mix) {
+  return m.flights + m.stays + m.cars + m.packages + m.esim;
+}
+
 function StackedBars({
   rows,
 }: {
-  rows: Array<{ label: string; flights: number; stays: number; cars: number }>;
+  rows: Array<{ label: string } & Mix>;
 }) {
-  const max = Math.max(1, ...rows.map((r) => r.flights + r.stays + r.cars));
-  if (rows.every((r) => r.flights + r.stays + r.cars === 0)) {
+  const max = Math.max(1, ...rows.map((r) => mixTotal(r)));
+  if (rows.every((r) => mixTotal(r) === 0)) {
     return <Empty>No searches yet this year. Charts fill in as travellers search.</Empty>;
   }
+  const order: Array<keyof Mix> = ["flights", "stays", "cars", "packages", "esim"];
   return (
-    <div className="mt-4 flex h-48 items-end gap-2">
+    <div className="mt-4 flex h-48 items-end gap-1.5 sm:gap-2">
       {rows.map((r) => {
-        const total = r.flights + r.stays + r.cars;
+        const total = mixTotal(r);
         const h = Math.max(total ? 8 : 2, Math.round((total / max) * 160));
-        const f = total ? (r.flights / total) * h : 0;
-        const s = total ? (r.stays / total) * h : 0;
-        const c = total ? (r.cars / total) * h : 0;
         return (
-          <div key={r.label} className="flex flex-1 flex-col items-center gap-1">
+          <div key={r.label} className="flex min-w-0 flex-1 flex-col items-center gap-1">
             <div className="flex h-40 w-full flex-col justify-end overflow-hidden rounded-t-lg bg-white/5">
-              <div style={{ height: c, background: KIND_COLOR.cars }} />
-              <div style={{ height: s, background: KIND_COLOR.stays }} />
-              <div style={{ height: f, background: KIND_COLOR.flights }} />
+              {order.map((k) => (
+                <div key={k} style={{ height: total ? (r[k] / total) * h : 0, background: KIND_COLOR[k] }} />
+              ))}
             </div>
             <span className="text-[10px] font-bold text-white/45">{r.label}</span>
           </div>
@@ -876,13 +1078,11 @@ function StackedBars({
 }
 
 function Donut({ mix }: { mix: Mix }) {
-  const total = mix.flights + mix.stays + mix.cars;
+  const total = mixTotal(mix);
   if (!total) return <Empty>No click-throughs yet.</Empty>;
-  const segs = [
-    { key: "flights", n: mix.flights, color: KIND_COLOR.flights },
-    { key: "stays", n: mix.stays, color: KIND_COLOR.stays },
-    { key: "cars", n: mix.cars, color: KIND_COLOR.cars },
-  ];
+  const segs = (Object.keys(KIND_LABEL) as Array<keyof Mix>)
+    .map((key) => ({ key, n: mix[key] || 0, color: KIND_COLOR[key] }))
+    .filter((s) => s.n > 0);
   let acc = 0;
   const r = 54;
   const c = 2 * Math.PI * r;
@@ -946,9 +1146,9 @@ function DestChart({ title, subtitle, rows }: { title: string; subtitle: string;
                 <p className="font-black text-sky-200">{r.total}</p>
               </div>
               <div className="mt-1 flex h-2 overflow-hidden rounded-full bg-white/10">
-                <span className="h-full" style={{ width: `${(r.flights / max) * 100}%`, background: KIND_COLOR.flights }} />
-                <span className="h-full" style={{ width: `${(r.stays / max) * 100}%`, background: KIND_COLOR.stays }} />
-                <span className="h-full" style={{ width: `${(r.cars / max) * 100}%`, background: KIND_COLOR.cars }} />
+                {(["flights", "stays", "cars", "packages", "esim"] as const).map((k) => (
+                  <span key={k} className="h-full" style={{ width: `${((r[k] || 0) / max) * 100}%`, background: KIND_COLOR[k] }} />
+                ))}
               </div>
             </li>
           ))}

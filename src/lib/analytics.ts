@@ -117,87 +117,155 @@ function lastDays(n: number) {
   return out;
 }
 
-const KINDS = ["flights", "stays", "cars"] as const;
+export const KINDS = ["flights", "stays", "cars", "packages", "esim"] as const;
+export type Kind = (typeof KINDS)[number];
+export type Mix = Record<Kind, number>;
+
+function emptyMix(): Mix {
+  return { flights: 0, stays: 0, cars: 0, packages: 0, esim: 0 };
+}
+
+function mixOf(rows: AnalyticsEvent[]): Mix {
+  const mix = emptyMix();
+  for (const e of rows) {
+    if (e.kind in mix) mix[e.kind as Kind] += 1;
+  }
+  return mix;
+}
+
+function counts(rows: AnalyticsEvent[]) {
+  const searches = rows.filter((e) => e.type === "search");
+  const outbounds = rows.filter((e) => e.type === "outbound");
+  return {
+    searches: searches.length,
+    outbounds: outbounds.length,
+    mix: mixOf(searches),
+    booked: mixOf(outbounds),
+  };
+}
+
+function conversion(searches: number, outbounds: number) {
+  if (!searches) return 0;
+  return Math.round((outbounds / searches) * 1000) / 10;
+}
+
+function ymd(d: Date) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function startOfWeek(d = new Date()) {
+  const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const day = (x.getDay() + 6) % 7;
+  x.setDate(x.getDate() - day);
+  return x;
+}
+
+function lastWeeks(n: number) {
+  const out: string[] = [];
+  const d = startOfWeek();
+  for (let i = 0; i < n; i++) {
+    out.unshift(ymd(d));
+    d.setDate(d.getDate() - 7);
+  }
+  return out;
+}
+
+function addDaysYmd(key: string, n: number) {
+  const [y, m, d] = key.split("-").map(Number);
+  const dt = new Date(y, (m || 1) - 1, d || 1);
+  dt.setDate(dt.getDate() + n);
+  return ymd(dt);
+}
+
+function period(rows: AnalyticsEvent[], start: string, end: string) {
+  return counts(rows.filter((e) => e.at.slice(0, 10) >= start && e.at.slice(0, 10) < end));
+}
+
+function topDests(rows: AnalyticsEvent[], limit = 10) {
+  const map = new Map<
+    string,
+    { code: string; city: string; country: string; total: number } & Mix
+  >();
+  for (const e of rows) {
+    const code = (e.destination || e.destCity || "").toUpperCase();
+    if (!code) continue;
+    const dest = getDestination(code);
+    const city = e.destCity || dest?.city || code;
+    const country = e.destCountry || dest?.country || "";
+    const cur = map.get(code) || { code, city, country, total: 0, ...emptyMix() };
+    cur.total += 1;
+    if (e.kind in emptyMix()) cur[e.kind as Kind] += 1;
+    map.set(code, cur);
+  }
+  return [...map.values()].sort((a, b) => b.total - a.total).slice(0, limit);
+}
+
+function topList(rows: AnalyticsEvent[], key: (e: AnalyticsEvent) => string, limit = 8) {
+  const map = new Map<string, number>();
+  for (const e of rows) {
+    const k = key(e);
+    if (!k) continue;
+    map.set(k, (map.get(k) || 0) + 1);
+  }
+  return [...map.entries()]
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, limit);
+}
 
 export function analyticsSummary(month?: string) {
   load();
   const months = lastMonths(12);
   const days = lastDays(30);
+  const weeks = lastWeeks(12);
   const selected = month && months.includes(month) ? month : months[months.length - 1];
 
   const byMonth = months.map((key) => {
     const rows = memory.filter((e) => monthKey(e.at) === key);
-    const searches = rows.filter((e) => e.type === "search");
-    const outbounds = rows.filter((e) => e.type === "outbound");
-    const mix = {
-      flights: searches.filter((e) => e.kind === "flights").length,
-      stays: searches.filter((e) => e.kind === "stays").length,
-      cars: searches.filter((e) => e.kind === "cars").length,
-    };
-    const booked = {
-      flights: outbounds.filter((e) => e.kind === "flights").length,
-      stays: outbounds.filter((e) => e.kind === "stays").length,
-      cars: outbounds.filter((e) => e.kind === "cars").length,
-    };
-    return { month: key, searches: searches.length, outbounds: outbounds.length, mix, booked };
+    const c = counts(rows);
+    return { month: key, ...c };
   });
 
   const daily = days.map((key) => {
     const rows = memory.filter((e) => e.at.slice(0, 10) === key);
-    return {
-      day: key,
-      searches: rows.filter((e) => e.type === "search").length,
-      outbounds: rows.filter((e) => e.type === "outbound").length,
-    };
+    const c = counts(rows);
+    return { day: key, ...c };
   });
 
-  function topDests(rows: AnalyticsEvent[], limit = 10) {
-    const map = new Map<
-      string,
-      { code: string; city: string; country: string; total: number; flights: number; stays: number; cars: number }
-    >();
-    for (const e of rows) {
-      const code = (e.destination || e.destCity || "").toUpperCase();
-      if (!code) continue;
-      const dest = getDestination(code);
-      const city = e.destCity || dest?.city || code;
-      const country = e.destCountry || dest?.country || "";
-      const cur = map.get(code) || { code, city, country, total: 0, flights: 0, stays: 0, cars: 0 };
-      cur.total += 1;
-      if (e.kind === "flights") cur.flights += 1;
-      else if (e.kind === "stays") cur.stays += 1;
-      else if (e.kind === "cars") cur.cars += 1;
-      map.set(code, cur);
-    }
-    return [...map.values()].sort((a, b) => b.total - a.total).slice(0, limit);
-  }
+  const weekly = weeks.map((start) => {
+    const end = addDaysYmd(start, 7);
+    const rows = memory.filter((e) => e.at.slice(0, 10) >= start && e.at.slice(0, 10) < end);
+    const c = counts(rows);
+    return { week: start, ...c };
+  });
 
   const monthRows = memory.filter((e) => monthKey(e.at) === selected);
   const monthSearches = monthRows.filter((e) => e.type === "search");
   const monthOut = monthRows.filter((e) => e.type === "outbound");
   const allSearches = memory.filter((e) => e.type === "search");
   const allOut = memory.filter((e) => e.type === "outbound");
+  const mixAll = mixOf(allSearches);
+  const bookedAll = mixOf(allOut);
 
-  const partners: Record<string, number> = {};
-  for (const e of allOut) {
-    const name = e.partner || "Unknown";
-    partners[name] = (partners[name] || 0) + 1;
-  }
-  const topPartners = Object.entries(partners)
-    .map(([name, count]) => ({ name, count }))
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 8);
+  const today = ymd(new Date());
+  const yesterday = addDaysYmd(today, -1);
+  const weekStart = ymd(startOfWeek());
+  const lastWeekStart = addDaysYmd(weekStart, -7);
+  const monthStart = today.slice(0, 7) + "-01";
+  const prevMonthDate = new Date();
+  prevMonthDate.setDate(1);
+  prevMonthDate.setMonth(prevMonthDate.getMonth() - 1);
+  const lastMonthStart = ymd(prevMonthDate);
+  const lastMonthEnd = monthStart;
 
-  const mixAll = {
-    flights: allSearches.filter((e) => e.kind === "flights").length,
-    stays: allSearches.filter((e) => e.kind === "stays").length,
-    cars: allSearches.filter((e) => e.kind === "cars").length,
-  };
-  const bookedAll = {
-    flights: allOut.filter((e) => e.kind === "flights").length,
-    stays: allOut.filter((e) => e.kind === "stays").length,
-    cars: allOut.filter((e) => e.kind === "cars").length,
-  };
+  const todayC = period(memory, today, addDaysYmd(today, 1));
+  const yesterdayC = period(memory, yesterday, today);
+  const weekC = period(memory, weekStart, addDaysYmd(weekStart, 7));
+  const lastWeekC = period(memory, lastWeekStart, weekStart);
+  const monthC = period(memory, monthStart, addDaysYmd(today, 1));
+  const lastMonthC = period(memory, lastMonthStart, lastMonthEnd);
+
+  const topKind = (Object.keys(mixAll) as Kind[]).sort((a, b) => mixAll[b] - mixAll[a])[0] || "flights";
 
   return {
     selectedMonth: selected,
@@ -206,18 +274,40 @@ export function analyticsSummary(month?: string) {
       searches: allSearches.length,
       outbounds: allOut.length,
       uniqueDests: new Set(memory.map((e) => e.destination).filter(Boolean)).size,
-      topKind: (["flights", "stays", "cars"] as Array<keyof typeof mixAll>).sort((a, b) => mixAll[b] - mixAll[a])[0],
+      topKind,
+      conversion: conversion(allSearches.length, allOut.length),
     },
     mixAll,
     bookedAll,
     byMonth,
     daily,
+    weekly,
+    periods: {
+      today: { ...todayC, conversion: conversion(todayC.searches, todayC.outbounds) },
+      yesterday: { ...yesterdayC, conversion: conversion(yesterdayC.searches, yesterdayC.outbounds) },
+      week: { ...weekC, conversion: conversion(weekC.searches, weekC.outbounds) },
+      lastWeek: { ...lastWeekC, conversion: conversion(lastWeekC.searches, lastWeekC.outbounds) },
+      month: { ...monthC, conversion: conversion(monthC.searches, monthC.outbounds) },
+      lastMonth: { ...lastMonthC, conversion: conversion(lastMonthC.searches, lastMonthC.outbounds) },
+    },
     topDestinationsMonth: topDests(monthSearches),
     topDestinationsAll: topDests(allSearches),
     topBookedMonth: topDests(monthOut),
-    topPartners,
+    topPartners: topList(allOut, (e) => e.partner || "Unknown"),
+    topOrigins: topList(allSearches, (e) => (e.origin || "").toUpperCase()),
     kinds: KINDS,
     monthSearchCount: monthSearches.length,
     monthOutboundCount: monthOut.length,
+    recentBookings: allOut.slice(0, 80).map((e) => ({
+      id: e.id,
+      at: e.at,
+      kind: e.kind,
+      partner: e.partner || "Partner",
+      origin: e.origin,
+      destination: e.destination,
+      destCity: e.destCity,
+      depart: e.depart,
+      returnDate: e.returnDate,
+    })),
   };
 }

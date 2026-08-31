@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookieName, readAdminToken } from "@/lib/admin";
-import { listBookings, listSearches, stats } from "@/lib/travel-api/store";
+import { listSearches, stats } from "@/lib/travel-api/store";
 import { analyticsSummary } from "@/lib/analytics";
+import { userStats } from "@/lib/users-store";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -27,8 +28,8 @@ export async function GET(req: NextRequest) {
       aria: Boolean(process.env.XAI_API_KEY),
     },
     stats: stats(),
+    members: userStats(),
     analytics: analyticsSummary(month),
-    searches: listSearches().slice(0, 40),
-    bookings: listBookings().slice(0, 40),
+    searches: listSearches().slice(0, 50),
   });
 }

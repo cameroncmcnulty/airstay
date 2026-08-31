@@ -73,3 +73,22 @@ export function removeUser(id: string) {
   const users = store.load().filter((u) => u.id !== id);
   store.save(users);
 }
+
+export function userStats() {
+  const users = store.load();
+  const now = Date.now();
+  const d7 = now - 7 * 86400000;
+  const d30 = now - 30 * 86400000;
+  const joined7d = users.filter((u) => new Date(u.createdAt).getTime() >= d7).length;
+  const joined30d = users.filter((u) => new Date(u.createdAt).getTime() >= d30).length;
+  const seen7d = users.filter((u) => new Date(u.lastSeen).getTime() >= d7).length;
+  return {
+    total: users.length,
+    active: users.filter((u) => !u.disabled).length,
+    disabled: users.filter((u) => u.disabled).length,
+    marketing: users.filter((u) => u.marketingConsent).length,
+    joined7d,
+    joined30d,
+    seen7d,
+  };
+}

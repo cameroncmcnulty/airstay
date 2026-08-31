@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { t, type Locale, type Messages } from "@/lib/i18n";
-import { currentUser, signOut as authSignOut, type PublicUser } from "@/lib/auth";
+import { currentUser, pingLastSeen, signOut as authSignOut, type PublicUser } from "@/lib/auth";
 import { readConsent, writeConsent, type ConsentState } from "@/lib/consent";
 import type { PublicSettings } from "@/lib/site-public";
 import type { GeoOrigin } from "@/lib/hubs";
@@ -37,7 +37,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setLocaleState(stored);
       document.documentElement.lang = stored === "fr" ? "fr-CA" : "en-CA";
     }
-    setUser(currentUser());
+    const u = currentUser();
+    setUser(u);
+    if (u) pingLastSeen(u);
     setConsentState(readConsent());
     setReady(true);
     fetch("/api/settings")

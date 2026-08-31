@@ -14,6 +14,8 @@ export default function SignupPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [show, setShow] = useState(false);
   const [province, setProvince] = useState("ON");
   const [age, setAge] = useState(false);
   const [terms, setTerms] = useState(false);
@@ -24,8 +26,10 @@ export default function SignupPage() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    if (name.trim().length < 2) return setError(m.auth.errorName);
     if (!validEmail(email)) return setError(m.auth.errorEmail);
     if (!validPassword(password)) return setError(m.auth.errorPass);
+    if (password !== confirm) return setError(m.auth.errorMatch);
     if (!age) return setError(m.auth.errorAge);
     if (!terms) return setError(m.auth.errorTerms);
     setBusy(true);
@@ -38,9 +42,10 @@ export default function SignupPage() {
 
   return (
     <div className="mx-auto max-w-lg px-4 py-8 sm:py-12">
-      <h1 className="text-3xl font-black text-navy">{m.auth.createTitle}</h1>
+      <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-sky-700">{m.brand}</p>
+      <h1 className="mt-2 text-3xl font-black text-navy">{m.auth.createTitle}</h1>
       <p className="mt-2 text-sm text-navy/65">{m.auth.createSub}</p>
-      <form onSubmit={onSubmit} className="mt-8 space-y-4 rounded-card bg-white p-6 shadow-card ring-1 ring-navy/5">
+      <form onSubmit={onSubmit} className="mt-8 space-y-4 rounded-card bg-white p-5 shadow-card ring-1 ring-navy/5 sm:p-6">
         <label className="block text-xs font-bold uppercase tracking-wide text-navy/50">
           {m.auth.name}
           <input className="field mt-1" value={name} onChange={(e) => setName(e.target.value)} required autoComplete="name" />
@@ -51,8 +56,29 @@ export default function SignupPage() {
         </label>
         <label className="block text-xs font-bold uppercase tracking-wide text-navy/50">
           {m.auth.password}
-          <input className="field mt-1" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="new-password" />
+          <input
+            className="field mt-1"
+            type={show ? "text" : "password"}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            autoComplete="new-password"
+          />
         </label>
+        <label className="block text-xs font-bold uppercase tracking-wide text-navy/50">
+          {m.auth.confirmPassword}
+          <input
+            className="field mt-1"
+            type={show ? "text" : "password"}
+            value={confirm}
+            onChange={(e) => setConfirm(e.target.value)}
+            required
+            autoComplete="new-password"
+          />
+        </label>
+        <button type="button" className="text-xs font-bold text-sky-700" onClick={() => setShow((v) => !v)}>
+          {show ? m.auth.hidePassword : m.auth.showPassword}
+        </button>
         <label className="block text-xs font-bold uppercase tracking-wide text-navy/50">
           {m.auth.province}
           <select className="field mt-1" value={province} onChange={(e) => setProvince(e.target.value)}>
@@ -64,11 +90,11 @@ export default function SignupPage() {
           </select>
         </label>
         <label className="flex gap-2 text-sm text-navy/80">
-          <input type="checkbox" className="mt-1 accent-navy" checked={age} onChange={(e) => setAge(e.target.checked)} />
+          <input type="checkbox" className="mt-1 h-4 w-4 accent-navy" checked={age} onChange={(e) => setAge(e.target.checked)} />
           {m.auth.age}
         </label>
         <label className="flex gap-2 text-sm text-navy/80">
-          <input type="checkbox" className="mt-1 accent-navy" checked={terms} onChange={(e) => setTerms(e.target.checked)} />
+          <input type="checkbox" className="mt-1 h-4 w-4 accent-navy" checked={terms} onChange={(e) => setTerms(e.target.checked)} />
           <span>
             {m.auth.terms}{" "}
             <Link className="font-bold text-sky-700 underline" href="/terms">
@@ -81,11 +107,11 @@ export default function SignupPage() {
           </span>
         </label>
         <label className="flex gap-2 text-sm text-navy/80">
-          <input type="checkbox" className="mt-1 accent-sky" checked={marketing} onChange={(e) => setMarketing(e.target.checked)} />
+          <input type="checkbox" className="mt-1 h-4 w-4 accent-sky" checked={marketing} onChange={(e) => setMarketing(e.target.checked)} />
           {m.auth.marketing}
         </label>
         {error && <p className="text-sm font-semibold text-red-600">{error}</p>}
-        <button disabled={busy} className="w-full rounded-full bg-sky py-3 text-sm font-bold text-white shadow-lift disabled:opacity-60">
+        <button disabled={busy} className="btn-primary w-full disabled:opacity-60">
           {m.auth.submitCreate}
         </button>
       </form>

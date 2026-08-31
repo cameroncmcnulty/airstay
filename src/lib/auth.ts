@@ -155,7 +155,54 @@ export function updateUser(id: string, patch: Partial<User>) {
   if (i < 0) return null;
   users[i] = { ...users[i], ...patch, id: users[i].id, passwordHash: users[i].passwordHash };
   writeUsers(users);
-  return toPublic(users[i]);
+  const pub = toPublic(users[i]);
+  fetch("/api/account/register", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      id: pub.id,
+      name: pub.name,
+      email: pub.email,
+      province: pub.province,
+      marketingConsent: pub.marketingConsent,
+    }),
+  }).catch(() => undefined);
+  return pub;
+}
+
+export async function changePassword(id: string, current: string, next: string) {
+  const users = readUsers();
+  const user = users.find((u) => u.id === id);
+  if (!user) return { ok: false as const, error: "missing" };
+  const hash = await hashPassword(current, user.id);
+  if (hash !== user.passwordHash) return { ok: false as const, error: "current" };
+  if (!validPassword(next)) return { ok: false as const, error: "weak" };
+  user.passwordHash = await hashPassword(next, user.id);
+  writeUsers(users);
+  return { ok: true as const };
+}
+
+export function removeSavedSearch(userId: string, searchId: string) {
+  const users = readUsers();
+  const user = users.find((u) => u.id === userId);
+  if (!user) return null;
+  user.savedSearches = user.savedSearches.filter((s) => s.id !== searchId);
+  writeUsers(users);
+  return toPublic(user);
+}
+
+export function pingLastSeen(user: PublicUser) {
+  fetch("/api/account/register", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      province: user.province,
+      marketingConsent: user.marketingConsent,
+    }),
+  }).catch(() => undefined);
 }
 
 export function deleteUser(id: string) {
