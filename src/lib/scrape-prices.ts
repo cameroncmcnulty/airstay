@@ -3,11 +3,9 @@ import { getDestination } from "@/lib/airports";
 import {
   bookingHotelsUrl,
   discoverCarsUrl,
-  expediaFlightsUrl,
   expediaHotelsUrl,
   googleFlightsUrl,
   kayakCarsUrl,
-  kayakFlightsUrl,
   kayakHotelsUrl,
   type PartnerKey,
 } from "@/lib/partners";
@@ -136,8 +134,6 @@ export async function scrapeFares(q: SearchQuery): Promise<ScrapedFare[]> {
   const jobs: Promise<ScrapedFare[]>[] = [];
   if (q.kind === "flights") {
     jobs.push(scrapeGoogleFlights(q));
-    jobs.push(scrapeSiteMin(kayakFlightsUrl(q), "kayak", 80, 9000));
-    jobs.push(scrapeSiteMin(expediaFlightsUrl(q), "expedia", 80, 9000));
   } else if (q.kind === "stays") {
     jobs.push(scrapeGoogleHotels(q));
     jobs.push(scrapeSiteMin(kayakHotelsUrl(q), "kayak", 40, 2500));

@@ -505,6 +505,21 @@ export function bookingHotelsUrl(q: SearchQuery) {
   return `https://www.booking.com/searchresults.html?${params.toString()}`;
 }
 
+export function hotellookSearchUrl(q: SearchQuery) {
+  const dest = getDestination(q.to || "");
+  const params = new URLSearchParams({
+    marker: TP_MARKER,
+    currency: "cad",
+    language: "en",
+    destination: dest?.city || q.toCity || q.to || "",
+    checkIn: q.depart || "",
+    checkOut: q.returnDate || "",
+    adults: String(Math.max(1, q.adults || 2)),
+    children: String(q.children || 0),
+  });
+  return `https://search.hotellook.com/?${params.toString()}`;
+}
+
 export function kayakHotelsUrl(q: SearchQuery) {
   const dest = getDestination(q.to || "");
   const place = kayakHotelPlace(dest?.city || q.toCity || q.to || "Cancun", dest?.country || "");

@@ -141,7 +141,7 @@ function ResultsInner() {
     refreshUser();
   }
 
-  function go(offer: Leaving) {
+  function trackOutbound(offer: Leaving) {
     const u = currentUser();
     const name = offer.partner || offer.airlineName || offer.title;
     if (u) {
@@ -165,7 +165,6 @@ function ResultsInner() {
         returnDate: q.returnDate,
       }),
     }).catch(() => undefined);
-    window.open(offer.url, "_blank", "noopener");
     setLeaving(null);
   }
 
@@ -445,9 +444,15 @@ function ResultsInner() {
               {m.results.leavingBody.replace("{partner}", leavingName(leaving))}
             </p>
             <div className="mt-6 flex flex-wrap gap-2">
-              <button type="button" className="btn-primary" onClick={() => go(leaving)}>
+              <a
+                className="btn-primary"
+                href={leaving.url}
+                target="_blank"
+                rel="noopener"
+                onClick={() => trackOutbound(leaving)}
+              >
                 {m.results.continue.replace("{partner}", leavingName(leaving))}
-              </button>
+              </a>
               <button type="button" className="btn-ghost" onClick={() => setLeaving(null)}>
                 {m.results.stay}
               </button>
@@ -516,10 +521,10 @@ function PartnerBoardCard({
         </div>
         <div className="flex items-center justify-between gap-4 lg:flex-col lg:items-end">
           <p className="text-sm font-bold text-navy/50">{m.results.onSite}</p>
-          <button type="button" onClick={onOpen} className="btn-primary shrink-0">
+          <a href={offer.url} target="_blank" rel="noopener" className="btn-primary shrink-0">
             {m.results.seeLiveFares}
             <ExternalLink className="h-4 w-4" />
-          </button>
+          </a>
         </div>
       </div>
     </article>

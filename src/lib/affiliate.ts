@@ -66,7 +66,6 @@ function brandForHost(host: string): TpBrand | undefined {
 function normalizeDest(url: string, brand: TpBrand) {
   try {
     const u = new URL(url);
-    if (u.hostname.startsWith("www.")) u.hostname = u.hostname.slice(4);
     if (brand === "airalo") {
       const m = u.pathname.match(/^\/([a-z0-9-]+-esim)(?:\/.*)?$/i);
       if (m) {
@@ -92,6 +91,7 @@ export function tpTrack(brand: TpBrand, dest?: string) {
     marker: TP_MARKER,
     p: String(b.p),
     trs: TP_TRS,
+    sub_id: "airstay.ca",
     u: target,
   });
   return `https://tp.media/r?${params.toString()}`;
@@ -113,6 +113,7 @@ export function tpMediaUrl(brand: TpBrand, dest?: string) {
     marker: TP_MARKER,
     p: String(b.p),
     trs: TP_TRS,
+    sub_id: "airstay.ca",
     u: dest || b.home,
   });
   return `https://tp.media/r?${params.toString()}`;

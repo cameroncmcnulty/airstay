@@ -15,6 +15,7 @@ import {
   expediaPackagesUrl,
   googleFlightsUrl,
   hotelsComUrl,
+  hotellookSearchUrl,
   kayakCarsUrl,
   kayakFlightsUrl,
   kayakHotelsUrl,
@@ -191,14 +192,22 @@ export function travelpayoutsCheckouts(q: SearchQuery): LiveOffer[] {
 function fromScraped(hit: ScrapedFare, q: SearchQuery, names: Map<string, string>): LiveOffer {
   const meta = PARTNER_META[hit.partnerKey];
   const airline = hit.airline;
+  const checkout =
+    q.kind === "flights"
+      ? aviasalesUrl(q) || hit.url
+      : q.kind === "stays"
+        ? hotellookSearchUrl(q)
+        : q.kind === "cars"
+          ? tpTrack("getrentacar")
+          : hit.url;
   return {
     id: `scrape-${hit.partnerKey}-${airline || "x"}-${hit.flightNumber || hit.title || ""}-${hit.priceCad}`,
-    source: "partner",
+    source: q.kind === "flights" ? "travelpayouts" : "partner",
     kind: q.kind,
     title: hit.title || (airline ? names.get(airline) || airline : meta.name),
-    partner: q.kind === "stays" && hit.partnerKey === "google" ? "Google" : meta.name,
-    partnerKey: hit.partnerKey,
-    domain: meta.domain,
+    partner: q.kind === "flights" ? "Aviasales" : q.kind === "stays" ? "Hotellook" : meta.name,
+    partnerKey: q.kind === "flights" ? "aviasales" : hit.partnerKey,
+    domain: q.kind === "flights" ? "aviasales.com" : meta.domain,
     color: meta.color,
     tagline: meta.tagline,
     taglineFr: meta.taglineFr,
@@ -214,7 +223,7 @@ function fromScraped(hit: ScrapedFare, q: SearchQuery, names: Map<string, string
     stops: hit.stops,
     departAt: q.depart,
     returnAt: q.returnDate,
-    url: hit.url,
+    url: checkout,
     live: true,
     compare: compareLinksFor(q, { aviasales: hit.priceCad }),
   };
@@ -279,7 +288,7 @@ export async function searchLive(q: SearchQuery): Promise<LiveOffer[]> {
       if (item.status === "fulfilled") found.push(...item.value);
     }
   }
-  found.push(...scraped.map((hit) => fromScraped(hit, q, names)));
+  found.push(...scraped.filter((hit) => hit.airline).map((hit) => fromScraped(hit, q, names)));
 
   const seen = new Set<string>();
   return found
@@ -693,7 +702,7 @@ async function fetchHotelPrices(q: SearchQuery): Promise<LiveOffer[]> {
     const price = Math.round(Number(row.priceFrom || row.priceAvg || row.price || 0));
     if (!price) return;
     const name = String(row.hotelName || row.name || "Hotel");
-    const offer = offerFromPartner("booking", q, bookingHotelsUrl(q), {
+    const offer = offerFromPartner("booking", q, hotellookSearchUrl(q), {
       id: `stay-${row.hotelId || i}`,
       title: name,
       partner: name,
