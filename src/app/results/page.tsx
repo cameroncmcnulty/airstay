@@ -50,6 +50,8 @@ function ResultsInner() {
   const [alts, setAlts] = useState<FlightDateSuggestions | null>(null);
   const [monthDeals, setMonthDeals] = useState<MonthDeal[]>([]);
   const [relaxedDirect, setRelaxedDirect] = useState(false);
+  const [nearbyDates, setNearbyDates] = useState(false);
+  const [nearbyAirports, setNearbyAirports] = useState(false);
   const [loading, setLoading] = useState(true);
   const [sort, setSort] = useState<"best" | "price" | "fast">("best");
 
@@ -90,6 +92,8 @@ function ResultsInner() {
         setAlts(data.dateSuggestions || null);
         setMonthDeals(Array.isArray(data.monthDeals) ? data.monthDeals : []);
         setRelaxedDirect(Boolean(data.relaxedDirect) || (Boolean(q.directOnly) && (data.live || []).some((o: LiveOffer) => (o.stops || 0) > 0)));
+        setNearbyDates(Boolean(data.nearbyDates));
+        setNearbyAirports(Boolean(data.nearbyAirports) || (data.live || []).some((o: LiveOffer) => o.nearbyAirport));
       })
       .catch(() => {
         if (!cancelled) {
@@ -97,6 +101,8 @@ function ResultsInner() {
           setAlts(null);
           setMonthDeals([]);
           setRelaxedDirect(false);
+          setNearbyDates(false);
+          setNearbyAirports(false);
         }
       })
       .finally(() => {
@@ -263,12 +269,12 @@ function ResultsInner() {
         </div>
 
         <section className="mt-10">
-          {q.flexMonth && monthDeals.length > 0 && (
+          {monthDeals.length > 0 && q.kind === "flights" && (
             <div className="mb-8 rounded-[1.4rem] bg-white p-4 shadow-card ring-1 ring-navy/8 sm:p-5">
               <p className="text-[11px] font-black uppercase tracking-[0.16em] text-navy/40">
                 {m.results.monthScanTitle.replace(
                   "{month}",
-                  new Date(`${q.flexMonth}-01`).toLocaleDateString(locale === "fr" ? "fr-CA" : "en-CA", {
+                  new Date(`${q.flexMonth || (q.depart || "").slice(0, 7)}-01`).toLocaleDateString(locale === "fr" ? "fr-CA" : "en-CA", {
                     month: "long",
                     year: "numeric",
                   })
@@ -317,6 +323,16 @@ function ResultsInner() {
           {relaxedDirect && (
             <p className="mb-4 rounded-2xl bg-sky/10 px-4 py-3 text-sm font-semibold text-navy ring-1 ring-sky/30">
               {m.results.noNonstop}
+            </p>
+          )}
+          {nearbyDates && (
+            <p className="mb-4 rounded-2xl bg-sky/10 px-4 py-3 text-sm font-semibold text-navy ring-1 ring-sky/30">
+              {m.results.nearbyDatesNote}
+            </p>
+          )}
+          {nearbyAirports && (
+            <p className="mb-4 rounded-2xl bg-mist px-4 py-3 text-sm font-semibold text-navy ring-1 ring-navy/10">
+              {m.results.nearbyAirportNote}
             </p>
           )}
           <div className="flex flex-wrap items-end justify-between gap-3">
@@ -840,7 +856,13 @@ function RankedCard({
                   {m.results.nearbyDate}
                 </span>
               )}
+              {offer.nearbyAirport && (
+                <span className="rounded-full bg-navy/10 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wide text-navy">
+                  {m.results.nearbyAirport}
+                </span>
+              )}
             </div>
+            {offer.routeNote && <p className="mt-1 text-xs font-bold text-navy/55">{offer.routeNote}</p>}
             {offer.kind === "esim" ? (
               <EsimLine offer={offer} m={m} locale={locale} />
             ) : offer.kind === "stays" || offer.kind === "cars" || offer.kind === "packages" ? (

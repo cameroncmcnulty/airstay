@@ -27,18 +27,29 @@ function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T) {
 export async function GET(req: NextRequest) {
   let q = paramsToQuery(req.nextUrl.searchParams);
   try {
-    const monthDeals =
-      q.kind === "flights" && q.flexMonth ? await withTimeout(cheapestMonthDeals(q), 8000, []) : [];
-    if (q.flexMonth && !req.nextUrl.searchParams.get("depart")) {
+    const monthTask =
+      q.kind === "flights" ? withTimeout(cheapestMonthDeals(q), 8000, []) : Promise.resolve([]);
+    const needFlexDates = Boolean(q.flexMonth && !req.nextUrl.searchParams.get("depart"));
+    let monthDeals = needFlexDates ? await monthTask : [];
+    if (needFlexDates) {
       const fallback = flexFallbackDates(q, monthDeals);
       q = { ...q, depart: fallback.depart, returnDate: fallback.returnDate || q.returnDate };
     }
     let priced = await searchLive(q);
+    if (!needFlexDates) monthDeals = await monthTask;
     let relaxedDirect = false;
     if (q.directOnly && priced.length === 0) {
       priced = await searchLive({ ...q, directOnly: false });
       relaxedDirect = priced.length > 0;
     }
+    const wantedDay = (q.depart || "").slice(0, 10);
+    const nearbyDates = Boolean(
+      q.kind === "flights" &&
+        wantedDay &&
+        priced.length > 0 &&
+        !priced.some((row) => (row.departAt || "").slice(0, 10) === wantedDay && !row.nearbyAirport)
+    );
+    const nearbyAirports = priced.some((row) => row.nearbyAirport);
     const dateSuggestions =
       q.kind === "flights" && priced.length === 0
         ? await withTimeout(suggestFlightDates(q), 5000, null)
@@ -77,6 +88,8 @@ export async function GET(req: NextRequest) {
       dateSuggestions,
       monthDeals,
       relaxedDirect,
+      nearbyDates,
+      nearbyAirports,
       packages: [],
       source: "travelpayouts",
       generatedAt: new Date().toISOString(),
@@ -89,6 +102,8 @@ export async function GET(req: NextRequest) {
         dateSuggestions: null,
         monthDeals: [],
         relaxedDirect: false,
+        nearbyDates: false,
+        nearbyAirports: false,
         packages: [],
         error: err instanceof Error ? err.message : "search_failed",
         generatedAt: new Date().toISOString(),

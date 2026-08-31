@@ -30,7 +30,7 @@ async function html(url: string) {
       Accept: "text/html,application/xhtml+xml",
       "Accept-Language": "en-CA,en;q=0.9",
     },
-    next: { revalidate: 180 },
+    cache: "no-store",
     signal: AbortSignal.timeout(12000),
   });
   if (!res.ok) return "";
