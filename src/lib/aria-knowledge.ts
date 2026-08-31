@@ -297,14 +297,284 @@ const GUIDES: Guide[] = [
     en: "Chicago: architecture river cruise, neighbourhood food, lake in summer, serious winters. Directs from most Canadian hubs. Shoulder spring and fall are the sweet spot. Walkable downtown; the L is easy.",
     fr: "Chicago : architecture, tables de quartier, lac l’été. Directs depuis les hubs canadiens. Printemps et automne en or.",
   },
+  {
+    id: "la",
+    codes: ["LAX", "BUR", "SNA"],
+    names: ["los angeles", "la", "santa monica", "hollywood", "california"],
+    tags: ["usa", "city", "beach", "road", "weekend", "california"],
+    region: "United States · California",
+    en: "Los Angeles: sprawl with a payoff — Santa Monica/Venice for beach, Griffith for the view, tacos everywhere. LAX is a trek; give it time. Rent a car or pick one neighbourhood and stay. Spring and fall beat August heat. Pair with San Diego or Palm Springs if you have extra days.",
+    fr: "Los Angeles : Santa Monica/Venice, Griffith, tacos. LAX prend du temps. Une auto, ou un quartier et on reste. Printemps et automne battent août. San Diego ou Palm Springs en extra.",
+  },
+  {
+    id: "sanfrancisco",
+    codes: ["SFO", "OAK"],
+    names: ["san francisco", "sf", "bay area", "napa"],
+    tags: ["usa", "city", "fog", "food", "weekend", "california"],
+    region: "United States · Bay Area",
+    en: "San Francisco: hills, fog, food, a jacket in July. Directs from YVR/YYZ. Walk + transit beats driving downtown. Napa/Sonoma or Big Sur if you have a car and two extra nights. Summer can be the coldest ‘summer’ Canadians ever packed for.",
+    fr: "San Francisco : collines, brouillard, tables. Directs YVR/YYZ. Marche + transit. Napa ou Big Sur si vous avez une auto. Juillet peut demander une veste.",
+  },
+  {
+    id: "sandiego",
+    codes: ["SAN"],
+    names: ["san diego", "la jolla", "coronado"],
+    tags: ["usa", "beach", "california", "family", "mild"],
+    region: "United States · San Diego",
+    en: "San Diego: the easy California. Beaches, zoo, tacos, almost-always-nice weather. Great with kids. Directs from several Canadian cities. Skip a car if you stay near the water and use the trolley; rent one for La Jolla to Coronado hopping.",
+    fr: "San Diego : la Californie facile. Plages, zoo, tacos, climat doux. Super en famille. Auto utile pour sauter d’une plage à l’autre.",
+  },
+  {
+    id: "phoenix",
+    codes: ["PHX", "PSP"],
+    names: ["phoenix", "scottsdale", "palm springs", "arizona", "desert"],
+    tags: ["usa", "sun", "winter", "golf", "desert", "spa"],
+    region: "United States · Desert Southwest",
+    en: "Phoenix/Scottsdale and Palm Springs: winter-sun for Canadians who want dry heat, pools, golf, cactus sunsets. Directs in season. Summer is a furnace — go Nov–April. Hydrate, SPF, a hat. A car makes the desert actually usable.",
+    fr: "Phoenix/Scottsdale et Palm Springs : soleil d’hiver sec, piscines, golf. Directs en saison. L’été brûle — nov.–avril. Auto utile. Hydratez-vous.",
+  },
+  {
+    id: "seattle",
+    codes: ["SEA"],
+    names: ["seattle", "washington", "pike place"],
+    tags: ["usa", "city", "coffee", "weekend", "pacific"],
+    region: "United States · Pacific Northwest",
+    en: "Seattle: coffee, Pike Place, ferries, mountains on a clear day. Easy hop from YVR (even the train). Pack layers; drizzle is a personality. Great 3-night city with a day on the water.",
+    fr: "Seattle : café, Pike Place, traversiers. Hop facile depuis YVR. Couches — la bruine a du caractère. Idéal 3 nuits.",
+  },
+  {
+    id: "boston",
+    codes: ["BOS"],
+    names: ["boston", "new england", "massachusetts"],
+    tags: ["usa", "city", "history", "fall", "weekend", "food"],
+    region: "United States · New England",
+    en: "Boston: walkable history, Fenway, oysters, fall colour in New England. Directs from YYZ/YUL. October is chef’s-kiss. A car only if you’re leaving the city for Maine or Vermont.",
+    fr: "Boston : histoire à pied, Fenway, huîtres, couleurs d’octobre. Directs YYZ/YUL. Auto seulement pour le Maine ou le Vermont.",
+  },
+  {
+    id: "nashville",
+    codes: ["BNA"],
+    names: ["nashville", "tennessee", "music city"],
+    tags: ["usa", "music", "weekend", "food", "honkytonk"],
+    region: "United States · Nashville",
+    en: "Nashville: live music that isn’t a tourist trap if you wander off Broadway, hot chicken, a fun long weekend from Toronto. Directs. Comfortable shoes — you’ll stand more than you sit. Skip August humidity if you can.",
+    fr: "Nashville : musique live, poulet piquant, belle fin de semaine depuis Toronto. Directs. Chaussures confort. Évitez l’humidité d’août.",
+  },
+  {
+    id: "neworleans",
+    codes: ["MSY"],
+    names: ["new orleans", "nola", "louisiana"],
+    tags: ["usa", "food", "music", "weekend", "culture"],
+    region: "United States · New Orleans",
+    en: "New Orleans: food as a personality, brass in the street, a slower stroll than you’d think. Directs from some Canadian hubs. Shoulder seasons beat summer storms. The French Quarter is a scene; Garden District and Bywater have the soul.",
+    fr: "Nouvelle-Orléans : bouffe, cuivres, flânerie. Les épaules battent les orages d’été. French Quarter pour le spectacle, Garden District pour l’âme.",
+  },
+  {
+    id: "dublin",
+    codes: ["DUB"],
+    names: ["dublin", "ireland", "irlande", "galway", "cork"],
+    tags: ["europe", "pub", "green", "shoulder", "friendly"],
+    region: "Ireland",
+    en: "Dublin: pints, literature, a launch pad to the west coast and Cliffs of Moher. Directs from YYZ/YUL in season. Pack rain as a lifestyle. May–June and September are kinder. A car for the countryside; the city is walk + bus.",
+    fr: "Dublin : pintes, lettres, tremplin vers l’ouest. Directs YYZ/YUL. La pluie est un mode de vie. Mai–juin et septembre plus doux. Auto pour la campagne.",
+  },
+  {
+    id: "berlin",
+    codes: ["BER"],
+    names: ["berlin", "germany", "allemagne"],
+    tags: ["europe", "city", "history", "nightlife", "value"],
+    region: "Germany",
+    en: "Berlin: history you can walk, nightlife that starts late, value vs Paris. Directs or one-stop from Canada. Summer is festival season; Christmas markets in December. Transit is excellent — skip the car. Pair with Prague or a train to Munich if you have 10 days.",
+    fr: "Berlin : histoire à pied, nuits tardives, meilleur rapport que Paris. Transit excellent. Marchés de Noël en décembre. Prague ou Munich en train si vous avez 10 jours.",
+  },
+  {
+    id: "madrid",
+    codes: ["MAD"],
+    names: ["madrid", "spain", "espagne", "toledo"],
+    tags: ["europe", "city", "food", "art", "late"],
+    region: "Spain · Madrid",
+    en: "Madrid: art (Prado/Reina Sofía), late dinners, a more Spanish Spain than Barcelona’s postcard. Hot in August; May and October glow. Day trip to Toledo or Segovia. Easy high-speed to the rest of the country.",
+    fr: "Madrid : musées, dîners tardifs, l’Espagne de l’intérieur. Août brûle; mai et octobre rayonnent. Tolède ou Ségovie en journée.",
+  },
+  {
+    id: "prague",
+    codes: ["PRG"],
+    names: ["prague", "prague", "czech", "tchèquie"],
+    tags: ["europe", "city", "value", "architecture", "beer"],
+    region: "Czechia",
+    en: "Prague: fairy-tale core, serious beer, kinder prices than Western Europe. One-stop from Canada. Christmas and Easter are magic and crowded. Walk the castle at opening time. Pickpockets on Charles Bridge — zippers, not paranoia.",
+    fr: "Prague : cœur de conte, bière, prix plus doux. Noël et Pâques magiques et bondés. Le pont Charles, fermetures éclair, pas de panique.",
+  },
+  {
+    id: "vienna",
+    codes: ["VIE"],
+    names: ["vienna", "vienne", "austria", "autriche"],
+    tags: ["europe", "city", "cafe", "music", "christmas"],
+    region: "Austria",
+    en: "Vienna: cafés, palaces, music, Christmas markets that actually deliver. One-stop from Canada. Shoulder spring and late fall. Day trip to Bratislava or a train to Budapest. Dress a notch nicer for the opera — even the standing room.",
+    fr: "Vienne : cafés, palais, musique, marchés de Noël. Printemps et fin d’automne. Bratislava ou Budapest en train. Un cran plus chic pour l’opéra.",
+  },
+  {
+    id: "copenhagen",
+    codes: ["CPH"],
+    names: ["copenhagen", "copenhague", "denmark", "danemark"],
+    tags: ["europe", "design", "bikes", "hygge", "food"],
+    region: "Denmark",
+    en: "Copenhagen: bikes, design, cardamom buns, hygge that isn’t a cliché when it rains. Summer has light for days; winter is candle season. Walk + bike + metro. Pair with a Swedish train hop if you’re curious.",
+    fr: "Copenhague : vélos, design, brioches, hygge quand il pleut. Lumière l’été, bougies l’hiver. Marche + vélo + métro.",
+  },
+  {
+    id: "singapore",
+    codes: ["SIN"],
+    names: ["singapore", "singapour"],
+    tags: ["asia", "hub", "food", "clean", "stopover"],
+    region: "Singapore",
+    en: "Singapore: the world’s most useful long-haul pause — hawker food, gardens, a pool on a roof. Hot and humid always. Changi is a destination. Great 3-night stop between Canada and Australia/Bali. Tap water’s fine; chilli is a food group.",
+    fr: "Singapour : la pause long-courrier parfaite — hawker, jardins, piscine sur le toit. Chaud toujours. Changi est une destination. 3 nuits vers l’Australie ou Bali.",
+  },
+  {
+    id: "hongkong",
+    codes: ["HKG"],
+    names: ["hong kong", "hongkong"],
+    tags: ["asia", "city", "food", "skyline", "stopover"],
+    region: "Hong Kong",
+    en: "Hong Kong: skyline ferry, dim sum, hikes above the towers. A vivid 4-night city or a stop toward Southeast Asia. MTR is a dream. Summer is muggy; Nov–March is the window. Check current entry rules — they move.",
+    fr: "Hong Kong : traversier, dim sum, rando au-dessus des tours. 4 nuits ou escale vers l’Asie du Sud-Est. Nov.–mars plus doux. Vérifiez l’entrée — ça bouge.",
+  },
+  {
+    id: "sydney",
+    codes: ["SYD", "MEL"],
+    names: ["sydney", "australia", "australie", "melbourne"],
+    tags: ["oceania", "longhaul", "beach", "city", "coffee"],
+    region: "Australia",
+    en: "Sydney: harbour, beaches, a long-haul from Canada (usually via the Pacific). Melbourne is the food-and-culture sibling. Canadian winter = their summer — December–February is peak beach. Jet lag is real; plan a quiet day one. YVR is the kinder hop.",
+    fr: "Sydney : baie, plages, long-courrier (souvent via le Pacifique). Melbourne pour la bouffe. Notre hiver = leur été. YVR est le saut le plus doux. Jour 1 calme pour le décalage.",
+  },
+  {
+    id: "auckland",
+    codes: ["AKL"],
+    names: ["auckland", "new zealand", "nouvelle-zélande", "queenstown", "wellington"],
+    tags: ["oceania", "nature", "road", "longhaul", "adventure"],
+    region: "New Zealand",
+    en: "New Zealand: Auckland as gateway, then a campervan or flights to Wellington/Queenstown. Lord-of-the-Rings landscapes, serious coffee, changeable weather. Their summer is our winter. Two islands, two weeks if you can. Drive on the left.",
+    fr: "Nouvelle-Zélande : Auckland en porte, puis van ou vols vers Wellington/Queenstown. Paysages, café, météo changeante. Leur été = notre hiver. Deux îles, deux semaines. Conduite à gauche.",
+  },
+  {
+    id: "lima",
+    codes: ["LIM", "CUZ"],
+    names: ["lima", "peru", "pérou", "cusco", "machu picchu"],
+    tags: ["south america", "food", "andes", "altitude", "culture"],
+    region: "Peru",
+    en: "Lima: one of the world’s great food cities, then Andes if you’re going to Cusco/Machu Picchu. Altitude is not a personality test — slow day one in Cusco, coca tea, hydrate. Canada usually one-stops. Shoulder April–May and Sept–Oct.",
+    fr: "Lima : l’une des grandes tables du monde, puis les Andes. L’altitude, on y va doucement. Un stop depuis le Canada. Épaules avril–mai et sept.–oct.",
+  },
+  {
+    id: "riodejaneiro",
+    codes: ["GIG", "GRU"],
+    names: ["rio", "rio de janeiro", "brazil", "brésil", "sao paulo"],
+    tags: ["south america", "beach", "carnival", "city", "music"],
+    region: "Brazil",
+    en: "Rio: beaches, hills, music, Carnival if you book early. São Paulo is the food-and-business giant. Canada is a long one-stop. Portuguese helps; smiles help more. Use official taxis/apps. Southern summer is Dec–March.",
+    fr: "Rio : plages, collines, musique, Carnaval si vous réservez tôt. São Paulo pour la table. Un long stop depuis le Canada. Taxis officiels.",
+  },
+  {
+    id: "marrakech",
+    codes: ["RAK", "CMN"],
+    names: ["marrakech", "morocco", "maroc", "casablanca", "fez"],
+    tags: ["africa", "medina", "food", "desert", "culture"],
+    region: "Morocco",
+    en: "Marrakech: riads, souks, orange-blossom nights, a launch to the Atlas or the desert. Modest dress in medinas. Spring and fall beat summer heat. Canada one-stops via Europe. Bargain with humour; drink bottled water.",
+    fr: "Marrakech : riads, souks, nuits à la fleur d’oranger. Printemps et automne. Un stop via l’Europe. Eau embouteillée, marchandage avec le sourire.",
+  },
+  {
+    id: "capetown",
+    codes: ["CPT", "JNB"],
+    names: ["cape town", "south africa", "afrique du sud", "johannesburg", "kruger"],
+    tags: ["africa", "wine", "nature", "longhaul", "safari"],
+    region: "South Africa",
+    en: "Cape Town: mountain, two oceans, wine, a safari add-on via Johannesburg or a nearby reserve. Long-haul from Canada. Their summer is our winter. Load a maps offline copy; load official safety notes from travel.gc.ca. Wine country needs a designated driver — or a tour.",
+    fr: "Le Cap : montagne, deux océans, vin, safari en extra. Long-courrier. Leur été = notre hiver. Notes de travel.gc.ca. Le vignoble se fait en tournée.",
+  },
+  {
+    id: "cairo",
+    codes: ["CAI"],
+    names: ["cairo", "egypt", "égypte", "luxor", "giza"],
+    tags: ["africa", "history", "nile", "culture", "heat"],
+    region: "Egypt",
+    en: "Cairo: Giza at opening time, museum, then a Nile hop to Luxor if you can. Heat is a character in summer. Licensed guides beat hustle. Modest dress at religious sites. Confirm entry rules; they move. Shoulder Nov–Feb is the classic.",
+    fr: "Le Caire : Gizeh à l’ouverture, musée, puis Louxor si possible. L’été brûle. Guides licenciés. Nov.–fév. classique. Vérifiez l’entrée.",
+  },
+  {
+    id: "istanbul",
+    codes: ["IST", "SAW"],
+    names: ["istanbul", "turkey", "türkiye", "turquie"],
+    tags: ["europe", "asia", "food", "history", "hub"],
+    region: "Türkiye",
+    en: "Istanbul: two continents, breakfast that lasts, bazaars, a hub that can be the trip. Directs or one-stop from Canada. Shoulder April–June and September. Tram + ferry > taxi in traffic. Modest dress for mosques (shawls are often lent).",
+    fr: "Istanbul : deux continents, petit-déj. de roi, bazars. Épaules avril–juin et septembre. Tram + traversier. Tenue plus couverte pour les mosquées.",
+  },
+  {
+    id: "saigon",
+    codes: ["SGN", "HAN"],
+    names: ["ho chi minh", "saigon", "vietnam", "hanoi", "hanoï"],
+    tags: ["asia", "food", "value", "culture", "scooter"],
+    region: "Vietnam",
+    en: "Vietnam: Hanoi for character, Hoi An for lanterns, Saigon for energy, the food will ruin you for sandwiches at home. Long-haul from Canada. Shoulder travel beats peak heat and rain depending on north vs south (seasons flip). Grab an eSIM before you land.",
+    fr: "Vietnam : Hanoï du caractère, Hoi An des lanternes, Saigon du rythme. La bouffe gâche les sandwichs d’ici. Long-courrier. Une eSIM avant d’atterrir.",
+  },
+  {
+    id: "manila",
+    codes: ["MNL"],
+    names: ["manila", "manille", "philippines", "cebu", "palawan"],
+    tags: ["asia", "islands", "family", "beach", "value"],
+    region: "Philippines",
+    en: "Manila: the gateway; the trip is islands (Cebu, Palawan, Boracay). Direct-ish long-hauls from YVR sometimes. Traffic in Manila is a boss fight — land and connect same day if you can. Typhoon watch roughly June–November.",
+    fr: "Manille : la porte; le voyage, ce sont les îles (Cebu, Palawan). Trafic de boss final — correspondance le jour même si possible. Typhons ~juin–nov.",
+  },
+  {
+    id: "delhi",
+    codes: ["DEL", "BOM"],
+    names: ["delhi", "india", "inde", "mumbai", "jaipur", "goa"],
+    tags: ["asia", "culture", "food", "colour", "longhaul"],
+    region: "India",
+    en: "Delhi: chaos with a heartbeat, a Golden Triangle with Jaipur and Agra if it’s a first trip. Mumbai is the movie. Long-haul from Canada. Stomach caution is not snobbery; bottled water, busy stalls. Oct–March is the classic north India window.",
+    fr: "Delhi : chaos vivant, Triangle d’or avec Jaipur et Agra. Mumbai pour le cinéma. Long-courrier. Eau embouteillée. Oct.–mars pour le nord.",
+  },
+  {
+    id: "nassau",
+    codes: ["NAS", "BGI", "SXM", "CUR"],
+    names: ["bahamas", "nassau", "barbados", "st maarten", "curacao", "caribbean"],
+    tags: ["caribbean", "beach", "island", "sun", "winter"],
+    region: "Caribbean islands",
+    en: "Island-hop thinking: Bahamas for a quick hop from the east, Barbados for a polished Caribbean, Curaçao/Aruba south of the hurricane belt, St. Maarten if you like a split-island day. Directs vary by season from YYZ/YUL. Reef-safe sunscreen; cash for taxis.",
+    fr: "Îles : Bahamas en hop rapide, Barbade plus chic, Curaçao/Aruba hors ouragans. Directs selon la saison depuis YYZ/YUL.",
+  },
+  {
+    id: "belize",
+    codes: ["BZE", "PTY"],
+    names: ["belize", "panama", "panama city", "bocas", "ambergris"],
+    tags: ["central america", "reef", "jungle", "canal", "adventure"],
+    region: "Central America · Belize & Panama",
+    en: "Belize: reef, jungle, English spoken, a calmer Caribbean. Panama: canal, Casco Viejo, a hub to South America, Bocas if you want hammocks. Both are one-stop from most of Canada. Pack reef-safe lotion and bug spray for dusk.",
+    fr: "Belize : récif, jungle, anglais parlé. Panama : canal, Casco Viejo, hub vers le sud. Un stop depuis le Canada. Crème récif-safe et anti-moustiques.",
+  },
+  {
+    id: "montreal",
+    codes: ["YUL", "YQB"],
+    names: ["montreal", "montréal", "quebec city", "québec"],
+    tags: ["canada", "city", "food", "festival", "winter", "weekend"],
+    region: "Canada · Quebec",
+    en: "Montréal: terrasses, festivals, the mountain, a European weekend without the jet lag. Québec City for stone walls and winter magic. Summer is alive; February is carnival and poutine as survival. Fly or train from Toronto. Pack a real winter coat if it’s actually winter.",
+    fr: "Montréal : terrasses, festivals, la montagne. Québec pour les fortifs et l’hiver magique. Train depuis Toronto. Vrai manteau si c’est vraiment l’hiver.",
+  },
 ];
 
 const TOPICS: Topic[] = [
   {
     id: "airstay",
     tags: ["airstay", "how", "fee", "frais", "booking", "compare", "cad", "canadian", "aria", "who"],
-    en: "AIRSTAY is a Canadian site for flights, hotels and cars — priced in CAD, with no booking fee from us. Made by Canadians, for Canadians. Search here, then finish with the airline, hotel or car company you choose. Packages are coming soon. I’m Aria, your AI travel expert in the corner.",
-    fr: "AIRSTAY, c’est un site canadien pour vols, hôtels et autos — en $ CA, sans frais de réservation de notre part. Par des Canadiens, pour des Canadiens. Vous cherchez ici, vous terminez chez la marque choisie. Les forfaits arrivent. Je suis Aria, l’experte voyage IA.",
+    en: "AIRSTAY is a Canadian site for flights, hotels, cars and eSIMs — priced in CAD, with no booking fee from us. Made by Canadians, for Canadians. Search here, then finish with the airline, hotel, car company or eSIM brand you choose. Hand-picked AIRSTAY packages are coming soon; until then, partner vacation packages live on /packages. I’m Aria, your AI travel expert in the corner.",
+    fr: "AIRSTAY, c’est un site canadien pour vols, hôtels, autos et eSIMs — en $ CA, sans frais de réservation de notre part. Par des Canadiens, pour des Canadiens. Vous cherchez ici, vous terminez chez la marque choisie. Les forfaits AIRSTAY arrivent; en attendant, les forfaits partenaires sont sur /packages. Je suis Aria, l’experte voyage IA.",
   },
   {
     id: "seasons",
@@ -396,6 +666,78 @@ const TOPICS: Topic[] = [
     en: "Need a nudge? Winter: Cancún or Vallarta. Shoulder: Lisbon or London. Long-haul appetite: Tokyo via Vancouver. Mountains: Banff from Calgary. I’ll open the search — you just say the mood.",
     fr: "Un coup de pouce ? Hiver : Cancún ou Vallarta. Épaule : Lisbonne ou Londres. Long-courrier : Tokyo via Vancouver. Montagne : Banff depuis Calgary. Je lance la recherche.",
   },
+  {
+    id: "esim",
+    tags: ["esim", "e-sim", "sim", "data", "airalo", "wifi", "roaming", "cell"],
+    en: "eSIM on AIRSTAY: pick the destination, compare CAD plans, finish with Airalo. Install before you leave Wi-Fi at home. Keep your Canadian number on the physical SIM if you still need it. Europe, Mexico, US, Asia — I’ve got a page for that: /esim.",
+    fr: "eSIM sur AIRSTAY : destination, forfaits en $ CA, vous terminez chez Airalo. Installez avant de quitter le Wi-Fi. L’Europe, le Mexique, les É-U, l’Asie — page /esim.",
+  },
+  {
+    id: "jetlag",
+    tags: ["jet lag", "jetlag", "sleep", "red-eye", "overnight", "décalage"],
+    en: "Eastbound (Canada → Europe) is the mean one: morning light on arrival, caffeine with breakfast, no 3pm nap if you can help it. Westbound is gentler. Hydrate, skip the third movie, set your watch at takeoff. For Japan/Australia, a West Coast hop (YVR) splits the pain.",
+    fr: "Vers l’est (Canada → Europe), c’est le dur : lumière du matin, café au petit-déj., pas de sieste à 15 h. Vers l’ouest, plus doux. Hydratez-vous, montre à l’heure du dest dès le décollage.",
+  },
+  {
+    id: "airport",
+    tags: ["airport", "catsa", "tsa", "security", "layover", "connection", "lounge", "aéroport"],
+    en: "Canada: CATSA, liquids 100ml, arrive 2h domestic / 3h US or international. Nexus/TSA PreCheck is a personality transplant. Tight layover under 90 minutes on a different terminal is a gamble. Lounge if the wait is 3+ hours or you need a shower after a redeye.",
+    fr: "Canada : CATSA, liquides 100 ml, 2 h intérieur / 3 h É-U ou international. Nexus change une vie. Correspondance < 90 min entre terminaux = pari. Salon si 3 h d’attente.",
+  },
+  {
+    id: "insurance",
+    tags: ["insurance", "assurance", "travel insurance", "medical", "cancel"],
+    en: "Travel medical insurance is the unsexy essential — provincial health plans are shy abroad. Cancel-for-any-reason costs more and has rules. Credit-card coverage often needs the full trip charged to the card; read it. I’m not selling a policy; I’m nagging you to have one.",
+    fr: "L’assurance médicale voyage, c’est l’essentiel sans glamour — la RAMQ/OHIP est timide à l’étranger. Les cartes couvrent parfois, avec des astérisques. Je ne vends rien; je râle pour que vous en ayez une.",
+  },
+  {
+    id: "solo",
+    tags: ["solo", "alone", "myself", "seule", "seul", "independent"],
+    en: "Solo: city trips and well-run group day tours beat empty all-inclusives. Sit at bars, take walking tours day one, share tables. Lisbon, Tokyo, London, Mexico City, Montreal are easy. Tell someone your plan. I’ve got you — and the search buttons.",
+    fr: "Solo : les villes et les visites du jour battent les tout-inclus vides. Comptoirs, walking tour le jour 1. Lisbonne, Tokyo, Londres, Mexico, Montréal. Prévenez quelqu’un de votre plan.",
+  },
+  {
+    id: "whenbook",
+    tags: ["when to book", "book now", "how early", "avance", "réserver", "tuesday"],
+    en: "There’s no magic Tuesday anymore. Sun in winter: book as soon as March break/Christmas is a maybe. Europe summer: early spring. Shoulder and mid-week often win. Set a fare alert energy — search on AIRSTAY, don’t refresh yourself into a worse price.",
+    fr: "Plus de mardi magique. Soleil d’hiver : dès que relâche/Noël est un peut-être. Été en Europe : tôt au printemps. Épaules et mi-semaine. Cherchez sur AIRSTAY plutôt que de vous rafraîchir le prix à la hausse.",
+  },
+  {
+    id: "plugs",
+    tags: ["plug", "adapter", "adaptateur", "voltage", "charger", "outlet"],
+    en: "Canada/US: same plugs. Mexico/Caribbean: usually the same, pack a cheap adapter just in case. UK: chunky G. EU: C/F. Japan: two-pin like us, sometimes without the ground. A universal adapter + a USB power strip beats a suitcase of bricks.",
+    fr: "Canada/É-U : mêmes prises. Mexique/Caraïbes : souvent pareil. Royaume-Uni : type G. UE : C/F. Japon : deux broches. Un adaptateur universel + une barrette USB, c’est la paix.",
+  },
+  {
+    id: "health",
+    tags: ["water", "eau", "mosquito", "moustique", "altitude", "vaccine", "vaccin", "pharmacy"],
+    en: "Tap water: fine in most of Western Europe, Japan, Singapore; bottled in much of Mexico, Caribbean, North Africa, South Asia. Mosquito evenings in the tropics — cover up at dusk. Altitude (Mexico City, Cusco, Andes): slow day one. Vaccines: talk to a travel clinic, not me; I’m not your doctor.",
+    fr: "Eau du robinet : OK Europe de l’Ouest, Japon, Singapour; bouteille au Mexique, Caraïbes, Afrique du Nord, Asie du Sud. Moustiques au crépuscule. Altitude : jour 1 lent. Vaccins : clinique voyage, pas moi.",
+  },
+  {
+    id: "tipping",
+    tags: ["tip", "tipping", "pourboire", "gratuity", "service"],
+    en: "US: 18–22% at restaurants still the norm. Mexico: 10–15% if service isn’t included. Europe: service often included; rounding up is polite, 10% for wow. Japan: don’t tip. All-inclusives: small cash for housekeeping and bartenders still goes a long way.",
+    fr: "É-U : 18–22 %. Mexique : 10–15 % si non inclus. Europe : service souvent inclus, arrondir. Japon : pas de pourboire. Tout-inclus : un peu de cash ménage et bar.",
+  },
+  {
+    id: "ski",
+    tags: ["ski", "snowboard", "whistler", "banff", "aspen", "powder"],
+    en: "Ski from Canada: Whistler via YVR, Banff/Lake Louise via YYC, Tremblant from YUL/YOW. US: Colorado and Utah if you want the bigger dumps. Book lodging early for Christmas and March break. Pack layers, not a fashion show. A car at Banff helps; Whistler has buses.",
+    fr: "Ski : Whistler via YVR, Banff via YYC, Tremblant via YUL. Colorado/Utah pour la poudre US. Relâche et Noël partent vite. Couches. Auto utile à Banff.",
+  },
+  {
+    id: "scuba",
+    tags: ["scuba", "snorkel", "dive", "reef", "cenote"],
+    en: "Easy snorkel: Isla Mujeres, Belize barrier, Hawaiʻi, Aruba. Divers: Cozumel, Raja Ampat if you’re going far, Red Sea if the routing works. Reef-safe sunscreen is not optional. Certify before you fly if you can — pool time at home beats a rushed resort course.",
+    fr: "Snorkel facile : Isla Mujeres, Belize, Hawaï, Aruba. Plongeurs : Cozumel, mer Rouge. Crème récif-safe. Certifiez chez vous si possible.",
+  },
+  {
+    id: "accessibility",
+    tags: ["wheelchair", "mobility", "accessible", "disability", "fauteuil"],
+    en: "Ask before you book: step-free rooms, roll-in showers, airport assistance (request 48h+ ahead). Newer city hotels and big US/European airports are generally kinder than cobbled old towns and overwater bungalows. Direct flights reduce connection stress. Flag it in the search notes to yourself — I’ll still send you to the right AIRSTAY page.",
+    fr: "Demandez avant : chambre sans marche, douche à l’italienne, assistance aéroport (48 h+). Les aéroports récents sont plus doux que les vieilles pierres. Les directs réduisent le stress.",
+  },
 ];
 
 function norm(s: string) {
@@ -423,7 +765,7 @@ function score(hay: string[], qTokens: string[]) {
   return n;
 }
 
-export function retrieveGuides(message: string, limit = 3): Guide[] {
+export function retrieveGuides(message: string, limit = 4): Guide[] {
   const q = tokens(message);
   const ranked = GUIDES.map((g) => {
     const nameScore = score([...g.codes, ...g.names], q);
@@ -431,7 +773,7 @@ export function retrieveGuides(message: string, limit = 3): Guide[] {
     return { g, nameScore, s: nameScore * 4 + tagScore };
   }).sort((a, b) => b.s - a.s);
   const named = ranked.filter((x) => x.nameScore > 0);
-  const pool = named.length ? named : ranked.filter((x) => x.s >= 6);
+  const pool = named.length ? named : ranked.filter((x) => x.s >= 4);
   return pool.slice(0, limit).map((x) => x.g);
 }
 
@@ -444,7 +786,7 @@ export function retrieveTopics(message: string): Topic[] {
     const home = TOPICS.find((t) => t.id === "airstay");
     if (home) ranked.unshift({ t: home, s: 99 });
   }
-  return ranked.slice(0, 3).map((x) => x.t);
+  return ranked.slice(0, 5).map((x) => x.t);
 }
 
 export function knowledgeBlock(message: string, locale: Locale) {
@@ -462,10 +804,10 @@ export function fallbackAria(message: string, locale: Locale) {
   const q = message.trim();
   const low = q.toLowerCase();
 
-  if (/^(hi|hey|hello|yo|sup|salut|bonjour|allo)\b/i.test(low) && low.length < 24) {
+  if (/^(hi|hey|hello|yo|sup|salut|bonjour|allo|hey there)\b/i.test(low) && low.length < 28) {
     return fr
-      ? "Salut — Aria, experte voyage AIRSTAY. Une plage, une ville, une valise trop lourde, ou juste « sors-moi d’ici » ?"
-      : "Hey — Aria, AIRSTAY’s travel expert. A beach, a city, a packing spiral, or just ‘get me out of here’?";
+      ? "Salut — Aria, experte voyage AIRSTAY. Une plage, une ville, une valise trop lourde, une eSIM, ou juste « sors-moi d’ici » ?"
+      : "Hey — Aria, AIRSTAY’s travel expert. A beach, a city, a packing spiral, an eSIM, or just ‘get me out of here’?";
   }
   if (/^(thanks|thank you|merci|ty|cheers)\b/i.test(low)) {
     return fr
@@ -477,29 +819,41 @@ export function fallbackAria(message: string, locale: Locale) {
   }
   if (/who are you|t.?.es qui|c.?est qui|what can you|que peux/i.test(low)) {
     return fr
-      ? "Je suis Aria avec AIRSTAY — experte voyage IA. Plages, villes, valises, visas en gros, et je t’envoie au bon endroit sur le site pour chercher. Je ne réserve pas à ta place : je t’oriente, tu compares en $ CA, sans frais de notre part."
-      : "I’m Aria with AIRSTAY — an AI travel expert. Beaches, cities, packing, visas at a high level, and I’ll send you to the right place on the site to search. I don’t book for you: I aim, you compare in CAD, no fee from us.";
+      ? "Je suis Aria avec AIRSTAY — experte voyage IA. Plages, villes, valises, visas en gros, eSIM, forfaits partenaires, et je t’envoie au bon endroit sur le site. Je ne réserve pas : je t’oriente, tu compares en $ CA, sans frais de notre part."
+      : "I’m Aria with AIRSTAY — an AI travel expert. Beaches, cities, packing, visas at a high level, eSIMs, partner packages, and I’ll send you to the right page. I don’t book: I aim, you compare in CAD, no fee from us.";
   }
   if (/\b(joke|blague|funny)\b/i.test(low)) {
     return fr
       ? "Pourquoi les avions n’ont pas de valise émotionnelle ? Parce que le décalage horaire suffit. Allez, une vraie destination maintenant ?"
       : "Why don’t planes carry emotional baggage? Jet lag already does. Okay — a real destination now?";
   }
+  if (/\b(esim|e-sim|airalo|roaming|data plan)\b/i.test(low)) {
+    return fr
+      ? "eSIM : on compare les forfaits en $ CA, vous terminez chez Airalo. Installez-la avant de quitter le Wi-Fi à la maison. Dites-moi le pays, je vous envoie à la page."
+      : "eSIM: compare CAD plans here, finish with Airalo. Install it before you leave home Wi-Fi. Tell me the country and I’ll open the page.";
+  }
+  if (/\b(package|forfait|all.?inclusive|tout.?inclus|expedia)\b/i.test(low) && !retrieveGuides(message, 1).length) {
+    return fr
+      ? "Les forfaits AIRSTAY choisis à la main arrivent bientôt. En attendant, les forfaits partenaires (Expedia) sont sur la page Forfaits — et vous pouvez aussi coupler un vol et un hôtel vous-même."
+      : "Hand-picked AIRSTAY packages are coming soon. Until then, partner vacation packages (Expedia) live on the Packages page — or pair a flight and a hotel yourself.";
+  }
 
-  const guides = retrieveGuides(message, 1);
+  const guides = retrieveGuides(message, 2);
   const topics = retrieveTopics(message);
   const parts: string[] = [];
   if (guides.length) parts.push(guides.map((g) => (fr ? g.fr : g.en)).join("\n\n"));
   const extra = topics.filter((t) => {
     if (t.id === "airstay" || t.id === "chat") return !guides.length;
-    if (guides.length) return t.id === "seasons" && /when|best time|saison|month|hiver|summer|winter|february|février/i.test(message);
+    if (guides.length) {
+      return ["seasons", "pack", "flights", "esim", "jetlag", "visa"].includes(t.id);
+    }
     return t.id !== "chat";
   });
-  if (extra.length) parts.push(extra.map((t) => (fr ? t.fr : t.en)).join("\n\n"));
+  if (extra.length) parts.push(extra.slice(0, 2).map((t) => (fr ? t.fr : t.en)).join("\n\n"));
   if (!parts.length) {
     return fr
-      ? "Dis-moi une ville, une saison, un budget, un « j’ai besoin de chaleur » — ou ouvre un vol, un hôtel, une auto. Je t’y amène."
-      : "Give me a city, a season, a budget, a ‘I just need heat’ — or I’ll open flights, hotels, or cars for you.";
+      ? "Dis-moi une ville, une saison, un budget, un « j’ai besoin de chaleur » — ou j’ouvre vols, hôtels, autos, eSIM, forfaits. Je t’y amène."
+      : "Give me a city, a season, a budget, a ‘I just need heat’ — or I’ll open flights, hotels, cars, eSIMs, or packages. I’ve got you.";
   }
   const closer = fr
     ? "Tape un bouton si tu veux chercher ça tout de suite — ou dis-moi la vibe."

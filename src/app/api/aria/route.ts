@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
   const raw = (Array.isArray(body.messages) ? body.messages : []) as ChatMsg[];
   const messages = raw
     .filter((m) => m && (m.role === "user" || m.role === "assistant") && typeof m.content === "string")
-    .slice(-16)
+    .slice(-20)
     .map((m) => ({ role: m.role, content: String(m.content).slice(0, 4000) }));
   const last = [...messages].reverse().find((m) => m.role === "user")?.content || "";
   if (!last.trim()) return jsonError("Say something and I’ll take it from there.", 400);

@@ -48,7 +48,7 @@ export function ExpediaOffer() {
             </span>
           </div>
         </a>
-        <div className="grid items-center gap-4 bg-mist/70 px-4 py-5 sm:px-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,45rem)]">
+        <div className="grid items-center gap-4 bg-mist/70 px-4 py-5 sm:px-8 lg:grid-cols-[minmax(16rem,20rem)_minmax(0,1fr)]">
           <div>
             <p className="text-[10px] font-black uppercase tracking-[0.18em] text-navy/40">{m.ad.kicker}</p>
             <h3 className="mt-1 text-lg font-extrabold text-navy">{m.ad.title}</h3>
@@ -63,10 +63,12 @@ export function ExpediaOffer() {
               <ExternalLink className="h-4 w-4" />
             </a>
           </div>
-          <div className="overflow-hidden rounded-2xl bg-white p-2 shadow-lift ring-2 ring-sky">
-            <div className="eg-leaderboard-fit">
-              <div className="eg-leaderboard-inner">
-                <ExpediaPackageBanner layout="leaderboard" />
+          <div className="flex min-w-0 justify-center">
+            <div className="w-full max-w-[728px] overflow-hidden rounded-2xl bg-white p-1.5 shadow-lift ring-2 ring-sky sm:p-2">
+              <div className="eg-leaderboard-fit">
+                <div className="eg-leaderboard-inner">
+                  <ExpediaPackageBanner layout="leaderboard" />
+                </div>
               </div>
             </div>
           </div>

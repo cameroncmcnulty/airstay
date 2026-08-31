@@ -153,16 +153,20 @@ header {
 
 .eg-leaderboard-fit {
   container-type: inline-size;
+  position: relative;
   width: 100%;
   height: calc(90px * min(1, 100cqi / 728px));
   overflow: hidden;
 }
 
 .eg-leaderboard-fit .eg-leaderboard-inner {
+  position: absolute;
+  left: 50%;
+  top: 50%;
   width: 728px;
   height: 90px;
-  transform-origin: top left;
-  transform: scale(min(1, calc(100cqi / 728px)));
+  transform: translate(-50%, -50%) scale(min(1, calc(100cqi / 728px)));
+  transform-origin: center center;
 }
 
 .eg-mrec-fit {

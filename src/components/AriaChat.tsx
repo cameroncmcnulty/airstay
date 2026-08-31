@@ -7,7 +7,7 @@ import { parseFence, type AriaAction } from "@/lib/aria-actions";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
-const STORE = "airstay.aria.v4";
+const STORE = "airstay.aria.v5";
 
 export function AriaChat() {
   const { m, locale, settings } = useApp();

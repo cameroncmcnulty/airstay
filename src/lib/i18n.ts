@@ -403,7 +403,7 @@ export const t = {
       name: "Aria",
       title: "AIRSTAY · AI Travel Expert",
       greeting:
-        "Hey, I’m Aria with AIRSTAY — an AI Travel Expert. Most popular beaches, questions about cities or what to pack, obtaining visas, or simply how the site works… I’ve got you covered. Where should we start?",
+        "Hey — Aria, AIRSTAY’s AI travel expert. I live for the window seat, the first taco, and getting Canadians to the right page before the fare hops. Beach, city, packing crisis, visa panic, eSIM, or just ‘surprise me’ — I’m in.",
       placeholder: "Ask Aria anything…",
       send: "Send",
       open: "Chat with Aria",
@@ -411,7 +411,16 @@ export const t = {
       reset: "New chat",
       thinking: "Aria is thinking…",
       error: "I lost the signal for a second. Try that again.",
-      chips: ["Weekend in Cancún", "Surprise me", "Best time for Japan", "How AIRSTAY works", "What to pack for Mexico"],
+      chips: [
+        "Weekend in Cancún",
+        "Surprise me",
+        "Best time for Japan",
+        "What to pack for Mexico",
+        "eSIM for Europe",
+        "Lisbon on a budget",
+        "How AIRSTAY works",
+        "Cars in Hawaii",
+      ],
     },
     contact: {
       title: "Contact AIRSTAY",
@@ -842,7 +851,7 @@ export const t = {
       name: "Aria",
       title: "AIRSTAY · Experte voyage IA",
       greeting:
-        "Salut, je suis Aria avec AIRSTAY — experte voyage IA. Plages les plus populaires, questions sur les villes ou quoi mettre dans la valise, visas, ou simplement comment le site fonctionne… je m’en occupe. On commence où ?",
+        "Salut — Aria, experte voyage IA d’AIRSTAY. Place hublot, premier taco, et la bonne page avant que le tarif saute. Plage, ville, valise en crise, visa, eSIM, ou juste « surprends-moi » — je suis là.",
       placeholder: "Demandez à Aria…",
       send: "Envoyer",
       open: "Discuter avec Aria",
@@ -850,7 +859,16 @@ export const t = {
       reset: "Nouveau clavardage",
       thinking: "Aria réfléchit…",
       error: "J’ai perdu le fil une seconde. Réessayez.",
-      chips: ["Week-end à Cancún", "Surprends-moi", "Meilleure saison pour le Japon", "Comment marche AIRSTAY", "Valise pour le Mexique"],
+      chips: [
+        "Week-end à Cancún",
+        "Surprends-moi",
+        "Meilleure saison pour le Japon",
+        "Valise pour le Mexique",
+        "eSIM pour l’Europe",
+        "Lisbonne petit budget",
+        "Comment marche AIRSTAY",
+        "Autos à Hawaï",
+      ],
     },
     contact: {
       title: "Contacter AIRSTAY",
