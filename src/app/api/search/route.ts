@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { paramsToQuery } from "@/lib/deeplinks";
-import { cheapestMonthDeals, searchLive, suggestFlightDates, travelpayoutsCheckouts } from "@/lib/live-search";
+import { cheapestMonthDeals, flexFallbackDates, searchLive, suggestFlightDates, travelpayoutsCheckouts } from "@/lib/live-search";
 import { logSearch } from "@/lib/travel-api/store";
 import { recordEvent } from "@/lib/analytics";
 import { getDestination } from "@/lib/airports";
@@ -29,12 +29,18 @@ export async function GET(req: NextRequest) {
   try {
     const monthDeals =
       q.kind === "flights" && q.flexMonth ? await withTimeout(cheapestMonthDeals(q), 8000, []) : [];
-    if (monthDeals[0] && !req.nextUrl.searchParams.get("depart")) {
-      q = { ...q, depart: monthDeals[0].depart, returnDate: monthDeals[0].returnDate || q.returnDate };
+    if (q.flexMonth && !req.nextUrl.searchParams.get("depart")) {
+      const fallback = flexFallbackDates(q, monthDeals);
+      q = { ...q, depart: fallback.depart, returnDate: fallback.returnDate || q.returnDate };
     }
-    const priced = await searchLive(q);
+    let priced = await searchLive(q);
+    let relaxedDirect = false;
+    if (q.directOnly && priced.length === 0) {
+      priced = await searchLive({ ...q, directOnly: false });
+      relaxedDirect = priced.length > 0;
+    }
     const dateSuggestions =
-      q.kind === "flights" && priced.length === 0 && !q.flexMonth
+      q.kind === "flights" && priced.length === 0
         ? await withTimeout(suggestFlightDates(q), 5000, null)
         : null;
     const boards = travelpayoutsCheckouts(q).filter(
@@ -70,6 +76,7 @@ export async function GET(req: NextRequest) {
       live,
       dateSuggestions,
       monthDeals,
+      relaxedDirect,
       packages: [],
       source: "travelpayouts",
       generatedAt: new Date().toISOString(),
@@ -81,6 +88,7 @@ export async function GET(req: NextRequest) {
         live: travelpayoutsCheckouts(q),
         dateSuggestions: null,
         monthDeals: [],
+        relaxedDirect: false,
         packages: [],
         error: err instanceof Error ? err.message : "search_failed",
         generatedAt: new Date().toISOString(),

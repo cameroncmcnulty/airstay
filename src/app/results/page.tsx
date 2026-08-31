@@ -49,6 +49,7 @@ function ResultsInner() {
   const [live, setLive] = useState<LiveOffer[]>([]);
   const [alts, setAlts] = useState<FlightDateSuggestions | null>(null);
   const [monthDeals, setMonthDeals] = useState<MonthDeal[]>([]);
+  const [relaxedDirect, setRelaxedDirect] = useState(false);
   const [loading, setLoading] = useState(true);
   const [sort, setSort] = useState<"best" | "price" | "fast">("best");
 
@@ -88,12 +89,14 @@ function ResultsInner() {
         setLive(Array.isArray(data.live) ? data.live : []);
         setAlts(data.dateSuggestions || null);
         setMonthDeals(Array.isArray(data.monthDeals) ? data.monthDeals : []);
+        setRelaxedDirect(Boolean(data.relaxedDirect) || (Boolean(q.directOnly) && (data.live || []).some((o: LiveOffer) => (o.stops || 0) > 0)));
       })
       .catch(() => {
         if (!cancelled) {
           setLive([]);
           setAlts(null);
           setMonthDeals([]);
+          setRelaxedDirect(false);
         }
       })
       .finally(() => {
@@ -310,6 +313,11 @@ function ResultsInner() {
                 })}
               </ul>
             </div>
+          )}
+          {relaxedDirect && (
+            <p className="mb-4 rounded-2xl bg-sky/10 px-4 py-3 text-sm font-semibold text-navy ring-1 ring-sky/30">
+              {m.results.noNonstop}
+            </p>
           )}
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>

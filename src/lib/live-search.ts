@@ -277,15 +277,18 @@ function nextYearMonth(ym: string) {
 export async function cheapestMonthDeals(q: SearchQuery): Promise<MonthDeal[]> {
   const month = q.flexMonth;
   if (!month || q.kind !== "flights") return [];
-  const origin = searchCodes(q.from)[0];
-  const dest = searchCodes(q.to)[0];
+  const origins = searchCodes(q.from);
+  const dests = searchCodes(q.to);
+  const origin = origins[0];
+  const dest = dests[0];
   if (!origin || !dest) return [];
   const nights = Math.max(1, Math.min(28, q.nights || 7));
   const round = q.trip !== "oneway";
   const following = nextYearMonth(month);
-  const [a, b, cal] = await Promise.all([
-    fetchDateHits(pricesForDatesPath(origin, dest, month, round ? month : undefined, !round, Boolean(q.directOnly))),
-    fetchDateHits(pricesForDatesPath(origin, dest, month, round ? following : undefined, !round, Boolean(q.directOnly))),
+  const [ow, ow2, rt, cal] = await Promise.all([
+    fetchDateHits(pricesForDatesPath(origin, dest, month, undefined, true, false)),
+    fetchDateHits(pricesForDatesPath(origin, dest, following, undefined, true, false)),
+    fetchDateHits(pricesForDatesPath(origin, dest, month, following, false, false)),
     fetchDateHits(
       `https://api.travelpayouts.com/v1/prices/calendar?${new URLSearchParams({
         origin,
@@ -293,30 +296,47 @@ export async function cheapestMonthDeals(q: SearchQuery): Promise<MonthDeal[]> {
         depart_date: month,
         calendar_type: "departure_date",
         currency: "cad",
-        ...(round ? { return_date: following } : {}),
       }).toString()}`
     ),
   ]);
-  const hits = [...a, ...b, ...cal];
-  const days = daysInMonth(month);
+  const hits = [...ow, ...ow2, ...rt, ...cal].filter((h) => h.depart.startsWith(month) || h.depart.startsWith(following));
   const best = new Map<string, MonthDeal>();
-  for (const day of days) {
-    const ret = round ? addDays(day, nights) : undefined;
-    let match = hits.find((h) => h.depart === day && (!round || h.returnDate === ret));
-    if (!match && round) {
-      match = hits.find(
-        (h) => h.depart === day && h.returnDate && Math.abs(nightsBetweenIso(h.depart, h.returnDate) - nights) <= 1
-      );
+  for (const hit of hits) {
+    if (!hit.depart.startsWith(month)) continue;
+    const returnDate = round ? hit.returnDate || addDays(hit.depart, nights) : undefined;
+    if (round && hit.returnDate) {
+      const n = nightsBetweenIso(hit.depart, hit.returnDate);
+      if (n && Math.abs(n - nights) > 3) continue;
     }
-    if (!match) match = hits.find((h) => h.depart === day);
-    if (!match) continue;
-    const returnDate = round ? match.returnDate || ret : undefined;
-    const key = `${day}|${returnDate || ""}`;
-    const deal: MonthDeal = { depart: day, returnDate, priceCad: match.priceCad };
+    const key = `${hit.depart}|${returnDate || ""}`;
+    const deal: MonthDeal = { depart: hit.depart, returnDate, priceCad: hit.priceCad, stops: undefined };
     const prev = best.get(key);
     if (!prev || deal.priceCad < prev.priceCad) best.set(key, deal);
   }
+  if (!best.size && round) {
+    for (const hit of hits.filter((h) => h.depart.startsWith(month))) {
+      const returnDate = addDays(hit.depart, nights);
+      const key = `${hit.depart}|${returnDate}`;
+      const deal: MonthDeal = { depart: hit.depart, returnDate, priceCad: hit.priceCad };
+      const prev = best.get(key);
+      if (!prev || deal.priceCad < prev.priceCad) best.set(key, deal);
+    }
+  }
   return [...best.values()].sort((a, b) => a.priceCad - b.priceCad).slice(0, 16);
+}
+
+export function flexFallbackDates(q: SearchQuery, deals: MonthDeal[]) {
+  if (deals[0]) {
+    return { depart: deals[0].depart, returnDate: deals[0].returnDate };
+  }
+  const month = q.flexMonth;
+  if (!month) return {};
+  const day = daysInMonth(month)[0] || `${month}-01`;
+  const nights = Math.max(1, q.nights || 7);
+  return {
+    depart: day,
+    returnDate: q.trip === "oneway" ? undefined : addDays(day, nights),
+  };
 }
 
 export async function searchLive(q: SearchQuery): Promise<LiveOffer[]> {
@@ -358,12 +378,13 @@ export async function searchLive(q: SearchQuery): Promise<LiveOffer[]> {
       if (item.status === "fulfilled") found.push(...item.value);
     }
   }
-  found.push(...scraped.filter((hit) => hit.airline).map((hit) => fromScraped(hit, q, names)));
+  found.push(...scraped.map((hit) => fromScraped(hit, q, names)));
 
   const seen = new Set<string>();
-  return found
-    .filter((o) => (o.priceCad || 0) > 0)
-    .filter((o) => !q.directOnly || o.stops === 0)
+  const priced = found.filter((o) => (o.priceCad || 0) > 0);
+  const nonstop = priced.filter((o) => o.stops === 0);
+  const pool = q.directOnly && nonstop.length ? nonstop : priced;
+  return pool
     .sort((a, b) =>
       q.flexMonth
         ? (a.priceCad || 0) - (b.priceCad || 0)
@@ -664,15 +685,20 @@ async function fetchDates(
   limit = 50
 ) {
   const round = q.trip !== "oneway" && Boolean(q.returnDate);
-  const periods: Array<{ dep: string; ret?: string }> = [];
-  if (q.depart) periods.push({ dep: q.depart, ret: round ? q.returnDate : undefined });
-  if (q.depart) {
-    const depMonth = q.depart.slice(0, 7);
-    const retMonth = round && q.returnDate ? q.returnDate.slice(0, 7) : undefined;
-    if (!periods.some((p) => p.dep === depMonth && p.ret === retMonth)) {
-      periods.push({ dep: depMonth, ret: retMonth });
-    }
+  const periods: Array<{ dep: string; ret?: string; oneWay: boolean }> = [];
+  const months = new Set<string>();
+  if (q.flexMonth) months.add(q.flexMonth);
+  if (q.depart) months.add(q.depart.slice(0, 7));
+  if (q.returnDate) months.add(q.returnDate.slice(0, 7));
+  if (!months.size) months.add(todayIso().slice(0, 7));
+
+  if (q.depart && round && q.returnDate) periods.push({ dep: q.depart, ret: q.returnDate, oneWay: false });
+  if (q.depart) periods.push({ dep: q.depart, oneWay: true });
+  for (const month of months) {
+    periods.push({ dep: month, oneWay: true });
+    periods.push({ dep: month, ret: month, oneWay: false });
   }
+
   const jsons = await Promise.all(
     periods.map((period) => {
       const params = new URLSearchParams({
@@ -681,21 +707,21 @@ async function fetchDates(
         currency: "cad",
         cy: "cad",
         sorting,
-        direct: q.directOnly ? "true" : "false",
+        direct: "false",
         limit: String(limit),
         unique: "false",
-        one_way: round && period.ret ? "false" : "true",
+        one_way: period.oneWay ? "true" : "false",
         departure_at: period.dep,
         page: "1",
       });
-      if (period.ret) params.set("return_at", period.ret);
+      if (!period.oneWay && period.ret) params.set("return_at", period.ret);
       return tp(`https://api.travelpayouts.com/aviasales/v3/prices_for_dates?${params.toString()}`);
     })
   );
   const rows = jsons.flatMap((json) => (Array.isArray(json?.data) ? json.data : []));
   return rows.map((row: Record<string, unknown>, i: number) =>
     toOffer({
-      id: `dates-${sorting}-${origin}-${dest}-${i}`,
+      id: `dates-${sorting}-${origin}-${dest}-${String(row.departure_at || "").slice(0, 16)}-${row.price}-${i}`,
       origin: String(row.origin || origin),
       dest: String(row.destination || dest),
       originAirport: String(row.origin_airport || row.origin || origin),
@@ -706,7 +732,7 @@ async function fetchDates(
       airline: String(row.airline || ""),
       flightNumber: String(row.flight_number || ""),
       departAt: String(row.departure_at || q.depart || ""),
-      returnAt: String(row.return_at || q.returnDate || ""),
+      returnAt: String(row.return_at || ""),
       durationMin: minutes(row.duration_to ?? row.duration),
       durationBack: minutes(row.duration_back),
       link: typeof row.link === "string" ? row.link : undefined,
