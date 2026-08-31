@@ -47,8 +47,8 @@ export function Header() {
   }, [open]);
 
   return (
-    <header ref={menuRef} className="sticky top-0 z-40 border-b border-navy/10 bg-white shadow-sm">
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-3 py-2 sm:gap-4 sm:px-4 sm:py-3">
+    <header ref={menuRef} className="sticky top-0 z-40 border-b border-navy/10 bg-white shadow-sm pt-[env(safe-area-inset-top)]">
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-2 px-3 py-2 sm:gap-4 sm:px-4 sm:py-3">
         <Logo size="sm" variant="dark" />
         <nav className="hidden items-center gap-1 lg:flex" aria-label="Primary">
           {LINKS.map((l) => {
@@ -105,23 +105,23 @@ export function Header() {
           )}
           <button
             type="button"
-            className="rounded-full p-2 text-navy hover:bg-sky-50 lg:hidden"
+            className="grid h-11 w-11 place-items-center rounded-full text-navy hover:bg-sky-50 lg:hidden"
             onClick={() => setOpen((v) => !v)}
             aria-expanded={open}
             aria-label={open ? "Close menu" : "Open menu"}
           >
-            {open ? <X /> : <Menu />}
+            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
         </div>
       </div>
       {open && (
-        <div className="border-t border-navy/10 bg-white px-4 py-3 lg:hidden">
+        <div className="border-t border-navy/10 bg-white px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] lg:hidden">
           <nav className="flex flex-col gap-1">
             {LINKS.map((l) => (
               <Link
                 key={l.href}
                 href={l.href}
-                className="rounded-2xl px-3 py-3 font-semibold text-navy"
+                className="rounded-2xl px-3 py-3.5 text-base font-semibold text-navy"
                 onClick={() => setOpen(false)}
               >
                 {m.nav[l.key]}

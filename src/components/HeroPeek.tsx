@@ -160,7 +160,7 @@ export function HeroPeek({ from }: { from: string }) {
       {geo?.source === "ip" && (
         <p className="mb-2 text-[11px] font-semibold text-white/65">{m.hero.fromArea} · {terminal}</p>
       )}
-      <div className="grid grid-cols-4 gap-2 sm:grid-cols-2">
+      <div className="grid grid-cols-2 gap-2">
         {picks.map((p) => {
           const d = getDestination(p.code);
           if (!d) return null;
@@ -179,7 +179,7 @@ export function HeroPeek({ from }: { from: string }) {
               href={href}
               className="group relative col-span-1 min-w-0 overflow-hidden rounded-2xl bg-white/10 ring-1 ring-white/20"
             >
-              <div className="relative h-[4.6rem] overflow-hidden sm:h-28">
+              <div className="relative h-[5.25rem] overflow-hidden sm:h-28">
                 <img
                   src={DEST_PHOTOS[p.photo || d.code] || DEST_PHOTOS.LHR}
                   alt=""

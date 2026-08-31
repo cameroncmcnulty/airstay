@@ -11,7 +11,7 @@ export default function ContactPage() {
   const inbox = settings?.contactEmail || "hello@airstay.ca";
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-12">
+    <div className="mx-auto max-w-lg px-4 py-8 sm:py-12">
       <h1 className="text-3xl font-black text-navy">{m.contact.title}</h1>
       <p className="mt-2 text-sm text-navy/65">{m.contact.sub}</p>
       <p className="mt-3 text-sm font-semibold text-navy">

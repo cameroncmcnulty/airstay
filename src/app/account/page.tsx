@@ -17,7 +17,7 @@ export default function AccountPage() {
   if (!ready || !user) return <div className="px-4 py-16 text-center text-navy/50">…</div>;
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-12">
+    <div className="mx-auto max-w-3xl px-4 py-8 sm:py-12">
       <h1 className="text-3xl font-black text-navy">{m.account.title}</h1>
       <p className="mt-1 text-navy/60">
         {user.name} · {user.email} · {m.province[user.province as keyof typeof m.province]}

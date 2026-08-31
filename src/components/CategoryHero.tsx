@@ -15,9 +15,9 @@ export function CategoryHero({
     <section className="relative">
       <div className="relative h-[38vh] min-h-[220px] overflow-hidden sm:h-[44vh] sm:min-h-[280px]">
         <HeroMedia compact />
-        <div className="relative z-10 mx-auto flex h-full max-w-6xl flex-col justify-end px-4 pb-16 pt-20">
+        <div className="relative z-10 mx-auto flex h-full max-w-6xl flex-col justify-end px-4 pb-16 pt-16 sm:pt-20">
           <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-sky-100 sm:text-xs">{kicker}</p>
-          <h1 className="mt-1 text-3xl font-black tracking-tight text-white sm:text-4xl md:text-5xl">{title}</h1>
+          <h1 className="mt-1 text-[1.75rem] font-black tracking-tight text-white sm:text-4xl md:text-5xl">{title}</h1>
           <p className="mt-2 max-w-2xl text-sm text-white/80 sm:text-base">{subtitle}</p>
         </div>
       </div>

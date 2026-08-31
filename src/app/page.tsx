@@ -40,12 +40,12 @@ export default function HomePage() {
   return (
     <>
       <section className="relative">
-        <div className="relative min-h-[70vh] overflow-hidden sm:min-h-[78vh]">
+        <div className="relative min-h-[32rem] overflow-hidden sm:min-h-[70vh] lg:min-h-[78vh]">
           <HeroMedia />
-          <div className="relative z-10 mx-auto flex min-h-[70vh] max-w-6xl flex-col justify-end gap-8 px-4 pb-32 pt-10 sm:min-h-[78vh] sm:pb-36 md:flex-row md:items-end md:justify-between">
+          <div className="relative z-10 mx-auto flex min-h-[32rem] max-w-6xl flex-col justify-end gap-6 px-4 pb-28 pt-8 sm:min-h-[70vh] sm:gap-8 sm:pb-36 sm:pt-10 lg:min-h-[78vh] md:flex-row md:items-end md:justify-between">
             <div className="max-w-xl pb-2">
               <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-sky-100">{m.hero.kicker}</p>
-              <h1 className="mt-3 text-4xl font-black leading-[0.95] tracking-tight text-white sm:text-5xl md:text-7xl">
+              <h1 className="mt-3 text-[2.15rem] font-black leading-[0.95] tracking-tight text-white sm:text-5xl md:text-7xl">
                 {m.hero.title}
               </h1>
               <p className="mt-4 max-w-md text-base text-white/85 sm:text-lg">{m.hero.subtitle}</p>

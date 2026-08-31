@@ -37,7 +37,7 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-12">
+    <div className="mx-auto max-w-lg px-4 py-8 sm:py-12">
       <h1 className="text-3xl font-black text-navy">{m.auth.createTitle}</h1>
       <p className="mt-2 text-sm text-navy/65">{m.auth.createSub}</p>
       <form onSubmit={onSubmit} className="mt-8 space-y-4 rounded-card bg-white p-6 shadow-card ring-1 ring-navy/5">

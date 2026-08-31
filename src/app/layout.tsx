@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
@@ -12,6 +12,14 @@ const jakarta = Plus_Jakarta_Sans({
 const siteTitle = "AIRSTAY — Canadian travel. No booking fees.";
 const siteDescription =
   "Flights, hotels and cars from Canada — in CAD, with zero AIRSTAY booking fees. Made by Canadians, for Canadians.";
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  viewportFit: "cover",
+  themeColor: "#ffffff",
+};
 
 export const metadata: Metadata = {
   title: {

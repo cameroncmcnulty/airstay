@@ -135,9 +135,9 @@ export function AriaChat() {
   }
 
   return (
-    <div className="pointer-events-none fixed bottom-4 right-4 z-[60] sm:bottom-6 sm:right-6">
+    <div className="pointer-events-none fixed bottom-[max(1rem,env(safe-area-inset-bottom))] right-[max(1rem,env(safe-area-inset-right))] z-[60] sm:bottom-6 sm:right-6">
       {open && (
-        <div className="pointer-events-auto mb-3 flex h-[min(560px,74vh)] w-[min(400px,calc(100vw-1.75rem))] flex-col overflow-hidden rounded-[1.5rem] bg-white shadow-card ring-1 ring-navy/10 sm:mb-4">
+        <div className="pointer-events-auto mb-3 flex h-[min(560px,72dvh)] w-[min(400px,calc(100vw-1.5rem))] flex-col overflow-hidden rounded-[1.5rem] bg-white shadow-card ring-1 ring-navy/10 sm:mb-4">
           <div className="flex items-center gap-3 bg-mist px-4 py-3">
             <span className="aria-orb grid h-10 w-10 place-items-center rounded-full bg-gradient-to-br from-sky to-navy text-white">
               <Sparkles className="h-4 w-4" />
@@ -232,13 +232,13 @@ export function AriaChat() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder={m.aria.placeholder}
-                className="min-w-0 flex-1 bg-transparent px-3 py-2 text-sm text-navy outline-none placeholder:text-navy/35"
+                className="min-w-0 flex-1 bg-transparent px-3 py-2 text-base text-navy outline-none placeholder:text-navy/35 sm:text-sm"
                 maxLength={2000}
               />
               <button
                 type="submit"
                 disabled={busy || !input.trim()}
-                className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-sky text-white transition hover:bg-sky-600 disabled:bg-navy/15 disabled:text-navy/30"
+                className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-sky text-white transition hover:bg-sky-600 disabled:bg-navy/15 disabled:text-navy/30"
                 aria-label={m.aria.send}
               >
                 <Send className="h-4 w-4" />

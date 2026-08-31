@@ -43,7 +43,7 @@ export function ExpediaOffer() {
             <h3 className="mt-1 text-lg font-extrabold text-navy">{m.ad.title}</h3>
             <p className="mt-1 max-w-sm text-[12px] font-medium leading-relaxed text-navy/55">{m.ad.note}</p>
           </div>
-          <div className="overflow-hidden rounded-xl bg-white p-2 shadow-sm ring-1 ring-navy/8">
+          <div className="overflow-x-auto overflow-hidden rounded-xl bg-white p-2 shadow-sm ring-1 ring-navy/8">
             <div className="eg-leaderboard-fit">
               <div className="eg-leaderboard-inner">
                 <ExpediaPackageBanner layout="leaderboard" />

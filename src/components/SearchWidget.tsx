@@ -175,7 +175,7 @@ export function SearchWidget({
   return (
     <div className={embedded ? "" : "rounded-[1.8rem] bg-white p-3 shadow-card sm:p-5"}>
       {!hideTabs && (
-      <div className="flex flex-wrap gap-2" role="tablist" aria-label={m.bubbles.title}>
+      <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="tablist" aria-label={m.bubbles.title}>
         {TABS.map((tab) => {
           const Icon = tab.icon;
           const active = kind === tab.id;
@@ -192,7 +192,7 @@ export function SearchWidget({
                 setToOpen(false);
                 setCalOpen(false);
               }}
-              className={`inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-bold transition ${
+              className={`inline-flex shrink-0 items-center gap-2 rounded-full px-3 py-2.5 text-sm font-bold transition sm:px-4 ${
                 active
                   ? "bg-navy text-white shadow-bubble"
                   : "bg-mist text-navy/70 hover:bg-sky-50"
@@ -515,13 +515,13 @@ function Suggest({
   onClose: () => void;
 }) {
   return (
-    <ul className="absolute z-20 mt-1 max-h-64 w-full overflow-auto rounded-2xl bg-white py-1 shadow-card ring-1 ring-navy/10">
+    <ul className="absolute z-20 mt-1 max-h-[min(16rem,50vh)] w-full overflow-auto rounded-2xl bg-white py-1 shadow-card ring-1 ring-navy/10">
       {items.length === 0 && <li className="px-3 py-2 text-sm text-navy/50">{emptyLabel}</li>}
       {items.map((it) => (
         <li key={it.key}>
           <button
             type="button"
-            className="flex w-full flex-col px-3 py-2 text-left hover:bg-sky-50"
+            className="flex w-full flex-col px-3 py-3 text-left hover:bg-sky-50"
             onMouseDown={(e) => {
               e.preventDefault();
               it.onPick();
@@ -554,7 +554,7 @@ function Stepper({
       <div className="mt-1 flex items-center gap-2 rounded-full bg-mist px-2 py-1.5">
         <button
           type="button"
-          className="grid h-8 w-8 place-items-center rounded-full bg-white text-navy shadow-sm"
+          className="grid h-11 w-11 place-items-center rounded-full bg-white text-navy shadow-sm"
           onClick={() => onChange(Math.max(min, value - 1))}
           aria-label={`Decrease ${label}`}
         >
@@ -563,7 +563,7 @@ function Stepper({
         <span className="w-5 text-center text-sm font-bold text-navy">{value}</span>
         <button
           type="button"
-          className="grid h-8 w-8 place-items-center rounded-full bg-white text-navy shadow-sm"
+          className="grid h-11 w-11 place-items-center rounded-full bg-white text-navy shadow-sm"
           onClick={() => onChange(value + 1)}
           aria-label={`Increase ${label}`}
         >

@@ -46,7 +46,7 @@ export function ConfettiHandoff({
 
     const ox = origin.x + origin.w / 2;
     const oy = origin.y + origin.h / 2;
-    const pieces: Piece[] = Array.from({ length: 220 }, () => {
+    const pieces: Piece[] = Array.from({ length: window.innerWidth < 640 ? 90 : 220 }, () => {
       const ang = Math.random() * Math.PI * 2;
       const spd = 8 + Math.random() * 22;
       return {

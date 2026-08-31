@@ -135,34 +135,35 @@ export function DateRangePicker({
           {mode === "single" || step === "start" || !draftStart ? labels.pickStart : labels.pickEnd}
         </p>
         <div className="flex items-center gap-1">
-          <button type="button" className="grid h-8 w-8 place-items-center rounded-full hover:bg-mist" onClick={() => shift(-1)} aria-label="Previous month">
-            <ChevronLeft className="h-4 w-4" />
+          <button type="button" className="grid h-11 w-11 place-items-center rounded-full hover:bg-mist" onClick={() => shift(-1)} aria-label="Previous month">
+            <ChevronLeft className="h-5 w-5" />
           </button>
-          <button type="button" className="grid h-8 w-8 place-items-center rounded-full hover:bg-mist" onClick={() => shift(1)} aria-label="Next month">
-            <ChevronRight className="h-4 w-4" />
+          <button type="button" className="grid h-11 w-11 place-items-center rounded-full hover:bg-mist" onClick={() => shift(1)} aria-label="Next month">
+            <ChevronRight className="h-5 w-5" />
           </button>
         </div>
       </div>
 
       <div className="grid select-none gap-6 p-3 sm:grid-cols-2 sm:p-4">
-        {months.map((mo) => (
-          <MonthGrid
-            key={`${mo.y}-${mo.m}`}
-            year={mo.y}
-            month={mo.m}
-            locale={loc}
-            weekStartsOn={weekStartsOn}
-            heads={heads}
-            min={min}
-            start={draftStart}
-            end={draftEnd}
-            waitingForEnd={waitingForEnd}
-            onPick={pick}
-          />
+        {months.map((mo, i) => (
+          <div key={`${mo.y}-${mo.m}`} className={i === 1 ? "hidden sm:block" : ""}>
+            <MonthGrid
+              year={mo.y}
+              month={mo.m}
+              locale={loc}
+              weekStartsOn={weekStartsOn}
+              heads={heads}
+              min={min}
+              start={draftStart}
+              end={draftEnd}
+              waitingForEnd={waitingForEnd}
+              onPick={pick}
+            />
+          </div>
         ))}
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-navy/5 bg-mist/70 px-4 py-3">
+      <div className="flex flex-col items-stretch gap-3 border-t border-navy/5 bg-mist/70 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0 text-sm">
           {draftStart ? (
             <>
@@ -186,7 +187,7 @@ export function DateRangePicker({
           type="button"
           disabled={!canConfirm}
           onClick={confirm}
-          className="inline-flex items-center gap-2 rounded-full bg-sky px-4 py-2.5 text-sm font-bold text-white shadow-lift disabled:cursor-not-allowed disabled:bg-navy/20 disabled:shadow-none"
+          className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full bg-sky px-4 py-2.5 text-sm font-bold text-white shadow-lift disabled:cursor-not-allowed disabled:bg-navy/20 disabled:shadow-none sm:w-auto"
         >
           <span className="grid h-6 w-6 place-items-center rounded-full bg-white/20">
             <Check className="h-4 w-4" strokeWidth={3} />
@@ -264,7 +265,7 @@ function MonthGrid({
                   onPick(iso);
                 }
               }}
-              className={`relative h-10 touch-manipulation text-sm font-bold ${disabled ? "cursor-not-allowed text-navy/25" : "text-navy"}`}
+              className={`relative min-h-[44px] touch-manipulation text-sm font-bold ${disabled ? "cursor-not-allowed text-navy/25" : "text-navy"}`}
             >
               {inRange && <span className="pointer-events-none absolute inset-y-1 left-0 right-0 bg-sky-100" />}
               {isStart && end && <span className="pointer-events-none absolute inset-y-1 left-1/2 right-0 bg-sky-100" />}

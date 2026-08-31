@@ -24,7 +24,7 @@ export function LegalPage({
   const sections = locale === "fr" ? sectionsFr : sectionsEn;
 
   return (
-    <article className="mx-auto max-w-3xl px-4 py-12">
+    <article className="mx-auto max-w-3xl px-4 py-8 sm:py-12">
       <p className="text-xs font-bold uppercase tracking-[0.2em] text-sky-700">AIRSTAY</p>
       <h1 className="mt-2 text-3xl font-black text-navy md:text-4xl">{title}</h1>
       <p className="mt-2 text-sm text-navy/55">{updated}</p>

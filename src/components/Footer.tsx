@@ -18,29 +18,29 @@ export function Footer() {
         <div>
           <h2 className="text-sm font-bold uppercase tracking-wider text-sky-200">{m.footer.product}</h2>
           <ul className="mt-3 space-y-2 text-sm">
-            <li><Link className="hover:text-sky-200" href="/flights">{m.nav.flights}</Link></li>
-            <li><Link className="hover:text-sky-200" href="/stays">{m.nav.stays}</Link></li>
-            <li><Link className="hover:text-sky-200" href="/cars">{m.nav.cars}</Link></li>
-            <li><Link className="hover:text-sky-200" href="/esim">{m.nav.esim}</Link></li>
-            <li><Link className="hover:text-sky-200" href="/packages">{m.nav.packages}</Link></li>
+            <li><Link className="inline-block py-1.5 hover:text-sky-200" href="/flights">{m.nav.flights}</Link></li>
+            <li><Link className="inline-block py-1.5 hover:text-sky-200" href="/stays">{m.nav.stays}</Link></li>
+            <li><Link className="inline-block py-1.5 hover:text-sky-200" href="/cars">{m.nav.cars}</Link></li>
+            <li><Link className="inline-block py-1.5 hover:text-sky-200" href="/esim">{m.nav.esim}</Link></li>
+            <li><Link className="inline-block py-1.5 hover:text-sky-200" href="/packages">{m.nav.packages}</Link></li>
           </ul>
         </div>
         <div>
           <h2 className="text-sm font-bold uppercase tracking-wider text-sky-200">{m.footer.company}</h2>
           <ul className="mt-3 space-y-2 text-sm">
-            <li><Link className="hover:text-sky-200" href="/about">{m.nav.about}</Link></li>
-            <li><Link className="hover:text-sky-200" href="/contact">{m.footer.contact}</Link></li>
-            <li><Link className="hover:text-sky-200" href="/disclosure">{m.footer.disclosure}</Link></li>
-            <li><Link className="hover:text-sky-200" href="/developers">API</Link></li>
+            <li><Link className="inline-block py-1.5 hover:text-sky-200" href="/about">{m.nav.about}</Link></li>
+            <li><Link className="inline-block py-1.5 hover:text-sky-200" href="/contact">{m.footer.contact}</Link></li>
+            <li><Link className="inline-block py-1.5 hover:text-sky-200" href="/disclosure">{m.footer.disclosure}</Link></li>
+            <li><Link className="inline-block py-1.5 hover:text-sky-200" href="/developers">API</Link></li>
           </ul>
         </div>
         <div>
           <h2 className="text-sm font-bold uppercase tracking-wider text-sky-200">{m.footer.legal}</h2>
           <ul className="mt-3 space-y-2 text-sm">
-            <li><Link className="hover:text-sky-200" href="/privacy">{m.footer.privacy}</Link></li>
-            <li><Link className="hover:text-sky-200" href="/terms">{m.footer.terms}</Link></li>
-            <li><Link className="hover:text-sky-200" href="/cookies">{m.footer.cookies}</Link></li>
-            <li><Link className="hover:text-sky-200" href="/accessibility">{m.footer.accessibility}</Link></li>
+            <li><Link className="inline-block py-1.5 hover:text-sky-200" href="/privacy">{m.footer.privacy}</Link></li>
+            <li><Link className="inline-block py-1.5 hover:text-sky-200" href="/terms">{m.footer.terms}</Link></li>
+            <li><Link className="inline-block py-1.5 hover:text-sky-200" href="/cookies">{m.footer.cookies}</Link></li>
+            <li><Link className="inline-block py-1.5 hover:text-sky-200" href="/accessibility">{m.footer.accessibility}</Link></li>
           </ul>
         </div>
       </div>

@@ -201,7 +201,7 @@ function ResultsInner() {
         : `${originName || "—"} → ${destName || "—"}`;
 
   return (
-    <div className="pb-20">
+    <div className="pb-[calc(5.5rem+env(safe-area-inset-bottom))]">
       <section className="relative overflow-hidden bg-navy">
         <img src={destPhoto} alt="" className="absolute inset-0 h-full w-full object-cover opacity-40" />
         <div className="absolute inset-0 bg-gradient-to-r from-navy via-navy/88 to-navy/60" />
@@ -210,7 +210,7 @@ function ResultsInner() {
             <KindIcon className="h-3.5 w-3.5" />
             {q.kind === "stays" ? m.nav.stays : q.kind === "cars" ? m.nav.cars : q.kind === "esim" ? m.nav.esim : m.nav.flights}
           </p>
-          <h1 className="mt-2 text-3xl font-black tracking-tight md:text-5xl">{headline}</h1>
+          <h1 className="mt-2 text-[1.75rem] font-black tracking-tight sm:text-3xl md:text-5xl">{headline}</h1>
           {dest && (
             <p className="mt-1 text-sm text-white/70">{locale === "fr" ? dest.countryFr : dest.country}</p>
           )}
@@ -295,7 +295,7 @@ function ResultsInner() {
             )}
           </div>
           {!loading && list.length > 0 && (
-            <div className="mt-5 grid gap-3 sm:grid-cols-3">
+            <div className="mt-5 grid grid-cols-3 gap-2 sm:gap-3">
               <StatTile
                 icon={Trophy}
                 label={m.results.badgeBest}
@@ -438,14 +438,14 @@ function ResultsInner() {
       )}
       {leaving && (
         <div
-          className="fixed inset-0 z-50 grid place-items-center bg-navy/55 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-50 grid place-items-center bg-navy/55 p-3 backdrop-blur-sm sm:p-4"
           role="dialog"
           aria-modal="true"
           onClick={(e) => {
             if (e.target === e.currentTarget) setLeaving(null);
           }}
         >
-          <div className="w-full max-w-md rounded-card bg-white p-6 shadow-card">
+          <div className="max-h-[min(92dvh,40rem)] w-full max-w-md overflow-y-auto rounded-card bg-white p-5 shadow-card sm:p-6">
             <div className="flex items-center gap-3">
               {leaving.domain && (
                 <img src={partnerFavicon(leaving.domain)} alt="" className="h-10 w-10 rounded-xl ring-1 ring-navy/10" />
@@ -733,12 +733,12 @@ function RankedCard({
       } ${rank > 3 ? "bg-white/90" : ""}`}
     >
       {badges.best && (
-        <div className="bg-sky px-5 py-1.5 text-[11px] font-black uppercase tracking-[0.16em] text-white">
+        <div className="bg-sky px-4 py-1.5 text-[11px] font-black uppercase tracking-[0.16em] text-white sm:px-5">
           {m.results.badgeBest}
         </div>
       )}
-      <div className="flex flex-col gap-4 p-5 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex min-w-0 flex-1 items-start gap-4">
+      <div className="flex flex-col gap-4 p-4 sm:p-5 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex min-w-0 flex-1 items-start gap-3 sm:gap-4">
           <span
             className={`grid h-11 w-11 shrink-0 place-items-center rounded-full text-sm font-black ${
               rank === 1 ? "bg-sky text-white" : "bg-mist text-navy"
@@ -835,9 +835,9 @@ function RankedCard({
             )}
           </div>
         </div>
-        <div className="flex items-center justify-between gap-4 lg:flex-col lg:items-end">
+        <div className="flex items-center justify-between gap-3 border-t border-navy/5 pt-4 lg:flex-col lg:items-end lg:border-0 lg:pt-0">
           <div className="lg:text-right">
-            <p className="text-3xl font-black tracking-tight text-navy">{money(offer.priceCad || 0)}</p>
+            <p className="text-2xl font-black tracking-tight text-navy sm:text-3xl">{money(offer.priceCad || 0)}</p>
             <p className="text-[11px] font-semibold text-navy/45">
               {m.results.cadNote}
               {offer.priceUnit === "person" ? m.results.perAdult : offer.priceUnit === "plan" ? m.results.perPlan : ""}
@@ -846,7 +846,7 @@ function RankedCard({
               <p className="mt-0.5 text-[11px] font-semibold text-navy/40">{m.results.vsCheap.replace("{n}", money(extra))}</p>
             )}
           </div>
-          <button type="button" onClick={onOpen} className="btn-primary shrink-0">
+          <button type="button" onClick={onOpen} className="btn-primary min-h-11 shrink-0 px-5 sm:w-auto">
             {offer.kind === "esim" ? m.results.bookEsim : m.results.bookLive}
             <ExternalLink className="h-4 w-4" />
           </button>
@@ -900,7 +900,7 @@ function FlightLine({
   const departDay = (offer.departAt || "").slice(0, 10);
   const returnDay = (offer.returnAt || "").slice(0, 10);
   return (
-    <div className="mt-3 min-w-[220px] max-w-lg space-y-3">
+    <div className="mt-3 min-w-0 max-w-lg space-y-3">
       <FlightLeg
         label={m.results.outbound}
         from={from}
@@ -960,7 +960,7 @@ function FlightLeg({
       <p className="text-[10px] font-black uppercase tracking-[0.16em] text-navy/40">{label}</p>
       <div className="mt-1 flex items-center justify-between gap-3 text-navy">
         <div>
-          <p className="text-xl font-black tabular-nums">
+          <p className="text-lg font-black tabular-nums sm:text-xl">
             {departTime !== "—" ? departTime : day ? formatBubble(day, loc) : "—"}
           </p>
           <p className="text-xs font-bold text-navy/45">
@@ -968,7 +968,7 @@ function FlightLeg({
             {departTime !== "—" && day ? ` · ${formatBubble(day, loc)}` : ""}
           </p>
         </div>
-        <div className="min-w-[7rem] flex-1 text-center">
+        <div className="min-w-0 flex-1 text-center">
           <p className="text-[11px] font-bold text-navy/50">{prettyDuration(duration, stops)}</p>
           <div className="relative my-1 h-px bg-navy/15">
             <span className="absolute left-1/2 top-1/2 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-sky" />
@@ -976,7 +976,7 @@ function FlightLeg({
           <p className="text-[11px] font-bold text-navy/55">{stopsLabel(stops)}</p>
         </div>
         <div className="text-right">
-          <p className="text-xl font-black tabular-nums">{arriveTime !== "—" ? arriveTime : "—"}</p>
+          <p className="text-lg font-black tabular-nums sm:text-xl">{arriveTime !== "—" ? arriveTime : "—"}</p>
           <p className="text-xs font-bold text-navy/45">{to}</p>
         </div>
       </div>
@@ -1005,7 +1005,7 @@ function CompareBar({
             key={link.key}
             type="button"
             onClick={() => onCompare(link)}
-            className="inline-flex items-center gap-1.5 rounded-full bg-mist px-2.5 py-1 text-[11px] font-bold text-navy ring-1 ring-navy/8 hover:bg-white hover:ring-sky"
+            className="inline-flex min-h-9 items-center gap-1.5 rounded-full bg-mist px-2.5 py-1.5 text-[11px] font-bold text-navy ring-1 ring-navy/8 hover:bg-white hover:ring-sky"
           >
             <img src={partnerFavicon(PARTNER_META[link.key].domain)} alt="" className="h-3.5 w-3.5 rounded-sm" />
             {link.name}
@@ -1031,12 +1031,12 @@ function StatTile({
   accent?: boolean;
 }) {
   return (
-    <div className={`rounded-2xl p-4 ring-1 ${accent ? "bg-sky text-white ring-sky" : "bg-white text-navy ring-navy/8"}`}>
+    <div className={`rounded-2xl p-2.5 ring-1 sm:p-4 ${accent ? "bg-sky text-white ring-sky" : "bg-white text-navy ring-navy/8"}`}>
       <p className={`inline-flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wide ${accent ? "text-white/80" : "text-navy/45"}`}>
         <Icon className="h-3.5 w-3.5" />
         {label}
       </p>
-      <p className="mt-1 text-2xl font-black">{value}</p>
+      <p className="mt-1 text-lg font-black sm:text-2xl">{value}</p>
       {hint && <p className={`truncate text-xs font-semibold ${accent ? "text-white/75" : "text-navy/50"}`}>{hint}</p>}
     </div>
   );

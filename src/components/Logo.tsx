@@ -16,7 +16,7 @@ export function Logo({
     <img
       src={variant === "light" ? "/logo-light.png" : "/logo.png"}
       alt="AIRSTAY"
-      className={`${h} w-auto max-w-[220px] object-contain object-left`}
+      className={`${h} w-auto max-w-[148px] object-contain object-left sm:max-w-[220px]`}
     />
   );
   if (!href) return img;

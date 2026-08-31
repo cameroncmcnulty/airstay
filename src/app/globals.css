@@ -8,11 +8,21 @@
 
 html {
   scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
   @apply overflow-x-hidden bg-mist text-navy antialiased;
   background-color: #f3f6fb;
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+button,
+a,
+summary {
+  touch-action: manipulation;
 }
 
 body::before {
@@ -147,6 +157,19 @@ header {
   }
 }
 
+@media (max-width: 639px) {
+  @keyframes confetti-boom {
+    0% {
+      transform: translate(-50%, -50%) scale(0.12);
+      opacity: 0.55;
+    }
+    100% {
+      transform: translate(-50%, -50%) scale(22);
+      opacity: 0.92;
+    }
+  }
+}
+
 @keyframes hero-wave-drift {
   from {
     transform: translate3d(0, 0, 0);
@@ -157,15 +180,15 @@ header {
 }
 
 .field {
-  @apply w-full rounded-2xl border border-navy/10 bg-mist px-3 py-3 text-base font-semibold text-navy outline-none transition placeholder:font-medium placeholder:text-navy/35 focus:border-sky focus:bg-white focus:ring-4 focus:ring-sky/20;
+  @apply w-full min-h-12 rounded-2xl border border-navy/10 bg-mist px-3 py-3 text-base font-semibold text-navy outline-none transition placeholder:font-medium placeholder:text-navy/35 focus:border-sky focus:bg-white focus:ring-4 focus:ring-sky/20;
 }
 
 .btn-primary {
-  @apply inline-flex items-center justify-center gap-2 rounded-full bg-sky px-4 py-2.5 text-sm font-bold text-white shadow-lift transition hover:bg-sky-600;
+  @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-sky px-4 py-2.5 text-sm font-bold text-white shadow-lift transition hover:bg-sky-600;
 }
 
 .btn-ghost {
-  @apply inline-flex items-center justify-center gap-2 rounded-full border border-navy/15 px-4 py-2.5 text-sm font-bold text-navy transition hover:bg-mist;
+  @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-navy/15 px-4 py-2.5 text-sm font-bold text-navy transition hover:bg-mist;
 }
 
 .eg-affiliate-banners {
