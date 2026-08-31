@@ -47,6 +47,7 @@ export default function AccountPage() {
   const [homeAirport, setHomeAirport] = useState("");
   const [cabin, setCabin] = useState("economy");
   const [autoPrefill, setAutoPrefill] = useState(true);
+  const [directOnly, setDirectOnly] = useState(false);
   const [prefsMsg, setPrefsMsg] = useState("");
 
   useEffect(() => {
@@ -60,6 +61,7 @@ export default function AccountPage() {
     setHomeAirport(user.searchPrefs?.homeAirport || "");
     setCabin(user.searchPrefs?.cabin || "economy");
     setAutoPrefill(user.searchPrefs?.autoPrefill !== false);
+    setDirectOnly(Boolean(user.searchPrefs?.directOnly));
   }, [user]);
 
   if (!ready || !user) return <div className="px-4 py-16 text-center text-navy/50">…</div>;
@@ -127,6 +129,7 @@ export default function AccountPage() {
       homeAirport: code.length === 3 ? code : undefined,
       cabin: cabin as TravelerParty["cabin"],
       autoPrefill,
+      directOnly,
     });
     refreshUser();
     setPrefsMsg(m.account.prefsSaved);
@@ -195,7 +198,6 @@ export default function AccountPage() {
           {[
             { name: m.account.presetSolo, adults: 1, children: 0, childAges: [] as number[] },
             { name: m.account.presetCouple, adults: 2, children: 0, childAges: [] },
-            { name: m.account.presetFamily, adults: 2, children: 2, childAges: [8, 5] },
           ].map((p) => (
             <button
               key={p.name}
@@ -328,6 +330,10 @@ export default function AccountPage() {
         <label className="mt-4 flex items-center justify-between gap-3 rounded-2xl bg-mist px-4 py-3 text-sm font-semibold text-navy">
           {m.account.autoPrefill}
           <input type="checkbox" className="h-4 w-4 accent-sky" checked={autoPrefill} onChange={(e) => setAutoPrefill(e.target.checked)} />
+        </label>
+        <label className="mt-2 flex items-center justify-between gap-3 rounded-2xl bg-mist px-4 py-3 text-sm font-semibold text-navy">
+          {m.account.directOnly}
+          <input type="checkbox" className="h-4 w-4 accent-sky" checked={directOnly} onChange={(e) => setDirectOnly(e.target.checked)} />
         </label>
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <button type="button" className="btn-primary" onClick={savePrefs}>

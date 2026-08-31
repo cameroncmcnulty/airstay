@@ -25,7 +25,7 @@ import {
 } from "@/lib/partners";
 import { tpTrack, tpWrap } from "@/lib/affiliate";
 import { searchEsim } from "@/lib/esim";
-import { fromIso, nightsBetweenIso, pad2, todayIso } from "@/lib/dates";
+import { addDays, fromIso, nightsBetweenIso, pad2, todayIso } from "@/lib/dates";
 import { scrapeFares, type ScrapedFare } from "@/lib/scrape-prices";
 
 export type LiveOffer = {
@@ -249,6 +249,76 @@ function dateBand(offer: LiveOffer, wanted?: string) {
   return 3;
 }
 
+export type MonthDeal = {
+  depart: string;
+  returnDate?: string;
+  priceCad: number;
+  stops?: number;
+};
+
+function daysInMonth(ym: string) {
+  const [y, m] = ym.split("-").map(Number);
+  const last = new Date(y, m, 0).getDate();
+  const today = todayIso();
+  const out: string[] = [];
+  for (let d = 1; d <= last; d++) {
+    const iso = `${y}-${pad2(m)}-${pad2(d)}`;
+    if (iso >= today) out.push(iso);
+  }
+  return out;
+}
+
+function nextYearMonth(ym: string) {
+  const [y, m] = ym.split("-").map(Number);
+  const d = new Date(y, m, 1);
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}`;
+}
+
+export async function cheapestMonthDeals(q: SearchQuery): Promise<MonthDeal[]> {
+  const month = q.flexMonth;
+  if (!month || q.kind !== "flights") return [];
+  const origin = searchCodes(q.from)[0];
+  const dest = searchCodes(q.to)[0];
+  if (!origin || !dest) return [];
+  const nights = Math.max(1, Math.min(28, q.nights || 7));
+  const round = q.trip !== "oneway";
+  const following = nextYearMonth(month);
+  const [a, b, cal] = await Promise.all([
+    fetchDateHits(pricesForDatesPath(origin, dest, month, round ? month : undefined, !round, Boolean(q.directOnly))),
+    fetchDateHits(pricesForDatesPath(origin, dest, month, round ? following : undefined, !round, Boolean(q.directOnly))),
+    fetchDateHits(
+      `https://api.travelpayouts.com/v1/prices/calendar?${new URLSearchParams({
+        origin,
+        destination: dest,
+        depart_date: month,
+        calendar_type: "departure_date",
+        currency: "cad",
+        ...(round ? { return_date: following } : {}),
+      }).toString()}`
+    ),
+  ]);
+  const hits = [...a, ...b, ...cal];
+  const days = daysInMonth(month);
+  const best = new Map<string, MonthDeal>();
+  for (const day of days) {
+    const ret = round ? addDays(day, nights) : undefined;
+    let match = hits.find((h) => h.depart === day && (!round || h.returnDate === ret));
+    if (!match && round) {
+      match = hits.find(
+        (h) => h.depart === day && h.returnDate && Math.abs(nightsBetweenIso(h.depart, h.returnDate) - nights) <= 1
+      );
+    }
+    if (!match) match = hits.find((h) => h.depart === day);
+    if (!match) continue;
+    const returnDate = round ? match.returnDate || ret : undefined;
+    const key = `${day}|${returnDate || ""}`;
+    const deal: MonthDeal = { depart: day, returnDate, priceCad: match.priceCad };
+    const prev = best.get(key);
+    if (!prev || deal.priceCad < prev.priceCad) best.set(key, deal);
+  }
+  return [...best.values()].sort((a, b) => a.priceCad - b.priceCad).slice(0, 16);
+}
+
 export async function searchLive(q: SearchQuery): Promise<LiveOffer[]> {
   if (q.kind === "esim") return searchEsim(q);
   const names = await airlines();
@@ -293,7 +363,12 @@ export async function searchLive(q: SearchQuery): Promise<LiveOffer[]> {
   const seen = new Set<string>();
   return found
     .filter((o) => (o.priceCad || 0) > 0)
-    .sort((a, b) => dateBand(a, q.depart) - dateBand(b, q.depart) || (a.priceCad || 0) - (b.priceCad || 0))
+    .filter((o) => !q.directOnly || o.stops === 0)
+    .sort((a, b) =>
+      q.flexMonth
+        ? (a.priceCad || 0) - (b.priceCad || 0)
+        : dateBand(a, q.depart) - dateBand(b, q.depart) || (a.priceCad || 0) - (b.priceCad || 0)
+    )
     .filter((o) => {
       const key = [
         o.airline || o.title,
@@ -394,15 +469,15 @@ async function fetchDateHits(path: string) {
   return parseFareHits(json);
 }
 
-function pricesForDatesPath(origin: string, dest: string, departAt: string, returnAt?: string, oneWay = false) {
+function pricesForDatesPath(origin: string, dest: string, departAt: string, returnAt?: string, oneWay = false, direct = false) {
   const params = new URLSearchParams({
     origin,
     destination: dest,
     currency: "cad",
     cy: "cad",
     sorting: "price",
-    direct: "false",
-    limit: "30",
+    direct: direct ? "true" : "false",
+    limit: "100",
     unique: "false",
     page: "1",
     departure_at: departAt,
@@ -606,7 +681,7 @@ async function fetchDates(
         currency: "cad",
         cy: "cad",
         sorting,
-        direct: "false",
+        direct: q.directOnly ? "true" : "false",
         limit: String(limit),
         unique: "false",
         one_way: round && period.ret ? "false" : "true",

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { paramsToQuery } from "@/lib/deeplinks";
-import { searchLive, suggestFlightDates, travelpayoutsCheckouts } from "@/lib/live-search";
+import { cheapestMonthDeals, searchLive, suggestFlightDates, travelpayoutsCheckouts } from "@/lib/live-search";
 import { logSearch } from "@/lib/travel-api/store";
 import { recordEvent } from "@/lib/analytics";
 import { getDestination } from "@/lib/airports";
@@ -25,11 +25,16 @@ function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T) {
 }
 
 export async function GET(req: NextRequest) {
-  const q = paramsToQuery(req.nextUrl.searchParams);
+  let q = paramsToQuery(req.nextUrl.searchParams);
   try {
+    const monthDeals =
+      q.kind === "flights" && q.flexMonth ? await withTimeout(cheapestMonthDeals(q), 8000, []) : [];
+    if (monthDeals[0] && !req.nextUrl.searchParams.get("depart")) {
+      q = { ...q, depart: monthDeals[0].depart, returnDate: monthDeals[0].returnDate || q.returnDate };
+    }
     const priced = await searchLive(q);
     const dateSuggestions =
-      q.kind === "flights" && priced.length === 0
+      q.kind === "flights" && priced.length === 0 && !q.flexMonth
         ? await withTimeout(suggestFlightDates(q), 5000, null)
         : null;
     const boards = travelpayoutsCheckouts(q).filter(
@@ -64,6 +69,7 @@ export async function GET(req: NextRequest) {
       ok: true,
       live,
       dateSuggestions,
+      monthDeals,
       packages: [],
       source: "travelpayouts",
       generatedAt: new Date().toISOString(),
@@ -74,6 +80,7 @@ export async function GET(req: NextRequest) {
         ok: false,
         live: travelpayoutsCheckouts(q),
         dateSuggestions: null,
+        monthDeals: [],
         packages: [],
         error: err instanceof Error ? err.message : "search_failed",
         generatedAt: new Date().toISOString(),

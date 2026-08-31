@@ -16,6 +16,9 @@ export type SearchQuery = {
   cabin?: "economy" | "premium" | "business" | "first";
   trip?: "roundtrip" | "oneway";
   dataPlan?: string;
+  directOnly?: boolean;
+  flexMonth?: string;
+  nights?: number;
 };
 
 export type PartnerOffer = {
@@ -112,6 +115,9 @@ export function queryToParams(q: SearchQuery) {
   if (q.cabin) p.set("cabin", q.cabin);
   if (q.trip) p.set("trip", q.trip);
   if (q.dataPlan) p.set("data", q.dataPlan);
+  if (q.directOnly) p.set("direct", "1");
+  if (q.flexMonth) p.set("month", q.flexMonth);
+  if (q.nights) p.set("nights", String(q.nights));
   return p.toString();
 }
 
@@ -125,13 +131,15 @@ export function paramsToQuery(sp: URLSearchParams): SearchQuery {
     .filter((n) => Number.isFinite(n) && n >= 0 && n <= 17);
   while (ages.length < children) ages.push(2);
   const oneway = kind === "flights" && trip === "oneway";
+  const flexMonth = sp.get("month") || undefined;
+  const nights = Number(sp.get("nights") || 0) || undefined;
   return {
     kind,
     from: sp.get("from") || undefined,
     to: sp.get("to") || undefined,
     toCity: sp.get("toCity") || undefined,
-    depart: sp.get("depart") || defaultDepart(),
-    returnDate: oneway ? undefined : sp.get("return") || defaultReturn(),
+    depart: sp.get("depart") || (flexMonth ? undefined : defaultDepart()),
+    returnDate: oneway ? undefined : sp.get("return") || (flexMonth ? undefined : defaultReturn()),
     adults: Number(sp.get("adults") || 1),
     children,
     childAges: ages.slice(0, children),
@@ -139,5 +147,8 @@ export function paramsToQuery(sp: URLSearchParams): SearchQuery {
     cabin: (sp.get("cabin") as SearchQuery["cabin"]) || "economy",
     trip,
     dataPlan: sp.get("data") || undefined,
+    directOnly: sp.get("direct") === "1",
+    flexMonth,
+    nights,
   };
 }

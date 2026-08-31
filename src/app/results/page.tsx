@@ -24,7 +24,7 @@ import { getAirport, getDestination } from "@/lib/airports";
 import { DEST_PHOTOS } from "@/lib/deals";
 import { useApp } from "@/context/AppContext";
 import { currentUser, updateUser } from "@/lib/auth";
-import { rankOffers, type FlightDateOption, type FlightDateSuggestions, type LiveOffer } from "@/lib/live-search";
+import { rankOffers, type FlightDateOption, type FlightDateSuggestions, type LiveOffer, type MonthDeal } from "@/lib/live-search";
 import { formatBubble, formatCompactDay, nightsBetweenIso } from "@/lib/dates";
 import { compareLinksFor, nightsBetween, partnerFavicon, PARTNER_META, type CompareLink } from "@/lib/partners";
 import { SearchWidget } from "@/components/SearchWidget";
@@ -48,6 +48,7 @@ function ResultsInner() {
   const [saved, setSaved] = useState(false);
   const [live, setLive] = useState<LiveOffer[]>([]);
   const [alts, setAlts] = useState<FlightDateSuggestions | null>(null);
+  const [monthDeals, setMonthDeals] = useState<MonthDeal[]>([]);
   const [loading, setLoading] = useState(true);
   const [sort, setSort] = useState<"best" | "price" | "fast">("best");
 
@@ -86,11 +87,13 @@ function ResultsInner() {
         if (cancelled) return;
         setLive(Array.isArray(data.live) ? data.live : []);
         setAlts(data.dateSuggestions || null);
+        setMonthDeals(Array.isArray(data.monthDeals) ? data.monthDeals : []);
       })
       .catch(() => {
         if (!cancelled) {
           setLive([]);
           setAlts(null);
+          setMonthDeals([]);
         }
       })
       .finally(() => {
@@ -257,6 +260,57 @@ function ResultsInner() {
         </div>
 
         <section className="mt-10">
+          {q.flexMonth && monthDeals.length > 0 && (
+            <div className="mb-8 rounded-[1.4rem] bg-white p-4 shadow-card ring-1 ring-navy/8 sm:p-5">
+              <p className="text-[11px] font-black uppercase tracking-[0.16em] text-navy/40">
+                {m.results.monthScanTitle.replace(
+                  "{month}",
+                  new Date(`${q.flexMonth}-01`).toLocaleDateString(locale === "fr" ? "fr-CA" : "en-CA", {
+                    month: "long",
+                    year: "numeric",
+                  })
+                )}
+              </p>
+              <p className="mt-1 text-sm text-navy/55">
+                {q.trip === "oneway"
+                  ? m.results.monthOnewaySub
+                  : m.results.monthScanSub.replace("{nights}", String(q.nights || nights || 7))}
+              </p>
+              <ul className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                {monthDeals.slice(0, 8).map((deal, i) => {
+                  const active = q.depart === deal.depart && (!deal.returnDate || q.returnDate === deal.returnDate);
+                  return (
+                    <li key={`${deal.depart}-${deal.returnDate || ""}`}>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          router.push(
+                            `/results?${queryToParams({
+                              ...q,
+                              depart: deal.depart,
+                              returnDate: deal.returnDate,
+                            })}`
+                          )
+                        }
+                        className={`flex w-full flex-col items-start rounded-2xl px-4 py-3 text-left ring-1 transition hover:-translate-y-0.5 hover:shadow-lift ${
+                          active ? "bg-sky text-white ring-sky" : "bg-mist text-navy ring-navy/8 hover:bg-white hover:ring-sky"
+                        }`}
+                      >
+                        <span className="text-sm font-extrabold">
+                          {formatBubble(deal.depart, locale === "fr" ? "fr-CA" : "en-CA")}
+                          {deal.returnDate ? ` – ${formatBubble(deal.returnDate, locale === "fr" ? "fr-CA" : "en-CA")}` : ""}
+                        </span>
+                        <span className={`mt-1 text-xs font-bold ${active ? "text-white/85" : "text-sky"}`}>
+                          {i === 0 ? `${m.results.monthBest} · ` : ""}
+                          {money(deal.priceCad)} · {m.results.pricePerAdult}
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
               <h2 className="text-2xl font-extrabold text-navy">{m.results.rankedTitle}</h2>
@@ -833,10 +887,7 @@ function RankedCard({
         <div className="flex items-center justify-between gap-3 border-t border-navy/5 pt-4 lg:flex-col lg:items-end lg:border-0 lg:pt-0">
           <div className="lg:text-right">
             <p className="text-2xl font-black tracking-tight text-navy sm:text-3xl">{money(offer.priceCad || 0)}</p>
-            <p className="text-[11px] font-semibold text-navy/45">
-              {m.results.cadNote}
-              {offer.priceUnit === "person" ? m.results.perAdult : offer.priceUnit === "plan" ? m.results.perPlan : ""}
-            </p>
+            <PriceNote offer={offer} query={query} m={m} money={money} />
             {extra > 0 && (
               <p className="mt-0.5 text-[11px] font-semibold text-navy/40">{m.results.vsCheap.replace("{n}", money(extra))}</p>
             )}
@@ -1041,6 +1092,50 @@ function StatTile({
       </p>
       <p className="mt-1 text-lg font-black sm:text-2xl">{value}</p>
       {hint && <p className={`truncate text-xs font-semibold ${accent ? "text-white/75" : "text-navy/50"}`}>{hint}</p>}
+    </div>
+  );
+}
+
+function PriceNote({
+  offer,
+  query,
+  m,
+  money,
+}: {
+  offer: LiveOffer;
+  query: ReturnType<typeof paramsToQuery>;
+  m: ReturnType<typeof useApp>["m"];
+  money: (n: number) => string;
+}) {
+  if (offer.kind === "esim") {
+    return <p className="text-[11px] font-semibold text-navy/45">{m.results.cadNote}{m.results.perPlan}</p>;
+  }
+  if (offer.kind === "stays") {
+    return (
+      <p className="text-[11px] font-semibold text-navy/45">
+        {m.results.priceStayTotal} · {m.results.cadNote}
+      </p>
+    );
+  }
+  if (offer.kind === "cars") {
+    return (
+      <p className="text-[11px] font-semibold text-navy/45">
+        {m.results.pricePerDay} · {m.results.cadNote}
+      </p>
+    );
+  }
+  const round = Boolean(offer.returnAt || (query.trip !== "oneway" && query.returnDate));
+  const adults = Math.max(1, offer.adults || query.adults || 1);
+  return (
+    <div className="text-[11px] font-semibold leading-snug text-navy/45">
+      <p>
+        {round ? m.results.priceRoundtrip : m.results.priceOneway} · {m.results.pricePerAdult}
+      </p>
+      {adults > 1 && offer.priceCad ? (
+        <p>{m.results.priceAdultsEst.replace("{n}", String(adults)).replace("{price}", money(offer.priceCad * adults))}</p>
+      ) : (
+        <p>{m.results.cadNote}</p>
+      )}
     </div>
   );
 }

@@ -20,9 +20,22 @@ import {
   type SearchKind,
   type SearchQuery,
 } from "@/lib/deeplinks";
-import { addDays } from "@/lib/dates";
+import { addDays, pad2 } from "@/lib/dates";
 import { consumePrefill, type TravelerParty } from "@/lib/travelers";
+import { updateSearchPrefs } from "@/lib/auth";
 import Link from "next/link";
+
+function upcomingMonths(locale: string, n = 12) {
+  const start = new Date();
+  start.setDate(1);
+  return Array.from({ length: n }, (_, i) => {
+    const d = new Date(start.getFullYear(), start.getMonth() + i, 1);
+    return {
+      value: `${d.getFullYear()}-${pad2(d.getMonth() + 1)}`,
+      label: d.toLocaleDateString(locale === "fr" ? "fr-CA" : "en-CA", { month: "long", year: "numeric" }),
+    };
+  });
+}
 
 const TABS: { id: SearchKind; icon: typeof Plane; labelKey: "flights" | "stays" | "cars" | "esim" }[] = [
   { id: "flights", icon: Plane, labelKey: "flights" },
@@ -64,6 +77,10 @@ export function SearchWidget({
   const [depart, setDepart] = useState(initial?.depart || defaultDepart());
   const [ret, setRet] = useState(initial?.returnDate || defaultReturn());
   const [trip, setTrip] = useState<"roundtrip" | "oneway">(initial?.trip || "roundtrip");
+  const [flex, setFlex] = useState(Boolean(initial?.flexMonth));
+  const [flexMonth, setFlexMonth] = useState(initial?.flexMonth || upcomingMonths(locale, 1)[0].value);
+  const [nights, setNights] = useState(initial?.nights || 7);
+  const [directOnly, setDirectOnly] = useState(Boolean(initial?.directOnly ?? user?.searchPrefs?.directOnly));
   const [adults, setAdults] = useState(initial?.adults || 1);
   const [children, setChildren] = useState(initial?.children || 0);
   const [childAges, setChildAges] = useState<Array<number | "">>(() => {
@@ -113,6 +130,11 @@ export function SearchWidget({
     applyParty(def);
     partyApplied.current = true;
   }, [user, initial?.adults, parties]);
+
+  useEffect(() => {
+    if (initial?.directOnly != null) return;
+    if (user?.searchPrefs?.directOnly) setDirectOnly(true);
+  }, [user?.searchPrefs?.directOnly, initial?.directOnly]);
 
   useEffect(() => {
     if (fromTouched.current || initial?.from) return;
@@ -185,13 +207,14 @@ export function SearchWidget({
       return;
     }
     setError("");
+    const useFlex = kind === "flights" && flex;
     const q: SearchQuery = {
       kind,
       from: fromCode || undefined,
       to: toCode || undefined,
       toCity: to || undefined,
-      depart,
-      returnDate: trip === "oneway" && kind === "flights" ? undefined : ret,
+      depart: useFlex ? undefined : depart,
+      returnDate: useFlex || (trip === "oneway" && kind === "flights") ? undefined : ret,
       adults,
       children,
       childAges: ages.filter((age): age is number => age !== ""),
@@ -199,6 +222,9 @@ export function SearchWidget({
       cabin,
       trip: kind === "flights" ? trip : "roundtrip",
       dataPlan: kind === "esim" ? dataPlan : undefined,
+      directOnly: kind === "flights" ? directOnly : undefined,
+      flexMonth: useFlex ? flexMonth : undefined,
+      nights: useFlex && trip === "roundtrip" ? nights : undefined,
     };
     router.push(`/results?${queryToParams(q)}`);
   }
@@ -267,6 +293,23 @@ export function SearchWidget({
                 {opt === "roundtrip" ? m.search.roundtrip : m.search.oneway}
               </button>
             ))}
+            <button
+              type="button"
+              onClick={() => setFlex(false)}
+              className={`rounded-full px-3 py-1.5 text-xs font-bold ${!flex ? "bg-sky-100 text-navy" : "text-navy/60"}`}
+            >
+              {m.search.exactDates}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setFlex(true);
+                setCalOpen(false);
+              }}
+              className={`rounded-full px-3 py-1.5 text-xs font-bold ${flex ? "bg-sky-100 text-navy" : "text-navy/60"}`}
+            >
+              {m.search.flexMonth}
+            </button>
           </div>
         )}
 
@@ -339,6 +382,24 @@ export function SearchWidget({
             )}
           </Field>
 
+          {kind === "flights" && flex ? (
+            <div className="grid gap-3 md:col-span-2 md:grid-cols-2">
+              <label className="text-xs font-bold uppercase tracking-wide text-navy/50">
+                {m.search.travelMonth}
+                <select className="field mt-1" value={flexMonth} onChange={(e) => setFlexMonth(e.target.value)}>
+                  {upcomingMonths(locale).map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {trip === "roundtrip" && (
+                <Stepper label={m.search.stayLength} value={nights} min={1} max={28} onChange={setNights} />
+              )}
+              <p className="md:col-span-2 text-xs font-semibold text-navy/50">{m.search.flexHint}</p>
+            </div>
+          ) : (
           <div
             className="md:col-span-2"
             ref={calRef}
@@ -414,7 +475,24 @@ export function SearchWidget({
               />
             )}
           </div>
+          )}
         </div>
+
+        {kind === "flights" && (
+          <label className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-navy">
+            <input
+              type="checkbox"
+              className="h-4 w-4 accent-sky"
+              checked={directOnly}
+              onChange={(e) => {
+                const on = e.target.checked;
+                setDirectOnly(on);
+                if (user) updateSearchPrefs(user.id, { directOnly: on });
+              }}
+            />
+            {m.search.directOnly}
+          </label>
+        )}
 
         {user && (
           <div className="-mx-1 flex items-center gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -595,11 +673,13 @@ function Stepper({
   label,
   value,
   min,
+  max,
   onChange,
 }: {
   label: string;
   value: number;
   min: number;
+  max?: number;
   onChange: (n: number) => void;
 }) {
   return (
@@ -614,11 +694,11 @@ function Stepper({
         >
           <Minus className="h-3.5 w-3.5" />
         </button>
-        <span className="w-5 text-center text-sm font-bold text-navy">{value}</span>
+        <span className="min-w-5 text-center text-sm font-bold text-navy">{value}</span>
         <button
           type="button"
           className="grid h-11 w-11 place-items-center rounded-full bg-white text-navy shadow-sm"
-          onClick={() => onChange(value + 1)}
+          onClick={() => onChange(Math.min(max ?? 99, value + 1))}
           aria-label={`Increase ${label}`}
         >
           <Plus className="h-3.5 w-3.5" />

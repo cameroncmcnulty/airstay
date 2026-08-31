@@ -15,6 +15,7 @@ export type SearchPrefs = {
   cabin?: SearchQuery["cabin"];
   autoPrefill?: boolean;
   defaultPartyId?: string;
+  directOnly?: boolean;
 };
 
 export const PREFILL_KEY = "airstay.prefillParty";
