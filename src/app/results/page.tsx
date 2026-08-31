@@ -28,6 +28,7 @@ import { rankOffers, type FlightDateOption, type FlightDateSuggestions, type Liv
 import { formatBubble, nightsBetweenIso } from "@/lib/dates";
 import { compareLinksFor, nightsBetween, partnerFavicon, PARTNER_META, type CompareLink } from "@/lib/partners";
 import { SearchWidget } from "@/components/SearchWidget";
+import { ConfettiHandoff } from "@/components/ConfettiHandoff";
 
 type Leaving = LiveOffer;
 
@@ -50,6 +51,7 @@ function ResultsInner() {
   const [alts, setAlts] = useState<FlightDateSuggestions | null>(null);
   const [loading, setLoading] = useState(true);
   const [sort, setSort] = useState<"best" | "price" | "fast">("best");
+  const [burst, setBurst] = useState<{ origin: { x: number; y: number; w: number; h: number } } | null>(null);
 
   const origin = q.from ? getAirport(q.from) : undefined;
   const dest = q.to ? getDestination(q.to) : undefined;
@@ -166,6 +168,16 @@ function ResultsInner() {
       }),
     }).catch(() => undefined);
     setLeaving(null);
+  }
+
+  function startHandoff(e: React.MouseEvent<HTMLAnchorElement>, offer: Leaving) {
+    e.preventDefault();
+    const href = offer.url;
+    window.open(href, "_blank", "noopener");
+    trackOutbound(offer);
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const r = e.currentTarget.getBoundingClientRect();
+    setBurst({ origin: { x: r.left, y: r.top, w: r.width, h: r.height } });
   }
 
   function leavingName(offer: Leaving) {
@@ -325,7 +337,7 @@ function ResultsInner() {
                       locale={locale}
                       m={m}
                       q={q}
-                      onOpen={() => setLeaving(o)}
+                      onHandoff={startHandoff}
                     />
                   </li>
                 ))}
@@ -421,6 +433,9 @@ function ResultsInner() {
         </section>
       </div>
 
+      {burst && (
+        <ConfettiHandoff origin={burst.origin} onDone={() => setBurst(null)} />
+      )}
       {leaving && (
         <div
           className="fixed inset-0 z-50 grid place-items-center bg-navy/55 p-4 backdrop-blur-sm"
@@ -449,7 +464,7 @@ function ResultsInner() {
                 href={leaving.url}
                 target="_blank"
                 rel="noopener"
-                onClick={() => trackOutbound(leaving)}
+                onClick={(e) => startHandoff(e, leaving)}
               >
                 {m.results.continue.replace("{partner}", leavingName(leaving))}
               </a>
@@ -470,14 +485,14 @@ function PartnerBoardCard({
   locale,
   m,
   q,
-  onOpen,
+  onHandoff,
 }: {
   offer: LiveOffer;
   rank: number;
   locale: "en" | "fr";
   m: ReturnType<typeof useApp>["m"];
   q: ReturnType<typeof paramsToQuery>;
-  onOpen: () => void;
+  onHandoff: (e: React.MouseEvent<HTMLAnchorElement>, offer: LiveOffer) => void;
 }) {
   const loc = locale === "fr" ? "fr-CA" : "en-CA";
   const when = [q.depart && formatBubble(q.depart, loc), q.returnDate && formatBubble(q.returnDate, loc)]
@@ -521,7 +536,13 @@ function PartnerBoardCard({
         </div>
         <div className="flex items-center justify-between gap-4 lg:flex-col lg:items-end">
           <p className="text-sm font-bold text-navy/50">{m.results.onSite}</p>
-          <a href={offer.url} target="_blank" rel="noopener" className="btn-primary shrink-0">
+          <a
+            href={offer.url}
+            target="_blank"
+            rel="noopener"
+            onClick={(e) => onHandoff(e, offer)}
+            className="btn-primary shrink-0"
+          >
             {m.results.seeLiveFares}
             <ExternalLink className="h-4 w-4" />
           </a>

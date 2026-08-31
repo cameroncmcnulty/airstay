@@ -48,7 +48,6 @@ Rules for that block:
 - For hotels: kind=stays (from optional). For cars: kind=cars and to=destination IATA.
 - For packages: href="/packages"
 - For how AIRSTAY works: / and /about
-- For deals: /deals
 - You may also use markdown links in the prose. The :::aria block is required when you are sending them somewhere.
 
 ${SITE_MAP}

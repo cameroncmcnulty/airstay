@@ -4,7 +4,6 @@ import { useState } from "react";
 import { ShieldCheck, MapPin, BadgeDollarSign, Link2 } from "lucide-react";
 import { SearchWidget } from "@/components/SearchWidget";
 import { CategoryBubbles } from "@/components/CategoryBubbles";
-import { DealGrid } from "@/components/DealCard";
 import { HeroMedia } from "@/components/HeroMedia";
 import { HeroPeek } from "@/components/HeroPeek";
 import { HowItWorks, TrustStrip } from "@/components/HowItWorks";
@@ -76,7 +75,6 @@ export default function HomePage() {
         <ExpediaOffer />
         <AirHelpOffer />
         <HowItWorks />
-        <DealGrid limit={4} />
 
         <section className="mx-auto max-w-6xl px-4">
           <h2 className="text-center text-2xl font-extrabold text-navy md:text-3xl">{m.why.title}</h2>

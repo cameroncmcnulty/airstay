@@ -14,7 +14,6 @@ export const SITE_MAP = `AIRSTAY PAGES (use these exact relative paths)
 - /cars — cars at the destination
 - /packages — vacation packages (Expedia flight + hotel)
 - /esim — eSIM data plans for the destination
-- /deals — featured CAD finds
 - /about — who we are
 - /contact — say hello
 - /account — saved searches (if they have an account)
@@ -90,7 +89,7 @@ export function inferActions(message: string, locale: "en" | "fr"): AriaAction[]
     return actions;
   }
   if (/(deal|aubaine|cheap|pas cher)/.test(s)) {
-    actions.push({ type: "page", href: "/deals", label: fr ? "Voir les aubaines" : "See deals" });
+    actions.push({ type: "page", href: "/", label: fr ? "Chercher un voyage" : "Search a trip" });
   }
   if (/(surprise|inspire|recommend|where should|nudge|surprend)/.test(s) && !findDest(message)) {
     const month = new Date().getMonth();
@@ -106,7 +105,7 @@ export function inferActions(message: string, locale: "en" | "fr"): AriaAction[]
       href: buildSearchHref({ kind: "flights", to: pick.to, toCity: city, locale }),
       label: fr ? `Vols vers ${city}` : `Flights to ${city}`,
     });
-    actions.push({ type: "page", href: "/deals", label: fr ? "Aubaines du moment" : "Today’s deals" });
+    actions.push({ type: "page", href: "/", label: fr ? "Chercher un voyage" : "Search a trip" });
     return unique(actions);
   }
   if (/(contact|help|humain|privacy|vie privee)/.test(s) && /(email|write|ecrire|officer)/.test(s)) {

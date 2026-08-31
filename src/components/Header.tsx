@@ -13,7 +13,6 @@ const LINKS = [
   { href: "/cars", key: "cars" as const },
   { href: "/esim", key: "esim" as const },
   { href: "/packages", key: "packages" as const },
-  { href: "/deals", key: "deals" as const },
 ];
 
 export function Header() {
