@@ -5,17 +5,27 @@ import {
   type PartnerKey,
   airlineLogo,
   aviasalesUrl,
+  agodaUrl,
   bookingHotelsUrl,
   compareLinksFor,
+  discoverCarsUrl,
+  expediaCarsUrl,
   expediaFlightsUrl,
+  expediaHotelsUrl,
+  expediaPackagesUrl,
   googleFlightsUrl,
+  hotelsComUrl,
+  kayakCarsUrl,
   kayakFlightsUrl,
+  kayakHotelsUrl,
+  rentalcarsUrl,
   skyscannerFlightsUrl,
   type CompareLink,
 } from "@/lib/partners";
 import { tpTrack, tpWrap } from "@/lib/affiliate";
 import { searchEsim } from "@/lib/esim";
 import { fromIso, nightsBetweenIso, pad2, todayIso } from "@/lib/dates";
+import { scrapeFares, type ScrapedFare } from "@/lib/scrape-prices";
 
 export type LiveOffer = {
   id: string;
@@ -145,18 +155,69 @@ export function rankOffers(offers: LiveOffer[]) {
 }
 
 export function travelpayoutsCheckouts(q: SearchQuery): LiveOffer[] {
-  if (q.kind !== "flights") return [];
-  const boards: Array<[PartnerKey, string | undefined]> = [
-    ["aviasales", aviasalesUrl(q)],
-    ["expedia", expediaFlightsUrl(q)],
-    ["kayak", kayakFlightsUrl(q)],
-    ["skyscanner", skyscannerFlightsUrl(q)],
-    ["google", googleFlightsUrl(q)],
-  ];
+  const boards: Array<[PartnerKey, string | undefined]> =
+    q.kind === "flights"
+      ? [
+          ["aviasales", aviasalesUrl(q)],
+          ["expedia", expediaFlightsUrl(q)],
+          ["kayak", kayakFlightsUrl(q)],
+          ["skyscanner", skyscannerFlightsUrl(q)],
+          ["google", googleFlightsUrl(q)],
+        ]
+      : q.kind === "stays"
+        ? [
+            ["booking", bookingHotelsUrl(q)],
+            ["expedia", expediaHotelsUrl(q)],
+            ["kayak", kayakHotelsUrl(q)],
+            ["hotels", hotelsComUrl(q)],
+            ["agoda", agodaUrl(q)],
+          ]
+        : q.kind === "cars"
+          ? [
+              ["discover", discoverCarsUrl(q)],
+              ["rentalcars", rentalcarsUrl(q)],
+              ["kayak", kayakCarsUrl(q)],
+              ["expedia", expediaCarsUrl(q)],
+            ]
+          : q.kind === "packages"
+            ? [["expedia", expediaPackagesUrl()]]
+            : [];
   return boards.flatMap(([key, url], i) => {
     const offer = offerFromPartner(key, q, url, { id: `board-${key}`, featured: i === 0 });
     return offer ? [offer] : [];
   });
+}
+
+function fromScraped(hit: ScrapedFare, q: SearchQuery, names: Map<string, string>): LiveOffer {
+  const meta = PARTNER_META[hit.partnerKey];
+  const airline = hit.airline;
+  return {
+    id: `scrape-${hit.partnerKey}-${airline || "x"}-${hit.flightNumber || hit.title || ""}-${hit.priceCad}`,
+    source: "partner",
+    kind: q.kind,
+    title: hit.title || (airline ? names.get(airline) || airline : meta.name),
+    partner: q.kind === "stays" && hit.partnerKey === "google" ? "Google" : meta.name,
+    partnerKey: hit.partnerKey,
+    domain: meta.domain,
+    color: meta.color,
+    tagline: meta.tagline,
+    taglineFr: meta.taglineFr,
+    airline,
+    airlineName: airline ? names.get(airline) || airline : undefined,
+    airlineLogo: airlineLogo(airline),
+    flightNumber: hit.flightNumber,
+    originAirport: q.from?.toUpperCase(),
+    destAirport: q.to?.toUpperCase(),
+    priceCad: hit.priceCad,
+    priceUnit: q.kind === "stays" ? "night" : q.kind === "cars" ? "day" : "person",
+    adults: q.adults || 1,
+    stops: hit.stops,
+    departAt: q.depart,
+    returnAt: q.returnDate,
+    url: hit.url,
+    live: true,
+    compare: compareLinksFor(q, { aviasales: hit.priceCad }),
+  };
 }
 
 async function tp(path: string) {
@@ -181,12 +242,19 @@ function dateBand(offer: LiveOffer, wanted?: string) {
 
 export async function searchLive(q: SearchQuery): Promise<LiveOffer[]> {
   if (q.kind === "esim") return searchEsim(q);
-  if (q.kind === "stays") return fetchHotelPrices(q);
-  if (q.kind === "cars") return [];
+  const names = await airlines();
+  const scrapedTask = scrapeFares(q).catch(() => [] as ScrapedFare[]);
+  if (q.kind === "stays") {
+    const [hotels, scraped] = await Promise.all([fetchHotelPrices(q), scrapedTask]);
+    return [...hotels, ...scraped.map((hit) => fromScraped(hit, q, names))];
+  }
+  if (q.kind === "cars" || q.kind === "packages") {
+    const scraped = await scrapedTask;
+    return scraped.map((hit) => fromScraped(hit, q, names));
+  }
   if (q.kind !== "flights") return [];
   const origins = searchCodes(q.from);
   const dests = searchCodes(q.to);
-  const names = await airlines();
   const adults = q.adults || 1;
   const pairs: Promise<PromiseSettledResult<LiveOffer[]>[]>[] = [];
 
@@ -205,11 +273,13 @@ export async function searchLive(q: SearchQuery): Promise<LiveOffer[]> {
   }
 
   const found: LiveOffer[] = [];
-  for (const batch of await Promise.all(pairs)) {
+  const [batches, scraped] = await Promise.all([Promise.all(pairs), scrapedTask]);
+  for (const batch of batches) {
     for (const item of batch) {
       if (item.status === "fulfilled") found.push(...item.value);
     }
   }
+  found.push(...scraped.map((hit) => fromScraped(hit, q, names)));
 
   const seen = new Set<string>();
   return found

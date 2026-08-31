@@ -27,12 +27,15 @@ function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T) {
 export async function GET(req: NextRequest) {
   const q = paramsToQuery(req.nextUrl.searchParams);
   try {
-    const priced = q.kind === "packages" ? [] : await searchLive(q);
+    const priced = await searchLive(q);
     const dateSuggestions =
       q.kind === "flights" && priced.length === 0
         ? await withTimeout(suggestFlightDates(q), 5000, null)
         : null;
-    const live = [...priced, ...travelpayoutsCheckouts(q)];
+    const boards = travelpayoutsCheckouts(q).filter(
+      (board) => !priced.some((row) => row.partnerKey === board.partnerKey && (row.priceCad || 0) > 0)
+    );
+    const live = [...priced, ...boards];
     const dest = q.to ? getDestination(q.to) : undefined;
     logSearch({
       kind: q.kind,

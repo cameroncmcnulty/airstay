@@ -760,6 +760,31 @@ function RankedCard({
             </div>
             {offer.kind === "esim" ? (
               <EsimLine offer={offer} m={m} locale={locale} />
+            ) : offer.kind === "stays" || offer.kind === "cars" || offer.kind === "packages" ? (
+              <>
+                <p className="mt-3 text-sm font-bold text-navy/60">
+                  {offer.title}
+                  {offer.departAt ? ` · ${offer.departAt}` : ""}
+                  {offer.returnAt ? ` – ${offer.returnAt}` : ""}
+                </p>
+                <CompareBar
+                  links={
+                    offer.compare?.length
+                      ? offer.compare
+                      : compareLinksFor(
+                          {
+                            ...query,
+                            depart: offerDay || query.depart,
+                            returnDate: (offer.returnAt || "").slice(0, 10) || query.returnDate,
+                          },
+                          { aviasales: offer.priceCad }
+                        )
+                  }
+                  money={money}
+                  m={m}
+                  onCompare={onCompare}
+                />
+              </>
             ) : (
               <>
                 <FlightLine offer={offer} loc={loc} stopsLabel={stopsLabel} m={m} />

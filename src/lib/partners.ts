@@ -453,13 +453,29 @@ export type CompareLink = {
 };
 
 export function compareLinksFor(q: SearchQuery, priced?: { aviasales?: number }): CompareLink[] {
-  const rows: Array<[PartnerKey, string | undefined, number | undefined]> = [
-    ["aviasales", aviasalesUrl(q), priced?.aviasales],
-    ["expedia", expediaFlightsUrl(q), undefined],
-    ["kayak", kayakFlightsUrl(q), undefined],
-    ["skyscanner", skyscannerFlightsUrl(q), undefined],
-    ["google", googleFlightsUrl(q), undefined],
-  ];
+  const rows: Array<[PartnerKey, string | undefined, number | undefined]> =
+    q.kind === "stays"
+      ? [
+          ["booking", bookingHotelsUrl(q), undefined],
+          ["expedia", expediaHotelsUrl(q), undefined],
+          ["kayak", kayakHotelsUrl(q), undefined],
+          ["hotels", hotelsComUrl(q), undefined],
+          ["agoda", agodaUrl(q), undefined],
+        ]
+      : q.kind === "cars"
+        ? [
+            ["discover", discoverCarsUrl(q), undefined],
+            ["rentalcars", rentalcarsUrl(q), undefined],
+            ["kayak", kayakCarsUrl(q), undefined],
+            ["expedia", expediaCarsUrl(q), undefined],
+          ]
+        : [
+            ["aviasales", aviasalesUrl(q), priced?.aviasales],
+            ["expedia", expediaFlightsUrl(q), undefined],
+            ["kayak", kayakFlightsUrl(q), undefined],
+            ["skyscanner", skyscannerFlightsUrl(q), undefined],
+            ["google", googleFlightsUrl(q), undefined],
+          ];
   return rows.flatMap(([key, url, priceCad]) =>
     url ? [{ key, name: PARTNER_META[key].name, url, priceCad }] : []
   );
