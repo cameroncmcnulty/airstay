@@ -3,6 +3,7 @@ import { paramsToQuery } from "@/lib/deeplinks";
 import {
   cheapestMonthDeals,
   flexFallbackDates,
+  mergeMonthDeals,
   monthDealsFromOffers,
   searchLive,
   suggestFlightDates,
@@ -46,14 +47,7 @@ export async function GET(req: NextRequest) {
     let priced = await searchLive(q);
     if (!needFlexDates) monthDeals = await monthTask;
     if (q.kind === "flights") {
-      const byDay = new Map<string, (typeof monthDeals)[number]>();
-      for (const deal of [...monthDeals, ...monthDealsFromOffers(q, priced)]) {
-        const prev = byDay.get(deal.depart);
-        if (!prev || deal.priceCad < prev.priceCad) byDay.set(deal.depart, deal);
-      }
-      monthDeals = [...byDay.values()]
-        .sort((a, b) => a.priceCad - b.priceCad || a.depart.localeCompare(b.depart))
-        .slice(0, 16);
+      monthDeals = mergeMonthDeals([...monthDeals, ...monthDealsFromOffers(q, priced)]);
     }
     if (q.flexMonth && !q.depart) {
       const picked = monthDeals[0];

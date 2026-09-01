@@ -284,7 +284,7 @@ function ResultsInner() {
         </div>
 
         <section className="mt-10">
-          {q.flexMonth && !loading && monthDeals.length === 0 && q.kind === "flights" && (
+          {q.flexMonth && !loading && monthDeals.length === 0 && list.length === 0 && q.kind === "flights" && (
             <p className="mb-6 rounded-2xl bg-mist px-4 py-3 text-sm font-semibold text-navy ring-1 ring-navy/10">
               {m.results.monthEmpty}
             </p>
@@ -328,6 +328,11 @@ function ResultsInner() {
                         <span className={`mt-1 text-xs font-bold ${active ? "text-white/85" : "text-sky"}`}>
                           {i === 0 ? `${m.results.monthBest} · ` : ""}
                           {money(deal.priceCad)} · {m.results.pricePerAdult}
+                          {deal.estimated
+                            ? ` · ${m.results.monthEstimated}`
+                            : deal.paired
+                              ? ` · ${m.results.monthPaired}`
+                              : ""}
                         </span>
                       </button>
                     </li>

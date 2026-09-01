@@ -322,6 +322,10 @@ export type MonthDeal = {
   returnDate?: string;
   priceCad: number;
   stops?: number;
+  /** Outbound + return one-ways. */
+  paired?: boolean;
+  /** 2× outbound used only when no return-direction cache exists. */
+  estimated?: boolean;
 };
 
 function daysInMonth(ym: string) {
@@ -361,14 +365,89 @@ function stayMatches(depart: string, returnDate: string | undefined, nights: num
   return Boolean(n && Math.abs(n - nights) <= 2);
 }
 
-function mergeMonthDeals(deals: MonthDeal[]) {
+function dealKind(deal: MonthDeal) {
+  if (!deal.paired) return 0;
+  if (!deal.estimated) return 1;
+  return 2;
+}
+
+function betterMonthDeal(prev: MonthDeal | undefined, deal: MonthDeal) {
+  if (!prev) return deal;
+  const prevKind = dealKind(prev);
+  const nextKind = dealKind(deal);
+  if (nextKind < prevKind) return deal;
+  if (nextKind > prevKind) return prev;
+  if (deal.priceCad < prev.priceCad) return deal;
+  if (deal.priceCad === prev.priceCad && (deal.returnDate || "") < (prev.returnDate || "")) return deal;
+  return prev;
+}
+
+export function mergeMonthDeals(deals: MonthDeal[]) {
   const best = new Map<string, MonthDeal>();
   for (const deal of deals) {
     if (!isIsoDay(deal.depart) || deal.priceCad <= 0) continue;
-    const prev = best.get(deal.depart);
-    if (!prev || deal.priceCad < prev.priceCad) best.set(deal.depart, deal);
+    best.set(deal.depart, betterMonthDeal(best.get(deal.depart), deal));
   }
   return [...best.values()].sort((a, b) => a.priceCad - b.priceCad || a.depart.localeCompare(b.depart)).slice(0, 16);
+}
+
+function cheapestByDay(hits: FareHit[], months?: string[]) {
+  const best = new Map<string, number>();
+  for (const hit of hits) {
+    if (!isIsoDay(hit.depart) || hit.priceCad <= 0) continue;
+    if (months && !months.some((ym) => hit.depart.startsWith(ym))) continue;
+    const prev = best.get(hit.depart);
+    if (prev == null || hit.priceCad < prev) best.set(hit.depart, hit.priceCad);
+  }
+  return best;
+}
+
+function nearestReturnFare(inbound: Map<string, number>, depart: string, nights: number) {
+  let best: { day: string; price: number; score: number } | undefined;
+  for (const [day, price] of inbound) {
+    if (day <= depart) continue;
+    const n = nightsBetweenIso(depart, day);
+    if (!n) continue;
+    const delta = Math.abs(n - nights);
+    if (delta > 4) continue;
+    const score = delta * 400 + price;
+    if (!best || score < best.score) best = { day, price, score };
+  }
+  return best;
+}
+
+/** Build round trips from outbound + inbound one-ways. Last resort: 2× outbound. */
+export function pairOneWayDeals(
+  outbound: Map<string, number>,
+  inbound: Map<string, number>,
+  month: string,
+  nights: number
+): MonthDeal[] {
+  const deals: MonthDeal[] = [];
+  const hasInbound = inbound.size > 0;
+  for (const [depart, outPrice] of outbound) {
+    if (!depart.startsWith(month)) continue;
+    const back = nearestReturnFare(inbound, depart, nights);
+    if (back) {
+      deals.push({
+        depart,
+        returnDate: back.day,
+        priceCad: outPrice + back.price,
+        paired: true,
+      });
+      continue;
+    }
+    if (!hasInbound) {
+      deals.push({
+        depart,
+        returnDate: addDays(depart, nights),
+        priceCad: outPrice * 2,
+        paired: true,
+        estimated: true,
+      });
+    }
+  }
+  return deals;
 }
 
 export function monthDealsFromOffers(q: SearchQuery, offers: LiveOffer[]): MonthDeal[] {
@@ -376,21 +455,26 @@ export function monthDealsFromOffers(q: SearchQuery, offers: LiveOffer[]): Month
   if (!month) return [];
   const nights = Math.max(1, Math.min(28, q.nights || 7));
   const round = q.trip !== "oneway";
-  const deals: MonthDeal[] = [];
+  const ticketed: MonthDeal[] = [];
+  const outbound = new Map<string, number>();
   for (const offer of offers) {
     const priceCad = Math.round(offer.priceCad || 0);
     const depart = isoDay(offer.departAt);
     if (!priceCad || !isIsoDay(depart) || !depart.startsWith(month)) continue;
     const returnDate = isoDay(offer.returnAt);
-    if (round && !stayMatches(depart, returnDate, nights)) continue;
-    deals.push({
-      depart,
-      returnDate: round ? returnDate : undefined,
-      priceCad,
-      stops: offer.stops,
-    });
+    if (round && stayMatches(depart, returnDate, nights)) {
+      ticketed.push({ depart, returnDate, priceCad, stops: offer.stops });
+      continue;
+    }
+    const prev = outbound.get(depart);
+    if (prev == null || priceCad < prev) outbound.set(depart, priceCad);
   }
-  return mergeMonthDeals(deals);
+  if (!round) {
+    return mergeMonthDeals(
+      [...outbound.entries()].map(([depart, priceCad]) => ({ depart, priceCad }))
+    );
+  }
+  return mergeMonthDeals([...ticketed, ...pairOneWayDeals(outbound, new Map(), month, nights)]);
 }
 
 export async function cheapestMonthDeals(q: SearchQuery): Promise<MonthDeal[]> {
@@ -405,7 +489,7 @@ export async function cheapestMonthDeals(q: SearchQuery): Promise<MonthDeal[]> {
   const round = q.trip !== "oneway";
   const following = nextYearMonth(month);
   const samples = sampleDaysInMonth(month, 4);
-  const jobs: Promise<FareHit[]>[] = [
+  const outJobs: Promise<FareHit[]>[] = [
     fetchDateHits(pricesForDatesPath(origin, dest, month, undefined, true, false)),
     fetchDateHits(pricesForDatesPath(origin, dest, following, undefined, true, false)),
     fetchDateHits(pricesForDatesPath(origin, dest, month, following, false, false)),
@@ -456,39 +540,102 @@ export async function cheapestMonthDeals(q: SearchQuery): Promise<MonthDeal[]> {
     fetchDateHits(groupedPricesPath(origin, dest, month, round ? following : undefined)),
   ];
   for (const day of samples) {
-    jobs.push(fetchDateHits(pricesForDatesPath(origin, dest, day, undefined, true, false)));
-    if (round) jobs.push(fetchDateHits(pricesForDatesPath(origin, dest, day, addDays(day, nights), false, false)));
+    outJobs.push(fetchDateHits(pricesForDatesPath(origin, dest, day, undefined, true, false)));
+    if (round) outJobs.push(fetchDateHits(pricesForDatesPath(origin, dest, day, addDays(day, nights), false, false)));
   }
-  const settled = await Promise.allSettled(jobs);
-  const hits: FareHit[] = [];
-  for (const item of settled) {
-    if (item.status === "fulfilled") hits.push(...item.value);
+  const inJobs: Promise<FareHit[]>[] = round
+    ? [
+        fetchDateHits(pricesForDatesPath(dest, origin, month, undefined, true, false)),
+        fetchDateHits(pricesForDatesPath(dest, origin, following, undefined, true, false)),
+        fetchDateHits(
+          `https://api.travelpayouts.com/v2/prices/month-matrix?${new URLSearchParams({
+            origin: dest,
+            destination: origin,
+            month: `${month}-01`,
+            currency: "cad",
+            show_to_affiliates: "true",
+            one_way: "true",
+            limit: "31",
+          }).toString()}`
+        ),
+        fetchDateHits(
+          `https://api.travelpayouts.com/v2/prices/month-matrix?${new URLSearchParams({
+            origin: dest,
+            destination: origin,
+            month: `${following}-01`,
+            currency: "cad",
+            show_to_affiliates: "true",
+            one_way: "true",
+            limit: "31",
+          }).toString()}`
+        ),
+        fetchDateHits(
+          `https://api.travelpayouts.com/v1/prices/calendar?${new URLSearchParams({
+            origin: dest,
+            destination: origin,
+            depart_date: `${month}-01`,
+            calendar_type: "departure_date",
+            currency: "cad",
+          }).toString()}`
+        ),
+        fetchDateHits(
+          `https://api.travelpayouts.com/v2/prices/latest?${new URLSearchParams({
+            origin: dest,
+            destination: origin,
+            currency: "cad",
+            period_type: "year",
+            page: "1",
+            limit: "30",
+            show_to_affiliates: "true",
+            sorting: "price",
+          }).toString()}`
+        ),
+        ...samples.map((day) =>
+          fetchDateHits(pricesForDatesPath(dest, origin, addDays(day, nights), undefined, true, false))
+        ),
+      ]
+    : [];
+  const settled = await Promise.allSettled([...outJobs, ...inJobs]);
+  const outHits: FareHit[] = [];
+  const inHits: FareHit[] = [];
+  settled.forEach((item, i) => {
+    if (item.status !== "fulfilled") return;
+    if (i < outJobs.length) outHits.push(...item.value);
+    else inHits.push(...item.value);
+  });
+  if (!round) {
+    return mergeMonthDeals(
+      outHits
+        .filter((hit) => isIsoDay(hit.depart) && hit.depart.startsWith(month))
+        .map((hit) => ({ depart: hit.depart, priceCad: hit.priceCad }))
+    );
   }
-  const deals: MonthDeal[] = [];
-  for (const hit of hits) {
+  const ticketed: MonthDeal[] = [];
+  for (const hit of outHits) {
     if (!isIsoDay(hit.depart) || !hit.depart.startsWith(month)) continue;
-    if (round) {
-      if (!stayMatches(hit.depart, hit.returnDate, nights)) continue;
-      deals.push({ depart: hit.depart, returnDate: hit.returnDate, priceCad: hit.priceCad });
-    } else {
-      deals.push({ depart: hit.depart, priceCad: hit.priceCad });
-    }
+    if (!stayMatches(hit.depart, hit.returnDate, nights)) continue;
+    ticketed.push({ depart: hit.depart, returnDate: hit.returnDate, priceCad: hit.priceCad });
   }
-  const merged = mergeMonthDeals(deals);
-  if (merged.length || round) return merged;
-  return mergeMonthDeals(
-    hits
-      .filter((hit) => isIsoDay(hit.depart) && hit.depart.startsWith(month))
-      .map((hit) => ({ depart: hit.depart, priceCad: hit.priceCad }))
-  );
+  const outbound = cheapestByDay(outHits, [month]);
+  const inbound = cheapestByDay(inHits, [month, following]);
+  return mergeMonthDeals([...ticketed, ...pairOneWayDeals(outbound, inbound, month, nights)]);
 }
 
-/** Only pin a flex search to a day that actually has a fare — never the 1st by default. */
+/** Pin to a real cheapest day when we have one. Otherwise probe mid-month so live search/scrape can still run. */
 export function flexFallbackDates(q: SearchQuery, deals: MonthDeal[]) {
   if (deals[0] && isIsoDay(deals[0].depart)) {
     return { depart: deals[0].depart, returnDate: deals[0].returnDate };
   }
-  return {};
+  const month = q.flexMonth;
+  if (!month) return {};
+  const days = daysInMonth(month);
+  if (!days.length) return {};
+  const day = days[Math.floor((days.length - 1) / 2)] || days[0];
+  const nights = Math.max(1, q.nights || 7);
+  return {
+    depart: day,
+    returnDate: q.trip === "oneway" ? undefined : addDays(day, nights),
+  };
 }
 
 export async function searchLive(q: SearchQuery): Promise<LiveOffer[]> {
