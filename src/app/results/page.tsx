@@ -62,6 +62,13 @@ function ResultsInner() {
   const destPhoto = (q.to && DEST_PHOTOS[q.to]) || DEST_PHOTOS.LHR || DEST_PHOTOS.CUN;
   const nights = nightsBetween(q.depart, q.returnDate);
   const money = (n: number) => (locale === "fr" ? cadFr(n) : cad(n));
+  const loc = locale === "fr" ? "fr-CA" : "en-CA";
+  const flexMonthLabel = (q.flexMonth || (q.depart || "").slice(0, 7))
+    ? new Date(`${q.flexMonth || (q.depart || "").slice(0, 7)}-01`).toLocaleDateString(loc, {
+        month: "long",
+        year: "numeric",
+      })
+    : "";
 
   const queryString = sp.toString();
   const extras = useMemo(() => live.filter((o) => !(o.priceCad && o.priceCad > 0)), [live]);
@@ -221,12 +228,20 @@ function ResultsInner() {
             <p className="mt-1 text-sm text-white/70">{locale === "fr" ? dest.countryFr : dest.country}</p>
           )}
           <div className="mt-5 flex flex-wrap gap-2">
-            {q.depart && (
+            {q.flexMonth && !sp.get("depart") && flexMonthLabel ? (
+              <MetaChip icon={CalendarDays}>
+                {q.trip === "oneway"
+                  ? m.results.flexMonthChipOneway.replace("{month}", flexMonthLabel)
+                  : m.results.flexMonthChip
+                      .replace("{month}", flexMonthLabel)
+                      .replace("{nights}", String(q.nights || nights || 7))}
+              </MetaChip>
+            ) : q.depart ? (
               <MetaChip icon={CalendarDays}>
                 {q.depart}
                 {q.returnDate ? ` – ${q.returnDate}` : ""}
               </MetaChip>
-            )}
+            ) : null}
             {q.kind === "esim" ? (
               <MetaChip icon={Smartphone}>{m.results.validDays.replace("{n}", String(Math.max(1, nights)))}</MetaChip>
             ) : q.kind === "cars" ? (
@@ -269,16 +284,15 @@ function ResultsInner() {
         </div>
 
         <section className="mt-10">
+          {q.flexMonth && !loading && monthDeals.length === 0 && q.kind === "flights" && (
+            <p className="mb-6 rounded-2xl bg-mist px-4 py-3 text-sm font-semibold text-navy ring-1 ring-navy/10">
+              {m.results.monthEmpty}
+            </p>
+          )}
           {monthDeals.length > 0 && q.kind === "flights" && (
             <div className="mb-8 rounded-[1.4rem] bg-white p-4 shadow-card ring-1 ring-navy/8 sm:p-5">
               <p className="text-[11px] font-black uppercase tracking-[0.16em] text-navy/40">
-                {m.results.monthScanTitle.replace(
-                  "{month}",
-                  new Date(`${q.flexMonth || (q.depart || "").slice(0, 7)}-01`).toLocaleDateString(locale === "fr" ? "fr-CA" : "en-CA", {
-                    month: "long",
-                    year: "numeric",
-                  })
-                )}
+                {m.results.monthScanTitle.replace("{month}", flexMonthLabel)}
               </p>
               <p className="mt-1 text-sm text-navy/55">
                 {q.trip === "oneway"
@@ -287,7 +301,9 @@ function ResultsInner() {
               </p>
               <ul className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
                 {monthDeals.slice(0, 8).map((deal, i) => {
-                  const active = q.depart === deal.depart && (!deal.returnDate || q.returnDate === deal.returnDate);
+                  const active = q.depart
+                    ? q.depart === deal.depart && (!deal.returnDate || q.returnDate === deal.returnDate)
+                    : i === 0;
                   return (
                     <li key={`${deal.depart}-${deal.returnDate || ""}`}>
                       <button
