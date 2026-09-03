@@ -8,7 +8,7 @@ import { useApp } from "@/context/AppContext";
 import {
   getAirport,
   getDestination,
-  searchCanadianAirports,
+  searchOriginAirports,
   searchDestinations,
   type Airport,
   type Destination,
@@ -146,7 +146,7 @@ export function SearchWidget({
     setFromCode(ap.code);
   }, [origin?.code, settings?.defaultFrom, initial?.from, locale, user?.searchPrefs?.homeAirport]);
 
-  const fromOpts = useMemo(() => searchCanadianAirports(from), [from]);
+  const fromOpts = useMemo(() => searchOriginAirports(from), [from]);
   const toOpts = useMemo(() => searchDestinations(to), [to]);
 
   const rangeTrip = kind === "esim" || kind !== "flights" || trip === "roundtrip";
@@ -340,7 +340,14 @@ export function SearchWidget({
                   items={fromOpts.map((a) => ({
                     key: a.code,
                     title: `${locale === "fr" ? a.cityFr : a.city} (${a.code})`,
-                    sub: locale === "fr" ? a.nameFr : a.name,
+                    sub:
+                      a.country && a.country !== "Canada"
+                        ? locale === "fr"
+                          ? a.countryFr || a.country
+                          : a.country
+                        : locale === "fr"
+                          ? a.nameFr
+                          : a.name,
                     onPick: () => pickFrom(a),
                   }))}
                   emptyLabel={m.search.noMatches}

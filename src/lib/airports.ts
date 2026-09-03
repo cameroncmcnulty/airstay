@@ -8,6 +8,8 @@ export type Airport = {
   nameFr: string;
   province: string;
   major?: boolean;
+  country?: string;
+  countryFr?: string;
 };
 
 export const CANADIAN_AIRPORTS: Airport[] = [
@@ -331,8 +333,29 @@ export const ALL_DESTINATIONS: Destination[] = uniqueDestinations(
 
 export const FEATURED_DESTINATIONS = POPULAR_DESTINATIONS.slice(0, 16).map((d) => d.code);
 
+function destToOrigin(d: Destination): Airport {
+  return {
+    code: d.code,
+    city: d.city,
+    cityFr: d.cityFr,
+    name: d.name || d.city,
+    nameFr: d.nameFr || d.cityFr,
+    province: d.country,
+    country: d.country,
+    countryFr: d.countryFr,
+  };
+}
+
+const CANADIAN_CODES = new Set(CANADIAN_AIRPORTS.map((a) => a.code.toUpperCase()));
+
+export const WORLD_ORIGIN_AIRPORTS: Airport[] = ALL_DESTINATIONS.filter(
+  (d) => !CANADIAN_CODES.has(d.code.toUpperCase())
+).map(destToOrigin);
+
 function haystackAirport(a: Airport) {
-  return [a.code, a.city, a.cityFr, a.name, a.nameFr, a.province];
+  return [a.code, a.city, a.cityFr, a.name, a.nameFr, a.province, a.country, a.countryFr].filter(
+    (x): x is string => Boolean(x)
+  );
 }
 
 function haystackDestination(d: Destination) {
@@ -366,6 +389,28 @@ export function searchCanadianAirports(q: string): Airport[] {
     .slice(0, 20);
 }
 
+/** Empty query: Canadian majors. Typed query: Canada first, then the rest of the world. */
+export function searchOriginAirports(q: string): Airport[] {
+  const s = q
+    .replace(/\([^)]*\)/g, " ")
+    .trim()
+    .toLowerCase();
+  if (!s) return CANADIAN_AIRPORTS.filter((a) => a.major);
+  const canadian = searchCanadianAirports(s);
+  const world = WORLD_ORIGIN_AIRPORTS.filter((a) => matches(haystackAirport(a), s)).sort(
+    (a, b) => rankScore(haystackAirport(a), s) - rankScore(haystackAirport(b), s)
+  );
+  const seen = new Set(canadian.map((a) => a.code.toUpperCase()));
+  const out = [...canadian];
+  for (const a of world) {
+    if (seen.has(a.code.toUpperCase())) continue;
+    seen.add(a.code.toUpperCase());
+    out.push(a);
+    if (out.length >= 20) break;
+  }
+  return out;
+}
+
 export function searchDestinations(q: string): Destination[] {
   const s = q.trim().toLowerCase();
   if (!s) return POPULAR_DESTINATIONS;
@@ -376,7 +421,12 @@ export function searchDestinations(q: string): Destination[] {
 
 export function getAirport(code: string) {
   const c = code.toUpperCase();
-  return CANADIAN_AIRPORTS.find((a) => a.code === c);
+  const local = CANADIAN_AIRPORTS.find((a) => a.code === c);
+  if (local) return local;
+  const world = WORLD_ORIGIN_AIRPORTS.find((a) => a.code.toUpperCase() === c);
+  if (world) return world;
+  const dest = ALL_DESTINATIONS.find((d) => d.code.toUpperCase() === c);
+  return dest ? destToOrigin(dest) : undefined;
 }
 
 export function getDestination(code: string) {
